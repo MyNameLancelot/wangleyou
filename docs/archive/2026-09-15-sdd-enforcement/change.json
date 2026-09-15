@@ -1,0 +1,43 @@
+{
+  "mode": "full",
+  "summary": "建立 SDD 分级声明、Git 快照检查、模块依赖检查与 CI；初始功能 PR 中既有应用范围见 docs/archive/2026-09-15-foundation-album-browsing/spec.md",
+  "reason": "防止规格与实现脱节，并消除小修必须三文件的流程冲突",
+  "behavior": false,
+  "architecture": true,
+  "verification": [
+    "npm run check：内容校验、类型检查、lint、8 个测试文件共 62 项通过（其中 SDD 14 项）",
+    "npm run build：通过，仓库子路径静态产物构建成功",
+    "工作区相对 origin/main 的完整差异检查通过；归档后复核见 verification.md"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "应用需求与行为不变"
+    },
+    "architecture": {
+      "status": "updated",
+      "reason": "记录开发工具与 CI 实际结构",
+      "paths": [
+        "docs/architecture.md"
+      ]
+    },
+    "modules": {
+      "status": "updated",
+      "reason": "新增开发工具模块，应用模块契约不变",
+      "paths": [
+        "scripts/sdd/module.md"
+      ]
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "沿用已有技术栈，无新增重大技术选型"
+    },
+    "readme": {
+      "status": "updated",
+      "reason": "说明本地维护入口",
+      "paths": [
+        "README.md"
+      ]
+    }
+  }
+}

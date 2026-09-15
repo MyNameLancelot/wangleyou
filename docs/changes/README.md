@@ -1,6 +1,6 @@
 # 活动变更规范
 
-每个变更使用有意义的独立目录名。开始实施前创建以下文件，内容可按规模精简。
+每个变更使用有意义的独立目录名并创建 change.json，字段见 [SDD 指南](../sdd.md)。完整流程开始实施前创建以下三份文件；轻量流程只需要声明、理由、影响及验证证据。
 
 ## spec.md
 
@@ -20,4 +20,4 @@
 
 ## 阅读与归档
 
-执行规则见 [AGENTS.md](../../AGENTS.md)，归档规则见 [archive/README.md](../archive/README.md)。目前无活动应用开发变更。最近完成：[工程初始化与相册浏览闭环](../archive/2026-09-15-foundation-album-browsing/spec.md)。
+执行规则见 [AGENTS.md](../../AGENTS.md)，归档规则见 [archive/README.md](../archive/README.md)。目前无活动变更。最近完成工程保障：[SDD 维护保障](../archive/2026-09-15-sdd-enforcement/spec.md)。最近完成：[工程初始化与相册浏览闭环](../archive/2026-09-15-foundation-album-browsing/spec.md)。

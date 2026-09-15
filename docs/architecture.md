@@ -74,3 +74,7 @@
 文档中的真实目录、公开接口和版本需随实现同步；架构决策被替代时保留历史理由并链接新记录。归档记录描述当时变更，不代替本文的当前架构。
 
 最近完成：[相册浏览闭环验证](archive/2026-09-15-foundation-album-browsing/verification.md)。
+
+## SDD 工程保障
+
+`scripts/sdd/` 独立承担 Git 快照读取、变更声明和文档引用校验、src 模块依赖约束；职责见 [工具模块](../scripts/sdd/module.md)，维护流程见 [SDD 指南](sdd.md)。PR CI 提供 SDD policy，既有 check 保留业务验证。远端保护未核实，自动检查不判断需求语义。

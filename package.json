@@ -13,11 +13,12 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
-    "check": "npm run validate:content && npm run typecheck && npm run lint && npm test",
+    "check": "npm run check:sdd -- --structure && npm run validate:content && npm run typecheck && npm run lint && npm test",
     "build": "npm run validate:content && npm run typecheck && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test:e2e": "playwright test",
-    "verify:fixtures": "node scripts/verify-fixtures.mjs"
+    "verify:fixtures": "node scripts/verify-fixtures.mjs",
+    "check:sdd": "tsx scripts/sdd/cli.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

@@ -129,3 +129,7 @@ SITE_BASE=/another-repo/ npm run preview
 未来 WebView 通过独立适配边界接入。当前无原生 SDK、桥接或离线缓存；移动模拟测试不能代表 iOS、Android 真机或套壳验证。全屏等功能按浏览器能力降级。
 
 本里程碑的 [规格、计划和任务归档](docs/archive/2026-09-15-foundation-album-browsing/spec.md) 与 [验证记录](docs/archive/2026-09-15-foundation-album-browsing/verification.md) 已完成。
+
+## SDD 维护检查
+
+规则、声明示例、完整/轻量流程及 GitHub 必需检查设置见 [SDD 维护指南](docs/sdd.md)。提交前可执行 `npm run check:sdd -- --staged`；审查整个工作区执行 `npm run check:sdd -- --worktree --base origin/main`。`npm run check` 包含模块依赖结构检查，PR CI 校验完整差异与变更声明。远端保护尚未核实，工作流存在不代表已经限制合并。
