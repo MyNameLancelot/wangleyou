@@ -1,0 +1,50 @@
+name: Validate static site
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  sdd:
+    name: SDD policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Validate full PR diff
+        if: github.event_name == 'pull_request'
+        env:
+          SDD_BASE: ${{ github.event.pull_request.base.sha }}
+          SDD_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: npm run check:sdd -- --base "$SDD_BASE" --head "$SDD_HEAD"
+      - name: Validate current structure
+        if: github.event_name == 'push'
+        run: npm run check:sdd -- --structure
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - run: npx playwright install --with-deps chrome
+      - run: npm run verify:fixtures
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-results
+          path: |
+            playwright-report/
+            test-results/

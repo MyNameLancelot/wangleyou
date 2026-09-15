@@ -1,0 +1,38 @@
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local tooling caches and test output
+.vite/
+.cache/
+coverage/
+.nyc_output/
+.playwright-cli/
+playwright-report/
+test-results/
+
+# WebStorm / IntelliJ local project files
+.idea/
+*.iml
+
+# Local environment files (keep documented templates)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Runtime logs
+*.log
+npm-debug.log*
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+
+# Operating system metadata
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini

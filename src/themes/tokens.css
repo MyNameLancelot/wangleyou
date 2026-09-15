@@ -1,0 +1,19 @@
+:root {
+  color-scheme: light;
+  --page: #fffaf0;
+  --paper: #fffdf8;
+  --ink: #343b32;
+  --muted: #696c60;
+  --accent: #a94e22;
+  --accent-soft: #f5e3c6;
+  --green: #657258;
+  --line: #e5decb;
+  --viewer: #20251f;
+  --viewer-text: #fffaf0;
+  --viewer-muted: #c4c9bc;
+  --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-title: 'Songti SC', 'STSong', 'Noto Serif CJK SC', serif;
+  --font-caption: 'SFMono-Regular', Consolas, monospace;
+  --radius: 14px;
+  --shadow: 0 14px 36px #343b3210;
+}
