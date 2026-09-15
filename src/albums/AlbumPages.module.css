@@ -1,0 +1,62 @@
+.intro { display: grid; grid-template-columns: 1fr 1.15fr; align-items: center; gap: 34px; padding: 56px 0 64px; }
+.eyebrow { font-family: var(--font-caption); color: var(--green); font-size: 11px; letter-spacing: 2px; display: block; }
+.sun { font-size: 22px; color: var(--accent); margin-right: 8px; vertical-align: -2px; }
+.intro h1 { font-family: var(--font-title); font-size: clamp(36px, 3.8vw, 56px); font-weight: 600; line-height: 1.45; letter-spacing: 1px; margin: 15px 0 18px; }
+.intro h1 span { color: var(--accent); }
+.introCopy > p { color: var(--muted); line-height: 1.9; font-size: 14px; }
+.primary { display: inline-flex; align-items: center; gap: 28px; padding: 12px 21px; margin-top: 25px; background: var(--ink); color: var(--paper); border-radius: 7px; font-size: 13px; }
+.primary:hover { background: var(--green); }
+.primary span { font-size: 19px; }
+.introMeta { display: flex; gap: 14px; margin-top: 25px; color: var(--muted); font-size: 10px; flex-wrap: wrap; }
+.introMeta span + span { border-left: 1px solid var(--line); padding-left: 14px; }
+.memoryStrip { position: relative; display: grid; grid-template-columns: 1.35fr 1fr; gap: 15px; align-items: center; padding: 8px 8px 27px 10px; }
+.memory { border: 0; background: var(--paper); padding: 8px 8px 11px; box-shadow: var(--shadow); text-align: left; min-width: 0; transition: transform .2s; }
+.memory:hover { transform: translateY(-5px); }
+.memory0 { grid-row: span 2; transform: rotate(-4deg); }
+.memory0 > span:first-child { height: 268px; }
+.memory1 { transform: rotate(4deg); }
+.memory2 { transform: rotate(2deg); }
+.memory1 > span:first-child, .memory2 > span:first-child { height: 115px; }
+.memoryCaption { display: block; font-family: var(--font-title); font-size: 13px; padding: 10px 5px 0; }
+.memoryCaption small { display: block; color: var(--muted); font: 9px var(--font-caption); margin-top: 3px; }
+.memoryNote { position: absolute; bottom: 0; left: 22px; color: var(--green); font-family: var(--font-title); font-size: 12px; }
+.albumsSection { scroll-margin-top: 25px; padding: 31px 0 42px; border-top: 1px solid var(--line); }
+.sectionHeader { display: flex; justify-content: space-between; align-items: flex-end; gap: 15px; margin-bottom: 24px; }
+.sectionHeader h2 { font-family: var(--font-title); font-size: 27px; font-weight: 600; margin-top: 6px; }
+.sectionNote { color: var(--muted); font-size: 12px; }
+.albumGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 25px; }
+.albumCard { min-width: 0; }
+.cover { position: relative; height: 212px; overflow: hidden; border-radius: var(--radius); }
+.cover img { transition: transform .35s; }
+.albumCard:hover .cover img { transform: scale(1.025); }
+.count { position: absolute; left: 13px; bottom: 13px; background: var(--paper); color: var(--ink); font-size: 10px; padding: 4px 10px; border-radius: 20px; }
+.cardInfo { padding: 15px 2px 0; }
+.date { color: var(--muted); font: 10px var(--font-caption); letter-spacing: 1px; }
+.cardInfo h3 { font-size: 17px; font-weight: 500; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cardInfo h3 span { font-size: 21px; color: var(--green); }
+.cardInfo p { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.emptyCover { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--green); background: var(--accent-soft); border: 1px dashed var(--line); }
+.emptyCover > span { font-size: 32px; font-weight: 200; }
+.emptyCover p { font-size: 13px; }
+.recent { padding: 26px 0 45px; }
+.recentGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.recentGrid button, .photoCard { border: 0; background: transparent; padding: 0; text-align: left; min-width: 0; }
+.recentPhoto { height: 165px; overflow: hidden; border-radius: 10px; }
+.recentGrid button > span, .photoCard > span { display: block; font-size: 12px; margin-top: 10px; }
+.recentGrid small, .photoCard small { display: block; font: 10px var(--font-caption); color: var(--muted); margin-top: 5px; }
+.detail { padding: 32px 0 65px; }
+.back { font-size: 12px; color: var(--green); display: inline-block; padding: 10px 0; }
+.detailHeader { margin: 32px 0 36px; }
+.detailHeader h1 { font: 600 clamp(28px, 4vw, 44px)/1.5 var(--font-title); margin: 10px 0; }
+.detailHeader p { color: var(--muted); font-size: 14px; }
+.photoGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 22px; }
+.photoThumb { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 12px; background: var(--accent-soft); }
+.photoCard img { transition: transform .25s; }
+.photoCard:hover img { transform: scale(1.02); }
+.empty { text-align: center; padding: 60px 20px; border: 1px dashed var(--line); border-radius: var(--radius); }
+.empty > span { display: block; color: var(--accent); font-size: 38px; margin-bottom: 15px; }
+.empty h2 { font-family: var(--font-title); font-weight: 500; }
+.empty p { color: var(--muted); margin-top: 12px; font-size: 13px; }
+@media (min-width: 1400px) { .cover { height: 240px; } }
+@media (max-width: 800px) { .intro { gap: 20px; grid-template-columns: 1fr 1fr; } .intro h1 { font-size: 35px; } .memory0 > span:first-child { height: 215px; } .memory1 > span:first-child, .memory2 > span:first-child { height: 92px; } .introMeta { gap: 8px; } .introMeta span + span { padding-left: 8px; } .introMeta span:last-child { display: none; } .cover { height: 165px; } .albumGrid { gap: 16px; } .sectionNote { display: none; } }
+@media (max-width: 600px) { .intro { grid-template-columns: 1fr; padding: 30px 0 36px; gap: 28px; } .intro h1 { font-size: 37px; margin-top: 10px; } .introCopy > p { font-size: 13px; } .primary { margin-top: 19px; } .introMeta { margin-top: 19px; } .memoryStrip { margin: 0 4px; } .memory0 > span:first-child { height: 232px; } .memory1 > span:first-child, .memory2 > span:first-child { height: 100px; } .memoryNote { font-size: 11px; } .sectionHeader h2 { font-size: 24px; } .albumGrid { grid-template-columns: 1fr; gap: 27px; } .cover { height: 220px; } .cardInfo { padding-top: 12px; } .recentGrid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px 12px; } .recentPhoto { height: 160px; } .photoGrid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 23px 12px; } .photoCard > span { font-size: 11px; } .detailHeader { margin-top: 22px; } .detail { padding-top: 18px; } .empty { padding: 40px 18px; } }
