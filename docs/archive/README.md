@@ -18,3 +18,4 @@
 | 2026-09-15 | [建立 SDD 开发指导](2026-09-15-sdd-guidance/spec.md) | 文档拆分、架构边界、计划与归档流程 |
 | 2026-09-15 | [相册浏览闭环](2026-09-15-foundation-album-browsing/spec.md) | React 工程、相册与大图、内容校验、浏览器验证 |
 | 2026-09-15 | [SDD 维护保障](2026-09-15-sdd-enforcement/spec.md) | 完整/轻量声明、Git 快照检查、模块依赖与 CI |
+| 2026-09-16 | [GitHub Pages 部署配置](2026-09-16-github-pages-deploy/spec.md) | main 验证后发布、CI 复用与部署操作说明；线上发布待执行 |

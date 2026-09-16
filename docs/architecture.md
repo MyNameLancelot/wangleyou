@@ -2,7 +2,7 @@
 
 ## 状态与阅读方式
 
-截至 2026-09-15，工程基础和手动照片浏览已实现，首个里程碑已通过本地验收并归档。技术栈为 React + TypeScript + Vite，npm 管理依赖。自动幻灯片、视频/音乐协调、多主题切换与原生桥接尚未实现。
+截至 2026-09-16，工程基础和手动照片浏览已实现，首个里程碑已通过本地验收并归档。技术栈为 React + TypeScript + Vite，npm 管理依赖。自动幻灯片、视频/音乐协调、多主题切换与原生桥接尚未实现。
 
 本文维护当前有效架构；拟议方案写入变更 spec，重大选择写入 decisions。每次实施完成后同步实际结构和实施状态，历史设计保留在归档中。
 
@@ -63,7 +63,8 @@
 - `scripts/validate-content.ts`：配置与本地资源校验，构建前必须通过。
 - `scripts/thumbnails.ts`：发布大图生成缩略图。
 - `npm run check`、`npm run build`、`npm run test:e2e`：验证入口，使用说明见 README。
-- `.github/workflows/check.yml`：CI 检查，不发布。
+- `.github/workflows/check.yml`：独立 push/PR 检查，也提供 workflow_call 供部署复用；自身不发布。
+- `.github/workflows/deploy.yml`：main push/手动运行，依次复用检查、构建 dist/、发布 Pages；权限和接口见 [工作流模块](../.github/workflows/module.md)。
 
 ## 后续决策关口
 
@@ -78,3 +79,11 @@
 ## SDD 工程保障
 
 `scripts/sdd/` 独立承担 Git 快照读取、变更声明和文档引用校验、src 模块依赖约束；职责见 [工具模块](../scripts/sdd/module.md)，维护流程见 [SDD 指南](sdd.md)。PR CI 提供 SDD policy，既有 check 保留业务验证。远端保护未核实，自动检查不判断需求语义。
+
+## Pages 发布链路
+
+部署工作流已配置为 validate → build → deploy：main 的同一运行提交先经完整应用验证，随后在独立 runner 重新构建原始内容并上传 dist/，最后通过 github-pages environment 发布。build 仅有源码和 Pages 读取权限；deploy 才有 Pages 写入与身份令牌权限。不依赖 Node 服务，不提交构建产物，不增加 gh-pages 分支。
+
+手动运行也限制 main；验证失败或任务跳过时不发布。pages 并发组避免同时部署且不中断正在运行的流程。保留独立检查工作流以维持原有 PR 状态检查名称，因此 main push 有重复验证开销，命令定义仍唯一。
+
+用户截图已显示 Pages Source=GitHub Actions。远端 artifact、环境权限和线上访问尚待提交合并后验证；本地配置验收不代表已经上线。首次操作、路径变更和回退见 [README](../README.md#首次部署)。
