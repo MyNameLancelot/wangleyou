@@ -89,7 +89,7 @@ npm run dev
 
 ## 静态路径与 GitHub Pages
 
-普通公开仓库可以开启 Pages。默认目标地址为 `https://<用户名>.github.io/wangleyou/`。项目使用 Hash 路由，例如 `/wangleyou/#/albums/summer-days`，不依赖服务器重写。
+普通公开仓库可以开启 Pages。本仓库部署成功后的地址为 `https://mynamelancelot.github.io/wangleyou/`。项目使用 Hash 路由，例如 `/wangleyou/#/albums/summer-days`，不依赖服务器重写。
 
 默认构建基础路径 `/wangleyou/`，可覆盖：
 
@@ -100,9 +100,38 @@ SITE_BASE=/another-repo/ npm run preview
 
 用户主页或自定义域名根目录使用 `SITE_BASE=/`。构建与预览应使用相同 base。
 
-当前 `.github/workflows/check.yml` 仅做 CI 检查，不发布。实际发布时，在仓库 Settings → Pages 中选择 GitHub Actions，按 [Vite 官方 Pages 指导](https://vite.dev/guide/static-deploy#github-pages) 添加部署工作流，上传 `dist/` 构建产物，再通过 Pages 部署 action 发布。Node/npm 只用于构建，访客浏览器加载编译后的 HTML/CSS/JS。
+### 首次部署
 
-本次未开启 Pages、未配置线上环境或推送仓库。发布前核对 [GitHub Pages 限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)，不要把 Git 仓库当无限容量媒体存储。
+1. 在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。用户已提供此设置的截图；不需要选择 Jekyll 或 Static HTML 模板。
+2. 默认地址不需要 Custom domain，留空即可；github.io 的 HTTPS 自动启用。
+3. 将本部署分支提交、推送，并通过 PR 合并到 `main`。工作流文件必须进入 main 才会自动发布；只推送功能分支不会发布网站。
+4. 在 **Actions → Deploy GitHub Pages** 查看 `Validate before deployment → Build Pages artifact → Publish GitHub Pages`。
+5. 若 GitHub 要求环境审批，按已有规则审批；在 **Settings → Environments → github-pages** 核实允许 `main` 部署。不要为通过检查而绕过现有审批。
+6. 发布成功后打开运行中 `github-pages` 环境给出的链接，核对首页、相册直接链接和刷新、照片原图与缩略图。Pages 设置页也会显示访问地址。
+
+`.github/workflows/deploy.yml` 监听 main 更新，也支持 **Run workflow → Branch: main** 手动重试。选择其他分支会跳过发布。每次先复用 `.github/workflows/check.yml` 运行内容/SDD 结构/类型/lint/单元测试/构建、内容夹具与桌面和移动模拟浏览器验证；全部成功才从同一提交重新构建并上传 `dist/`。Node/npm 只用于构建，访客浏览器加载编译后的 HTML/CSS/JS。
+
+check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检查和部署内检查两次运行；检查命令只维护一份。`SDD policy` 的完整变更声明门禁仍在 PR 执行，保护 main 仍需要 [分支保护](docs/sdd.md)。deploy.yml 不赋予构建任务 Pages 写权限；只有发布任务获得 Pages 写入与身份令牌权限，无需新增 PAT 或 secrets。
+
+发布只上传 dist/，不提交 dist/，不创建 gh-pages 分支。工作流明确设置 `SITE_BASE=/wangleyou/`；若以后绑定根域名或改仓库名，需同步工作流、Vite 默认路径和浏览器验证配置，不只填写 Custom domain。
+
+### 失败处理与回退
+
+- 检查或构建失败：查看第一个失败任务，修复后更新 main；后续上传/发布不会执行。
+- Pages 配置失败：确认 Source=GitHub Actions；发布权限/环境错误则检查 job 权限及 github-pages 的分支/审批设置。
+- 工作流已在 main 但没有运行：在 Actions 手动运行并选择 main。重跑历史运行会使用该次旧提交；恢复正常发布应运行当前 main。
+- 页面能开但资源 404：核对 /wangleyou/ 基础路径、相册媒体配置和真实 Pages 地址。
+- 暂停自动发布：在 Actions 禁用 Deploy GitHub Pages。恢复旧版本通过新 PR revert 问题提交，记录相应 SDD 说明，合并 main 后重新验证部署；禁用工作流不会删除已发布网站。
+
+### 状态与容量
+
+仓库已提供部署配置和本地验证；本次配置阶段没有执行远端工作流，首次线上部署及 HTTPS 访问尚待提交合并后验证。职责见 [工作流模块](.github/workflows/module.md)。
+
+截至 2026-09-16，GitHub Pages 发布站点最大 1 GB，源仓库建议不超过 1 GB，每月带宽软限制 100 GB，单次 Pages 部署超过 10 分钟会超时；自定义 Actions 不受默认每小时 10 次构建软限制约束。[GitHub Pages 限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
+
+普通 Git 推送会阻止超过 100 MiB 的单文件；添加媒体前先压缩并评估仓库总量，不把仓库当无限容量媒体存储。[GitHub 大文件说明](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
+
+配置依据：[GitHub 自定义 Pages 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)、[Vite 静态部署](https://vite.dev/guide/static-deploy#github-pages)。
 
 ## 工程与 SDD
 

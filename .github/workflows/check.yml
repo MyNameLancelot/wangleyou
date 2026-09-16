@@ -2,6 +2,7 @@ name: Validate static site
 on:
   push:
   pull_request:
+  workflow_call:
 permissions:
   contents: read
 jobs:
@@ -25,7 +26,7 @@ jobs:
           SDD_HEAD: ${{ github.event.pull_request.head.sha }}
         run: npm run check:sdd -- --base "$SDD_BASE" --head "$SDD_HEAD"
       - name: Validate current structure
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         run: npm run check:sdd -- --structure
   check:
     runs-on: ubuntu-latest

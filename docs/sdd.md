@@ -66,6 +66,8 @@ npm run check:sdd -- --structure
 
 仓库内：工作流提供 `SDD policy` job；PR 校验完整差异，push 仅校验当前模块结构。既有 `check` job 运行应用验证和新增检查测试。远端：本次未读取或修改保护规则，实际启用状态未核实。
 
+check.yml 同时供 deploy.yml 通过 workflow_call 复用；部署只在 main 验证通过后继续，手动运行同样执行 SDD 结构检查。独立 PR 的 `SDD policy` 与 `check` 保持不变，分支保护仍选择这两项；不要选择只在 main 发布时出现的部署内检查作为 PR 必需项。部署内结构检查不能代替 PR 的完整声明审查。
+
 维护者在 Settings → Branches（或 Rules → Rulesets）对实际默认分支配置：
 
 1. Require a pull request before merging；个人维护不强制要求无法由本人满足的额外审查人数。
