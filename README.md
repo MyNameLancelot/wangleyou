@@ -26,6 +26,7 @@ npm run dev
 | --- | --- |
 | `npm run dev` | 本地开发 |
 | `npm run thumbnails` | 从发布大图生成缩略图，不修改大图 |
+| `npm run compress:photos` | 离线把照片压成发布规格：长边封顶、统一 JPEG、剥离元数据，不改动源文件 |
 | `npm run validate:content` | 检查配置结构、日期、ID 和实际文件 |
 | `npm run typecheck` | TypeScript 检查 |
 | `npm run lint` | ESLint 检查 |
@@ -84,6 +85,25 @@ npm run dev
 - 可选尺寸必须为正整数；大图按原比例显示，缩略图容器可以裁切。
 - 显式引用文件不存在、配置格式错误、重复 ID 会使校验和构建失败，并指出字段位置。运行时网络失败可在大图查看器重试。
 - 背景音乐配置尚未实现；本阶段不要增加无消费方的音乐配置。
+
+### 压缩发布大图
+
+相机原片和演示素材先压成适合网页发布的规格再加入 `public/media/`。这是独立的离线预处理命令，只读输入目录，不参与站点运行时，也不改变任何页面行为。
+
+```bash
+npm run compress:photos -- ~/Pictures/trip              # 输出到 ~/Pictures/trip_compressed
+npm run compress:photos -- ~/Pictures/trip --out public/media --max-edge 3840 --quality 78
+npm run compress:photos -- ~/Pictures/trip --dry-run     # 只扫描并打印计划与预估，不写文件
+```
+
+- 默认长边上限 4096（DCI 4K 口径，横竖通用），只按原比例缩小、不放大；需要 UHD 口径时传 `--max-edge 3840`。
+- 默认质量 82。同一张图 q100 体积约为 q80 的两倍而画质没有可见收益，因此不建议把默认质量调高。输出一律为 JPEG 且扩展名改为 `.jpg`，编码使用 mozjpeg 与渐进式扫描。
+- 默认剥离 EXIF/GPS/拍摄时间等全部元数据，需要保留时加 `--keep-exif`；无论是否保留元数据，输出都会先按 EXIF Orientation 摆正。
+- 默认输出目录是输入目录同级的 `<输入目录>_compressed`，用 `--out` 覆盖；递归处理子目录并保留相对结构。可用 `--concurrency` 调整并发（默认 4，上限为 CPU 核数）。
+- HEIC/HEIF 需要外部解码器：先尝试 sharp 直接解码，失败后按 `sips`（macOS 自带）→ `heif-convert` → `magick` 顺序探测；三者在当前机器都没有时，该文件计入失败并给出安装建议，也可用 `--heic-via none` 跳过 HEIC。临时 JPEG 写在系统临时目录并自动清理。
+- 同一输出目录内多个源文件映射到同一个 `.jpg` 名时（例如 `a.jpg` 与 `a.png` 并存），按路径字典序保留第一个，其余追加 `-2`、`-3`，并在汇总中列出改名结果。
+- 重跑会覆盖同名输出文件，不影响输出目录中与本次无关的已有文件；输入目录始终保持只读。结束时打印成功、跳过、失败三类计数、体积节省比例、体积变大与失败清单。
+- 退出码：0 全部成功，1 存在处理失败，2 参数或环境错误。完整参数用 `npm run compress:photos -- --help` 查看。
 
 视频封面当前需维护者自行准备。添加大视频前先评估仓库和 Pages 限制；本项目没有在线压缩或转码服务。
 
@@ -146,7 +166,7 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 | src/media-viewer | 大图、键盘、触屏、焦点与全屏 |
 | src/shared | 复用图片组件 |
 | src/themes | 默认主题变量 |
-| scripts | 内容文件校验及缩略图生成 |
+| scripts | 内容文件校验、缩略图生成与发布图片压缩 |
 | tests | 浏览器验收 |
 | docs/changes | 活动规格、计划与任务 |
 | docs/archive | 已完成变更与验证记录 |

@@ -10,6 +10,7 @@
     "dev": "vite --host 127.0.0.1",
     "validate:content": "tsx scripts/validate-content.ts",
     "thumbnails": "tsx scripts/thumbnails.ts",
+    "compress:photos": "tsx scripts/compress-photos.ts",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
