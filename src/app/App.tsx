@@ -1,38 +1,165 @@
-import { useCallback, useEffect, useState } from 'react';
-import { AlbumPage, HomePage } from '../albums';
-import { content } from '../content';
-import type { Album, Photo } from '../content';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlbumPage, AlbumsPage, BrowsePage, HomePage } from '../albums';
+import { content, contentErrorMessage } from '../content';
+import type { Album } from '../content';
 import { MediaViewer } from '../media-viewer';
-import { openSession, stepSession } from '../playback';
-import type { Session } from '../playback';
+import type { ViewerCommands } from '../media-viewer';
+import {
+  handleEnded,
+  markPlaybackError,
+  openSession,
+  readLastPlayed,
+  resolveLastPlayed,
+  setContinuous,
+  setIntent,
+  setProgress,
+  setStatus,
+  stepSession,
+  writeLastPlayed,
+} from '../playback';
+import type { LastPlayed, Session } from '../playback';
+import { THEME_COPY, THEME_HERO_ASSETS, THEME_LABELS, applyTheme, nextTheme, readTheme } from '../themes';
+import type { ThemeName } from '../themes';
+import { assetUrl } from '../content';
 import '../themes';
 import { parseRoute } from './router';
+import { ThemeDecor } from './ThemeDecor';
 import styles from './App.module.css';
 import './global.css';
 
+const NAV = [
+  { href: '#/', label: '首页', kind: 'home' as const },
+  { href: '#/browse', label: '全部影像', kind: 'browse' as const },
+  { href: '#/albums', label: '相册', kind: 'albums' as const },
+];
+
 export function App() {
   const [route, setRoute] = useState(() => parseRoute(window.location.hash));
-  const [session, setSession] = useState<Session>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [theme, setTheme] = useState<ThemeName>(() => readTheme());
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+  const [lastPlayed, setLastPlayed] = useState<LastPlayed | null>(() => readLastPlayed());
+  const sessionRef = useRef<Session | null>(null);
+
   useEffect(() => {
-    const changeRoute = () => { setSession(null); setRoute(parseRoute(window.location.hash)); window.scrollTo(0,0); };
-    window.addEventListener('hashchange',changeRoute);
-    return () => window.removeEventListener('hashchange',changeRoute);
+    const changeRoute = () => {
+      sessionRef.current = null;
+      setSession(null);
+      setRoute(parseRoute(window.location.hash));
+      window.scrollTo(0, 0);
+    };
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener('hashchange', changeRoute);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('hashchange', changeRoute);
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
   }, []);
-  const album = route.kind === 'album' ? content.albums.find(a => a.id === route.id) : undefined;
-  useEffect(() => { document.title = `${album ? `${album.title} · ` : ''}${content.site.title} · 成长相册`; }, [album]);
-  const open = useCallback((album: Album,id: string) => setSession(openSession(album.media.filter((m): m is Photo => m.type==='photo'), id)),[]);
-  const step = useCallback((delta: number) => setSession(current => stepSession(current,delta)),[]);
-  const close = useCallback(() => setSession(null),[]);
+
+  const album = route.kind === 'album' ? content.albums.find(item => item.id === route.id) : undefined;
+  useEffect(() => {
+    const prefix = session ? '影像查看 · ' : album ? `${album.title} · ` : '';
+    document.title = `${prefix}${content.site.title} · 成长相册`;
+  }, [album, session]);
+
+  /** 会话由 App 唯一持有；这里同时维护 ref，避免在状态更新函数里产生副作用。 */
+  const applySession = useCallback((next: Session | null) => {
+    sessionRef.current = next;
+    setSession(next);
+    if (!next) return;
+    const media = next.media[next.index];
+    const owner = content.albums.find(item => item.media.some(entry => entry.id === media?.id));
+    if (!owner || !media) return;
+    const value: LastPlayed = { albumId: owner.id, mediaId: media.id, index: next.index };
+    writeLastPlayed(value);
+    setLastPlayed(value);
+  }, []);
+
+  const open = useCallback((target: Album, id: string) => {
+    applySession(openSession(target.media, id));
+  }, [applySession]);
+
+  const switchTheme = useCallback(() => setTheme(current => applyTheme(nextTheme(current))), []);
+
+  const commands = useMemo<ViewerCommands>(() => ({
+    step: delta => applySession(stepSession(sessionRef.current, delta)),
+    close: () => applySession(null),
+    toggleIntent: () => {
+      const current = sessionRef.current;
+      if (current) applySession(setIntent(current, current.intent === 'playing' ? 'paused' : 'playing'));
+    },
+    toggleContinuous: () => {
+      const current = sessionRef.current;
+      if (current) applySession(setContinuous(current, !current.continuous));
+    },
+    reportProgress: (progress, duration) => applySession(setProgress(sessionRef.current, progress, duration)),
+    reportStatus: status => applySession(setStatus(sessionRef.current, status)),
+    reportEnded: () => applySession(handleEnded(sessionRef.current)),
+    reportError: () => applySession(markPlaybackError(sessionRef.current)),
+    reportBlocked: () => {
+      const current = sessionRef.current;
+      if (current) applySession(setStatus(setIntent(current, 'paused'), 'paused'));
+    },
+    toggleTheme: switchTheme,
+  }), [applySession, switchTheme]);
+
+  const resume = resolveLastPlayed(content.albums, lastPlayed);
+  const firstMedia = content.albums.map(item => ({ album: item, media: item.media[0] })).find(entry => Boolean(entry.media));
+  const heroAsset = THEME_HERO_ASSETS[theme];
+  const heroImage = heroAsset ? assetUrl(heroAsset) : null;
+  const copy = THEME_COPY[theme];
+
+  const main = (() => {
+    if (contentErrorMessage) {
+      return <section className={styles.statePage} role="alert">
+        <span className={styles.stateIcon} aria-hidden="true">⚠</span>
+        <h1>内容配置暂时无法读取</h1>
+        <p>{contentErrorMessage}</p>
+        <p className={styles.stateHint}>相册配置维护在仓库的 <code>src/content/albums.json</code>，修正后重新构建即可恢复。</p>
+      </section>;
+    }
+    if (route.kind === 'home') return <HomePage data={content} onOpen={open} copy={copy} heroImage={heroImage} resume={resume} onResume={resume ? () => open(resume.album, resume.media.id) : undefined} />;
+    if (route.kind === 'browse') return <BrowsePage data={content} onOpen={open} heroImage={heroImage} />;
+    if (route.kind === 'albums') return <AlbumsPage data={content} />;
+    if (route.kind === 'album' && album) return <AlbumPage key={album.id} album={album} albums={content.albums} onOpen={open} />;
+    return <section className={styles.statePage}>
+      <span className={styles.stateIcon} aria-hidden="true">☀</span>
+      <h1>没有找到这个相册</h1>
+      <p>没有找到这个相册，链接可能已更改。</p>
+      <p className={styles.stateActions}>
+        <a className={styles.primaryAction} href="#/">回到首页</a>
+        {firstMedia && <button type="button" className={styles.secondaryAction} onClick={() => open(firstMedia.album, firstMedia.media.id)}>随便看看</button>}
+      </p>
+    </section>;
+  })();
+
   return <div className={styles.shell}>
-    <a className={styles.skip} href="#main" onClick={event=>{ event.preventDefault(); document.getElementById('main')?.focus(); }}>跳到主要内容</a>
+    <ThemeDecor />
+    <a className={styles.skip} href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>跳到主要内容</a>
+    {!online && <p className={styles.offline} role="status">当前处于离线状态，已加载的内容仍可查看，媒体可能无法显示。</p>}
     <header className={styles.header}>
-      <a className={styles.brand} href="#/" aria-label={`${content.site.title}，返回首页`}><span className={styles.brandIcon} aria-hidden="true">☀</span><span>{content.site.title}<small>成长相册 · OUR LITTLE DAYS</small></span></a>
-      <nav aria-label="主导航"><a href="#/" aria-current={route.kind==='home'?'page':undefined}>我们的相册</a><span className={styles.headerNote}>一起长大，一起看世界 <span aria-hidden="true">↗</span></span></nav>
+      <a className={styles.brand} href="#/" aria-label={`${content.site.title}，返回首页`}><span className={styles.brandIcon} aria-hidden="true">◐</span><span className={styles.brandName}>{content.site.title} · FAMILY ARCHIVE</span><span className={styles.brandMobileName}>{content.site.title}</span></a>
+      <nav className={styles.nav} aria-label="主导航">
+        {NAV.map(item => <a key={item.href} href={item.href} aria-current={route.kind === item.kind || (item.kind === 'albums' && route.kind === 'album') ? 'page' : undefined}>{item.label}</a>)}
+      </nav>
+      <button type="button" className={styles.themeSwitch} onClick={switchTheme} aria-label={`切换主题，当前是${THEME_LABELS[theme]}`}>
+        <span aria-hidden="true">◐</span>
+        <span className={styles.themeLabel}>{THEME_LABELS[theme]}</span>
+        <span className={styles.themeCaret} aria-hidden="true">⌄</span>
+      </button>
     </header>
-    <main id="main" tabIndex={-1} className={styles.main}>
-      {route.kind==='home'?<HomePage data={content} onOpen={open} />:album?<AlbumPage key={album.id} album={album} onOpen={open} />:<section className={styles.notFound}><span>这一页好像走丢了</span><h1>没有找到这个相册</h1><p>链接可能已更改，回到首页继续看看吧。</p><a href="#/">返回全部相册 →</a></section>}
-    </main>
-    <footer className={styles.footer}><span className={styles.footerBrand}>{content.site.title}<small>愿每个平凡的日子，都有迹可循。</small></span><span className={styles.demo}>演示相册 · 照片来自 <a href="https://www.pexels.com/" target="_blank" rel="noreferrer">Pexels ↗</a><br />演示日期与故事不代表真实家庭记录</span></footer>
-    {session && <MediaViewer session={session} onStep={step} onClose={close} />}
+    <main id="main" tabIndex={-1} className={styles.main}>{main}</main>
+    <footer className={styles.footer}>
+      <span className={styles.footerNote}>{copy.footNote}</span>
+      <span className={styles.demo}>示例内容 · 非真实影像 · 演示素材来自 Pexels / MDN CC0</span>
+    </footer>
+    <nav className={styles.mobileNav} aria-label="移动端主导航">
+      {NAV.map(item => <a key={item.href} href={item.href} aria-current={route.kind === item.kind || (item.kind === 'albums' && route.kind === 'album') ? 'page' : undefined}>{item.label}</a>)}
+    </nav>
+    {session && <MediaViewer session={session} commands={commands} themeLabel={THEME_LABELS[theme]} />}
   </div>;
 }

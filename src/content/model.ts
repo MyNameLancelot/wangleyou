@@ -16,6 +16,8 @@ export interface Video {
   src: string
   thumbnail?: string
   poster?: string
+  /** 说明字幕（WebVTT）：无对白的家庭短片也应有文字说明，供无法听音的场景使用。 */
+  captions?: string
   date?: string
   description?: string
   alt?: string

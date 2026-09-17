@@ -1,0 +1,47 @@
+{
+  "mode": "full",
+  "summary": "按已归档的双主题设计系统实现前端：三套主题运行时、视频播放、页面结构与查看器交互",
+  "reason": "设计基线已完成，运行时仍是单主题、无视频播放，且首页/浏览/相册/查看器结构与已确认设计不一致，需要一次成体系的实现",
+  "designImpact": "sync",
+  "designReason": "完全沿用已确认的 Penpot 组件语义、Token 与交互流程，实现后按 1440/390/横屏对照设计验证；若实现中出现设计未覆盖的交互语义，再升级为 update 并先补 Penpot",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "待实施：npm run check（内容校验、类型、lint、单元测试）",
+    "待实施：npm run build 与 npm run test:e2e（构建产物上的桌面与移动端验证）",
+    "待实施：1440、390 与横屏下对照 Penpot 的视觉与交互核对记录",
+    "待实施：主题切换保持 route/media/index/queue/播放意图的验证记录"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "reason": "把此前列为后续里程碑的主题切换、视频播放与连续播放纳入当前版本基线",
+      "paths": ["docs/requirements.md"]
+    },
+    "architecture": {
+      "status": "updated",
+      "reason": "明确 playback 扩展为媒体队列与播放意图唯一所有者，viewer 仅转发命令，themes 承担运行时主题",
+      "paths": ["docs/architecture.md"]
+    },
+    "modules": {
+      "status": "updated",
+      "reason": "themes、playback、media-viewer、content、albums 的职责与公开接口按实现结果同步",
+      "paths": [
+        "src/themes/module.md",
+        "src/playback/module.md",
+        "src/media-viewer/module.md",
+        "src/albums/module.md",
+        "src/content/module.md"
+      ]
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "沿用 ADR 0002 的分层 Token 与共享组件治理决策，本次没有新的架构级取舍"
+    },
+    "readme": {
+      "status": "updated",
+      "reason": "README 的当前版本说明需要从“后续里程碑”改为已实现的主题与播放能力",
+      "paths": ["README.md"]
+    }
+  }
+}
