@@ -21,3 +21,4 @@
 | 2026-09-16 | [GitHub Pages 部署配置](2026-09-16-github-pages-deploy/spec.md) | main 验证后发布、CI 复用与部署操作说明；线上发布待执行 |
 | 2026-09-17 | [长期 UI/交互设计系统](2026-09-17-long-term-design-system/spec.md) | SDD 设计影响治理、双主题 Token/组件、1440 与 390 原型、开发交付与 A1–A12 验证 |
 | 2026-09-17 | [提交信息语言约定](2026-09-17-commit-message-language/change.json) | 提交信息使用中文；type(scope) 保留英文关键字 |
+| 2026-09-17 | [按设计基线实现前端](2026-09-17-ui-design-implementation/spec.md) | 三套主题运行时、照片与视频连续播放、页面结构与查看器对齐设计、状态与无障碍 |

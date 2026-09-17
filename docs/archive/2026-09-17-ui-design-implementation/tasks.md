@@ -41,7 +41,7 @@
 
 ## 收尾
 
-- [ ] 7.1 运行 `npm run check`、`npm run build`、`npm run test:e2e`。
-- [ ] 7.2 同步 requirements、architecture、module.md、README。
-- [ ] 7.3 写 `verification.md`，逐条记录 B1–B12 证据与未验证项。
-- [ ] 7.4 归档变更目录并更新索引。
+- [x] 7.1 运行 `npm run check`、`npm run build`、`npm run test:e2e`、`npm run verify:fixtures`。
+- [x] 7.2 同步 requirements、architecture、module.md、README。
+- [x] 7.3 写 `verification.md`，逐条记录 B1–B12 证据与未验证项。
+- [x] 7.4 归档变更目录并更新索引。
