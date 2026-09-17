@@ -2,19 +2,23 @@
 
 ## 目的
 
-运行时主题设计变量边界；当前仅实现默认主题。
+运行时主题设计变量与主题选择：把 Penpot 已确认的三套模式（Default、Beach、Grassland）映射为语义 CSS 自定义属性，并提供读取、切换与偏好持久化。
 
 ## 职责
 
-提供暖阳奶油默认主题的语义 CSS 自定义属性。未来主题实现负责把设计系统的 Semantic/Component Token 映射到运行时变量，并管理主题选择与偏好。
+- `tokens.css` 提供跨主题稳定的 Token（字体、间距、形状、高度、动效、布局、媒体查看器）与三套颜色模式。
+- `index.ts` 提供 `THEMES`、`isThemeName`、`readTheme`、`applyTheme`、`nextTheme`、`initTheme` 与主题标签。
+- 通过 `document.documentElement` 的 `data-theme` 切换模式，偏好写入 `localStorage` 的 `wangleyou.theme`。
 
 ## 非职责
 
-当前尚未实现的主题切换、偏好保存，以及任何业务 UI。Penpot Primitive 原始色不是本模块的业务公开接口。
+不承载任何业务 UI、路由或播放状态；不实现主题专属的业务组件；不保存除主题名以外的偏好。
 
 ## 公开接口
 
-index.ts 导入 tokens.css；公开契约为语义 CSS 自定义属性。业务组件不得引用 `beach.*`、`grassland.*` 等主题原始变量，也不得维护主题条件分支。
+- 变量契约：颜色 `--color-*`、字体 `--font-*`、间距 `--space-*`、形状 `--radius-*`、高度 `--shadow-*`、动效 `--motion-*`、媒体查看器 `--media-viewer-*`。
+- 函数契约：`applyTheme(name, root?, storage?)` 返回实际生效主题；`readTheme(storage?)` 缺省与非法值回退 `default`；`nextTheme(current)` 按 `THEMES` 顺序循环。
+- `THEME_LABELS` / `THEME_SHORT_LABELS` 供界面显示名称。
 
 ## 允许依赖
 
@@ -22,12 +26,16 @@ index.ts 导入 tokens.css；公开契约为语义 CSS 自定义属性。业务�
 
 ## 状态与资源生命周期
 
-静态样式，无运行时状态或本地存储。
+状态只有"当前主题名"一项，来源是 `localStorage`，由 `App` 在渲染前调用 `initTheme()` 应用。存储不可用（隐私模式或禁用）时静默降级为无持久化，不创建监听或计时器。
 
 ## 主要文件
 
-tokens.css 设计变量；index.ts 唯一入口。
+- `tokens.css`：三套模式与稳定 Token。
+- `index.ts`：主题读写与切换。
+- `theme.test.ts`：默认回退、非法值、持久化、存储异常与循环切换。
 
 ## 扩展与验证
 
-后续多主题扩展保持变量语义一致：先在 Penpot 为新模式映射全部 Semantic/Component Token，再实现 CSS 变量和偏好逻辑并更新本文。验证至少覆盖默认降级、页面/查看器/播放控件、对比度、键盘焦点、390px、1440px、横屏、安全区和 reduced-motion。当前描述不代表多主题运行时已经实现。
+新增主题：先在 Penpot 建立 mode 集合并映射全部语义 Token，再在 `tokens.css` 增加一个 `[data-theme='<name>']` 块并加入 `THEMES`，最后补一条 `theme.test.ts` 用例。变量名不得引入主题专属语义，业务组件不得出现主题条件分支。
+
+验证至少覆盖：默认与非法值回退、存储异常、切换后路由/媒体/播放上下文保持、1440 与 390 视口、对比度、焦点可见、reduced-motion。

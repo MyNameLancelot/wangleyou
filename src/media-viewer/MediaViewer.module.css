@@ -1,26 +1,26 @@
-.dialog { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; max-width: none; max-height: none; border: 0; padding: max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); margin: 0; background: var(--viewer); color: var(--viewer-text); }
+.dialog { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; max-width: none; max-height: none; border: 0; padding: max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); margin: 0; background: var(--color-media-overlay); color: var(--color-action-on-primary); }
 .dialog[open] { display: flex; flex-direction: column; }
-.dialog::backdrop { background: var(--viewer); }
+.dialog::backdrop { background: var(--color-media-overlay); }
 .header { display: flex; justify-content: space-between; align-items: center; min-height: 52px; flex-shrink: 0; position: relative; }
 .label { font: 14px var(--font-title); letter-spacing: 2px; }
-.counter { position: absolute; left: 50%; transform: translateX(-50%); font: 12px var(--font-caption); color: var(--viewer-muted); }
+.counter { position: absolute; left: 50%; transform: translateX(-50%); font: 12px var(--font-caption); color: var(--media-viewer-text-muted); }
 .actions { display: flex; gap: 8px; }
 .actions button { background: transparent; color: inherit; border: 1px solid #ffffff30; border-radius: 50%; width: 44px; height: 44px; font-size: 25px; line-height: 1; }
 .stage { display: flex; flex: 1; min-height: 0; position: relative; align-items: center; justify-content: center; padding: 18px 60px; touch-action: pan-y pinch-zoom; }
 .photoArea { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
 .fullPhoto { width: 100%; height: 100%; object-fit: contain; }
-.arrow { position: absolute; z-index: 1; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #ffffff50; background: var(--viewer); color: var(--viewer-text); font-size: 20px; }
+.arrow { position: absolute; z-index: 1; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #ffffff50; background: var(--color-media-overlay); color: var(--color-action-on-primary); font-size: 20px; }
 .arrow:disabled { opacity: .28; }
 .previous { left: 0; }
 .next { right: 0; }
 .footer { flex-shrink: 0; text-align: center; padding: 8px 0 16px; }
 .footer h2 { font: 400 18px var(--font-title); }
-.footer p { font: 11px var(--font-caption); margin-top: 8px; color: var(--viewer-muted); }
-.hint { display: block; font-size: 10px; color: var(--viewer-muted); margin-top: 12px; }
-.status { position: absolute; text-align: center; color: var(--viewer-muted); font-size: 14px; }
-.retry { border: 1px solid var(--viewer-muted); color: var(--viewer-text); border-radius: 5px; padding: 8px 20px; background: transparent; margin-top: 18px; }
-.dialog :focus-visible { outline-color: var(--viewer-text); }
+.footer p { font: 11px var(--font-caption); margin-top: 8px; color: var(--media-viewer-text-muted); }
+.hint { display: block; font-size: 10px; color: var(--media-viewer-text-muted); margin-top: 12px; }
+.status { position: absolute; text-align: center; color: var(--media-viewer-text-muted); font-size: 14px; }
+.retry { border: 1px solid var(--media-viewer-text-muted); color: var(--color-action-on-primary); border-radius: 5px; padding: 8px 20px; background: transparent; margin-top: 18px; }
+.dialog :focus-visible { outline-color: var(--color-action-on-primary); }
 @media (max-width: 600px) { .label { font-size: 12px; letter-spacing: 0; } .stage { padding: 15px 0 56px; } .arrow { top: auto; bottom: 0; } .previous { left: calc(50% - 62px); } .next { right: calc(50% - 62px); } .footer { padding-top: 19px; } .footer h2 { font-size: 16px; } .footer .hint { font-size: 0; } .footer .hint::after { content: '左右滑动切换照片'; font-size: 10px; } }
 
-.viewport { width: 100%; height: 100%; min-height: 0; display: flex; flex-direction: column; background: var(--viewer); color: var(--viewer-text); }
+.viewport { width: 100%; height: 100%; min-height: 0; display: flex; flex-direction: column; background: var(--color-media-overlay); color: var(--color-action-on-primary); }
 .viewport:fullscreen { padding: max(12px, env(safe-area-inset-top)) 18px max(12px, env(safe-area-inset-bottom)); }
