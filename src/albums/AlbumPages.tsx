@@ -178,7 +178,7 @@ export function AlbumPage({ album, albums, onOpen }: { album: Album; albums: Alb
       {first && <button type="button" className={styles.primary} onClick={() => onOpen(album, first.id)}><span aria-hidden="true">▶</span> 从这里播放</button>}
     </header>
     {album.media.length
-      ? <div className={styles.photoGrid}>{album.media.map((media, i) => <MediaTile key={media.id} album={album} media={media} onOpen={onOpen} variant="tall" eager={i < 3} />)}</div>
+      ? <div className={styles.photoGrid} data-testid="album-media-grid">{album.media.map((media, i) => <MediaTile key={media.id} album={album} media={media} onOpen={onOpen} variant="tall" eager={i < 3} />)}</div>
       : <div className={styles.empty}><span aria-hidden="true">☀</span><h2>下一段故事，还在路上</h2><p>这个相册暂时没有影像，先去看看其他回忆吧。</p><a className={styles.primary} href="#/">返回首页 <span aria-hidden="true">↗</span></a></div>}
     {next && next.media.length > 0 && <section className={styles.upNext} aria-labelledby="upnext-title">
       <div className={styles.sectionHeader}>
