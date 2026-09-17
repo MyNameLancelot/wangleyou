@@ -173,7 +173,13 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 每个实际模块包含 module.md。新增功能按“spec → plan → tasks → 实现 → 验证 → 同步架构 → 归档”推进。
 
+每个变更还需在 `change.json` 声明设计影响：`none` 表示没有用户可见变化；`sync` 表示完全复用既有组件与交互并在实现后核对；`update` 表示需要在实现前更新 Penpot。详细规则见 [SDD 维护指南](docs/sdd.md)。
+
+长期设计基线：[王乐悠家庭影像 - 双主题交互设计](https://design.penpot.app/#/workspace?team-id=d8ac01df-6646-81d2-8008-a54ac2a2360b&file-id=d8ac01df-6646-81d2-8008-a550140af9ad)。产品行为以 requirements 为准，Penpot 负责视觉、交互、组件状态和响应式契约。
+
 新增主题应沿用 `src/themes/tokens.css` 的语义变量；后续主题选择和偏好管理放在 themes，业务模块不维护独立主题分支。
+
+新增主题的设计顺序：建立获准使用的 Primitive 和装饰资产；为全部 Semantic/Component Token 增加主题模式映射；检查无装饰降级；验证首页、浏览、详情、图片/视频查看、错误恢复和主题切换；再实现运行时 CSS 变量。不得复制业务组件或把演示内容写死到 UI。设计系统长期决策见 [ADR 0002](docs/decisions/0002-design-system-governance.md)。
 
 未来 WebView 通过独立适配边界接入。当前无原生 SDK、桥接或离线缓存；移动模拟测试不能代表 iOS、Android 真机或套壳验证。全屏等功能按浏览器能力降级。
 

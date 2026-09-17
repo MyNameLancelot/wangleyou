@@ -1,0 +1,37 @@
+{
+  "mode": "light",
+  "summary": "约定 Git 提交信息使用中文",
+  "reason": "统一提交信息语言便于评审和回溯；只改文档与协作约定，不改变产品行为、接口和架构",
+  "designImpact": "none",
+  "designReason": "提交信息约定不产生任何用户可见的视觉或交互变化，不需要更新 Penpot",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "已核对 AGENTS.md 第 6 节与 docs/sdd.md 提交信息一节表述一致：type(scope) 保持英文，描述与正文用中文",
+    "npm run check:sdd -- --structure 通过",
+    "npm test -- scripts/sdd/check.test.ts scripts/sdd/git.test.ts 通过",
+    "本次只修改 AGENTS.md 与 docs/sdd.md，无 src、构建或运行时改动"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "不改变产品需求与验收行为"
+    },
+    "architecture": {
+      "status": "none",
+      "reason": "不改变系统结构、依赖方向和运行方式"
+    },
+    "modules": {
+      "status": "none",
+      "reason": "模块契约与接口不变"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "属于提交信息约定，未达到需要 ADR 的决策级别"
+    },
+    "readme": {
+      "status": "none",
+      "reason": "使用方法不变；约束写入 AGENTS.md，格式细则与审查项写入 docs/sdd.md"
+    }
+  }
+}
