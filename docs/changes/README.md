@@ -20,4 +20,4 @@
 
 ## 阅读与归档
 
-执行规则见 [AGENTS.md](../../AGENTS.md)，归档规则见 [archive/README.md](../archive/README.md)。目前无活动变更。最近完成：[长期 UI/交互设计系统](../archive/2026-09-17-long-term-design-system/spec.md)。最近完成部署配置：[GitHub Pages 部署配置](../archive/2026-09-16-github-pages-deploy/spec.md)。最近完成工程保障：[SDD 维护保障](../archive/2026-09-15-sdd-enforcement/spec.md)。最近完成：[工程初始化与相册浏览闭环](../archive/2026-09-15-foundation-album-browsing/spec.md)。
+执行规则见 [AGENTS.md](../../AGENTS.md)，归档规则见 [archive/README.md](../archive/README.md)。目前无活动变更。最近完成：[提交信息语言约定](../archive/2026-09-17-commit-message-language/change.json)。最近完成：[长期 UI/交互设计系统](../archive/2026-09-17-long-term-design-system/spec.md)。最近完成部署配置：[GitHub Pages 部署配置](../archive/2026-09-16-github-pages-deploy/spec.md)。最近完成工程保障：[SDD 维护保障](../archive/2026-09-15-sdd-enforcement/spec.md)。最近完成：[工程初始化与相册浏览闭环](../archive/2026-09-15-foundation-album-browsing/spec.md)。

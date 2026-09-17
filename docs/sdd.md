@@ -61,6 +61,31 @@ npm run check:sdd -- --structure
 
 暂不安装 hook，也不改变全局 Git 配置。如果以后启用仓库级 pre-commit，调用上述 --staged 命令即可；hook 可绕过，不作为最终保障。
 
+## 提交信息
+
+提交信息使用中文，便于评审和回溯；类型与作用域沿用 Conventional Commits 的英文关键字，保持工具链可解析。
+
+```
+<type>(<scope>): <中文描述>
+```
+
+- type：feat、fix、docs、style、refactor、perf、test、build、ci、chore、revert。
+- scope：受影响的模块或领域，例如 design-system、sdd、pages；范围不明确时可省略。
+- 描述：祈使句、中文、不超过 72 字符，说明改了什么，不逐条复述 diff。
+- 正文：按需补充原因、影响和验证结论；与行为和架构有关的提交必须与 change.json 的结论一致。
+
+示例：
+
+```
+feat(design-system): 新增双主题 Penpot 设计系统与设计治理
+
+在 SDD 中定义 designImpact 三级分类、校验与变更记录规则，并交付长期 Penpot 设计系统。
+验证：Token 对比度、组件逐态、桌面与移动端原型在预览中的实际点击。
+归档：docs/archive/2026-09-17-long-term-design-system。
+```
+
+提交信息只写给人读，不替代变更声明和文档：事实来源仍是规格、总架构、module.md 与归档记录。
+
 ## 审查清单
 
 - PR 全部变化是否被声明解释？full/light 分类、behavior/architecture 布尔值是否真实？
@@ -69,6 +94,7 @@ npm run check:sdd -- --structure
 - requirements、architecture、module.md 是否仍准确？none 理由是否成立？
 - 实现是否遵循公开入口、依赖方向和唯一状态/资源所有权？验证证据是否真实？
 - 任务状态是否真实？完成后基线同步、链接修复及归档索引是否完成？
+- 提交信息是否使用中文，并与 change.json 的范围和结论一致？
 - 如果修改检查脚本、CI 或本指南，是否削弱原约束？不得仅靠修改后的检查自证安全。
 
 依赖检查解析 TS/JS 的静态导入、导出与字面量动态导入/require，约束现有模块的无环依赖白名单和公开入口。CSS 引用、路径别名、非字面量动态导入不在自动解析范围，采用新的导入方式前扩展检查并审查。既有业务测试继续验证内容和播放状态；文档检查不能证明架构正确。
