@@ -19,3 +19,4 @@
 | 2026-09-15 | [相册浏览闭环](2026-09-15-foundation-album-browsing/spec.md) | React 工程、相册与大图、内容校验、浏览器验证 |
 | 2026-09-15 | [SDD 维护保障](2026-09-15-sdd-enforcement/spec.md) | 完整/轻量声明、Git 快照检查、模块依赖与 CI |
 | 2026-09-16 | [GitHub Pages 部署配置](2026-09-16-github-pages-deploy/spec.md) | main 验证后发布、CI 复用与部署操作说明；线上发布待执行 |
+| 2026-09-17 | [长期 UI/交互设计系统](2026-09-17-long-term-design-system/spec.md) | SDD 设计影响治理、双主题 Token/组件、1440 与 390 原型、开发交付与 A1–A12 验证 |

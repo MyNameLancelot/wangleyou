@@ -17,6 +17,9 @@ export function validateSnapshot(files: Map<string, string>, changed: string[]):
     if (!object(r)) { fail('声明必须是对象'); continue; }
     if (!['full', 'light'].includes(String(r.mode))) fail('mode 必须为 full 或 light');
     for (const key of ['summary', 'reason']) if (!text(r[key])) fail(`${key} 必须填写实际内容`);
+    if (!['none', 'sync', 'update'].includes(String(r.designImpact))) fail('designImpact 必须为 none、sync 或 update');
+    if (!text(r.designReason)) fail('designReason 必须填写实际内容');
+    if (r.designImpact === 'update' && r.mode !== 'full') fail('设计更新必须使用 full');
     for (const key of ['behavior', 'architecture']) if (typeof r[key] !== 'boolean') fail(`${key} 必须为布尔值`);
     if ((r.behavior === true || r.architecture === true) && r.mode !== 'full') fail('行为或架构变化必须使用 full');
     if (!Array.isArray(r.verification) || !r.verification.length || !r.verification.every(text)) fail('verification 必须列出验证证据');
