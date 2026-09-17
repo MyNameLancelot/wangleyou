@@ -26,7 +26,7 @@
 
 | 条目 | 状态 | 证据 |
 | --- | --- | --- |
-| B1 | 通过 | `src/themes/tokens.css` 定义海边沙滩/旷野草原/中性默认三套模式，`DEFAULT_THEME` 为海边沙滩；`applyTheme` 写入 `data-theme` 与 `localStorage: wangleyou.theme`，缺省与非法值回退海边。单测 `theme.test.ts` 6 条覆盖缺省、非法值、持久化、存储抛错与循环切换；端到端 `theme decoration stays decorative and switchable` 验证海边 → 草原 → 默认循环切换、刷新后保留，并断言草原主题下 hero 文案随之变化。 |
+| B1 | 通过 | `src/themes/tokens.css` 只交付两套主题：海边沙滩为 `:root` 默认外观，旷野草原由 `[data-theme='grassland']` 覆盖，不存在第三套中性主题；`applyTheme` 写入 `data-theme` 与 `localStorage: wangleyou.theme`，缺省与非法值回退海边。单测 `theme.test.ts` 6 条覆盖缺省、非法值、持久化、存储抛错与循环切换；端到端 `theme decoration stays decorative and switchable` 验证海边 ↔ 草原切换、刷新后保留，并断言草原主题下 hero 文案随之变化。 |
 | B2 | 通过 | 端到端 `theme switch keeps page, media and playback context`：查看器内切主题后序号仍为 2/3、路由仍为 `#/albums/summer-days`、关闭后主题保持。主题切换只调用 `applyTheme`，不触碰会话。 |
 | B3 | 通过 | `playback` 用一条队列承载照片与视频（`openSession(media,id)`）；单测覆盖混合队列推进、越界保持、`currentMedia`；端到端 `video plays…` 验证视频在第 4 项、向左切到第 3 项（照片，无进度条）。 |
 | B4 | 通过 | `handleEnded`：连续播放开启且有下一项时前进并继续播放，否则停在当前项并标记 `ended`；单测 2 条覆盖两种分支。控制栏连续播放开关为 `aria-pressed` 切换，端到端验证状态翻转。 |
@@ -64,7 +64,7 @@
 
 第一次交付与本仓库设计稿（`docs/design-assets/*-v2.png`）差距明显，复核后做了针对性修订，本记录同步更新：
 
-- 默认主题从"中性默认"改为**海边沙滩**（`DEFAULT_THEME`），切换顺序改为海边 → 草原 → 默认，`docs/requirements.md` §4.4 同步。
+- 默认外观为**海边沙滩**：`THEMES` 只保留海边与草原，中性默认主题被移除，`:root` 直接使用海边取值以便首屏就是默认主题；`docs/requirements.md` §4.4 同步。
 - 首页改为设计稿的**整幅环境插画 + 左侧内容卡**结构：眉标胶囊、主题标题与副标题、主次按钮、内容统计；文案作为主题语气 Slot（`THEME_COPY`），相册数据仍全部来自 content。
 - 影像卡片改为设计稿的**说明条内嵌在卡片底部**（深色条 + 白字），首页与浏览页为 16:7 宽卡、相册详情为 4:3 高卡，视频保留右上播放圆标与时长。
 - 影像浏览页改为 **hero 带 + 悬浮筛选胶囊 + 左侧"按时间定位"卡（年份与相册列表）**，小屏隐藏侧栏并回退为横向年份按钮。

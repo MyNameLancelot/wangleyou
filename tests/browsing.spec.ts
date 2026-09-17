@@ -235,8 +235,6 @@ test('theme decoration stays decorative and switchable', async ({page}) => {
   await expect(page.getByRole('heading',{level:1})).toContainText('把辽阔的日子');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:/切换主题/}).click();
-  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('default');
-  await page.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
   await page.reload();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');

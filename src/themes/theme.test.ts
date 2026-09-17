@@ -62,10 +62,9 @@ describe('主题运行时', () => {
   });
 
   it('按顺序循环切换三套主题', () => {
-    expect(THEMES).toEqual(['beach', 'grassland', 'default']);
+    expect(THEMES).toEqual(['beach', 'grassland']);
     expect(nextTheme('beach')).toBe('grassland');
-    expect(nextTheme('grassland')).toBe('default');
-    expect(nextTheme('default')).toBe('beach');
+    expect(nextTheme('grassland')).toBe('beach');
     expect(nextTheme('unknown')).toBe('grassland');
   });
 });
