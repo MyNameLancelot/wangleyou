@@ -23,3 +23,12 @@
 | video/weekend-clip.zh.vtt | 本项目编写 | 仅用于演示字幕说明，无对白 |
 
 视频封面复用 `thumbs/flowers.webp`（同一 Pexels 演示照片的派生缩略图）。演示视频没有对白，字幕用于说明画面内容与演示用途；替换真实家庭视频时同步更新本文件与字幕。
+
+## 主题背景插画
+
+| 发布文件 | 来源 | 说明 |
+| --- | --- | --- |
+| theme/beach-hero.webp | 本项目设计资产 `docs/design-assets/beach-environment-v1.png` | 内置图像生成工具产出的原创演示插画；运行时按 1920px 宽导出 WebP（约 108 KB） |
+| theme/grassland-hero.webp | 本项目设计资产 `docs/design-assets/grassland-environment-v1.png` | 同上（约 101 KB） |
+
+两张图均为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；替换为实拍素材时同步更新本文件与许可说明。

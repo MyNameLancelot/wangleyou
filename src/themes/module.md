@@ -6,8 +6,8 @@
 
 ## 职责
 
-- `tokens.css` 提供跨主题稳定的 Token（字体、间距、形状、高度、动效、布局、媒体查看器）与三套颜色模式。
-- `index.ts` 提供 `THEMES`、`isThemeName`、`readTheme`、`applyTheme`、`nextTheme`、`initTheme` 与主题标签。
+- `tokens.css` 提供跨主题稳定的 Token（字体、间距、形状、高度、动效、布局、媒体查看器）与三套颜色模式（海边沙滩、旷野草原、中性默认）。
+- `index.ts` 提供 `THEMES`、`DEFAULT_THEME`、`isThemeName`、`readTheme`、`applyTheme`、`nextTheme`、`initTheme`、主题标签、主题文案 Slot（`THEME_COPY`）与背景插画 Slot（`THEME_HERO_ASSETS`）。
 - 通过 `document.documentElement` 的 `data-theme` 切换模式，偏好写入 `localStorage` 的 `wangleyou.theme`。
 
 ## 非职责
@@ -17,8 +17,9 @@
 ## 公开接口
 
 - 变量契约：颜色 `--color-*`、字体 `--font-*`、间距 `--space-*`、形状 `--radius-*`、高度 `--shadow-*`、动效 `--motion-*`、媒体查看器 `--media-viewer-*`。
-- 函数契约：`applyTheme(name, root?, storage?)` 返回实际生效主题；`readTheme(storage?)` 缺省与非法值回退 `default`；`nextTheme(current)` 按 `THEMES` 顺序循环。
-- `THEME_LABELS` / `THEME_SHORT_LABELS` 供界面显示名称。
+- 函数契约：`applyTheme(name, root?, storage?)` 返回实际生效主题；`readTheme(storage?)` 缺省与非法值回退 `DEFAULT_THEME`（海边沙滩）；`nextTheme(current)` 按 `THEMES` 顺序（海边 → 草原 → 默认）循环。
+- `THEME_LABELS` / `THEME_SHORT_LABELS` 供界面显示名称；`THEME_COPY` 只提供主题语气文案（eyebrow、标题、副标题、脚注），相册数据仍全部来自 content。
+- `THEME_HERO_ASSETS` 指向 `public/media/theme/*-hero.webp`，由设计稿环境插画导出；中性默认主题不加载背景插画。
 
 ## 允许依赖
 

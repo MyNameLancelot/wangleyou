@@ -14,7 +14,7 @@ async function openFirst(page: Page) {
 test('homepage, album, original photo, keyboard and focus restoration', async ({page}) => {
   const errors:string[]=[]; page.on('pageerror',error=>errors.push(error.message));
   await page.goto('./');
-  await expect(page.getByRole('heading', {level:1})).toContainText('把日子过成');
+  await expect(page.getByRole('heading', {level:1})).toContainText('把有海风的日子');
   await page.getByRole('link',{name:'查看相册：把夏天装进口袋'}).click();
   await expect(page.getByRole('heading',{name:'把夏天装进口袋',level:1})).toBeVisible();
   const trigger=page.getByRole('button',{name:firstPhoto}); await trigger.click();
@@ -226,19 +226,18 @@ test('media skeletons resolve into real images', async ({page}) => {
 
 test('theme decoration stays decorative and switchable', async ({page}) => {
   await page.goto('./');
-  const decor = page.locator('[aria-hidden="true"]').filter({ has: page.locator('span') }).first();
+  const decor = page.getByTestId('theme-decor');
   await expect(decor).toHaveCount(1);
-  expect(await page.evaluate(()=>{
-    const layer = document.querySelector('[aria-hidden="true"]') as HTMLElement | null;
-    return layer ? getComputedStyle(layer).pointerEvents : 'none';
-  })).toBe('none');
-  await page.getByRole('button',{name:/切换主题/}).click();
+  expect(await decor.evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none');
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('grassland');
+  await expect(page.getByRole('heading',{level:1})).toContainText('把辽阔的日子');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('default');
+  await page.getByRole('button',{name:/切换主题/}).click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
   await page.reload();
-  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('default');
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
 });

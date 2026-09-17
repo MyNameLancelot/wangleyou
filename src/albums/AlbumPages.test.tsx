@@ -6,10 +6,11 @@ import { validateContent } from '../content';
 
 const onOpen = () => {};
 const site = { title: '测试相册', subtitle: '配置驱动' };
+const copy = { eyebrow: '潮汐带回的日子', title: '把有海风的日子，留在这里。', subtitle: '照片、视频与那些值得重看的片刻。' };
 
 it('renders a new single-photo album from config without changing UI', () => {
   const data = validateContent({ site, albums: [{ id: 'new-album', title: '新相册', media: [{ id: 'one', type: 'photo', src: 'media/one.jpg' }] }] });
-  expect(renderToStaticMarkup(<HomePage data={data} onOpen={onOpen} />)).toContain('#/albums/new-album');
+  expect(renderToStaticMarkup(<HomePage data={data} onOpen={onOpen} copy={copy} />)).toContain('#/albums/new-album');
   const html = renderToStaticMarkup(<AlbumPage album={data.albums[0]} albums={data.albums} onOpen={onOpen} />);
   expect(html).toContain('新相册');
   expect(html.match(/aria-label="查看照片：one"/g)).toHaveLength(1);
@@ -27,7 +28,7 @@ it('uses a later available thumbnail when first video has no preview', () => {
       ],
     }],
   });
-  const html = renderToStaticMarkup(<HomePage data={data} onOpen={onOpen} />);
+  const html = renderToStaticMarkup(<HomePage data={data} onOpen={onOpen} copy={copy} />);
   expect(html).toContain('alt="混合"');
   expect(html).toMatch(/src="[^"]*\/media\/thumbs\/one\.webp" alt="混合"/);
   expect(html).not.toContain('留给下一段故事');
@@ -74,7 +75,8 @@ it('相册详情提供面包屑、播放入口与相邻相册导航', () => {
   const html = renderToStaticMarkup(<AlbumPage album={data.albums[0]} albums={data.albums} onOpen={onOpen} />);
   expect(html).toContain('从这里播放');
   expect(html).toContain('href="#/browse"');
-  expect(html).toContain('aria-label="相邻相册"');
+  expect(html).toContain('接下来的影像');
+  expect(html).toContain('下一本相册');
   expect(html).toContain('#/albums/second');
   expect(html).not.toContain('上一本相册');
 });

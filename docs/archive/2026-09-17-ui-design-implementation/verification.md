@@ -26,7 +26,7 @@
 
 | 条目 | 状态 | 证据 |
 | --- | --- | --- |
-| B1 | 通过 | `src/themes/tokens.css` 定义 Default/Beach/Grassland 三套模式；`applyTheme` 写入 `data-theme` 与 `localStorage: wangleyou.theme`，非法值回退默认。单测 `theme.test.ts` 6 条覆盖缺省、非法值、持久化、存储抛错与循环切换；端到端 `theme decoration stays decorative and switchable` 验证三主题循环切换与刷新后保留。 |
+| B1 | 通过 | `src/themes/tokens.css` 定义海边沙滩/旷野草原/中性默认三套模式，`DEFAULT_THEME` 为海边沙滩；`applyTheme` 写入 `data-theme` 与 `localStorage: wangleyou.theme`，缺省与非法值回退海边。单测 `theme.test.ts` 6 条覆盖缺省、非法值、持久化、存储抛错与循环切换；端到端 `theme decoration stays decorative and switchable` 验证海边 → 草原 → 默认循环切换、刷新后保留，并断言草原主题下 hero 文案随之变化。 |
 | B2 | 通过 | 端到端 `theme switch keeps page, media and playback context`：查看器内切主题后序号仍为 2/3、路由仍为 `#/albums/summer-days`、关闭后主题保持。主题切换只调用 `applyTheme`，不触碰会话。 |
 | B3 | 通过 | `playback` 用一条队列承载照片与视频（`openSession(media,id)`）；单测覆盖混合队列推进、越界保持、`currentMedia`；端到端 `video plays…` 验证视频在第 4 项、向左切到第 3 项（照片，无进度条）。 |
 | B4 | 通过 | `handleEnded`：连续播放开启且有下一项时前进并继续播放，否则停在当前项并标记 `ended`；单测 2 条覆盖两种分支。控制栏连续播放开关为 `aria-pressed` 切换，端到端验证状态翻转。 |
@@ -59,3 +59,17 @@
 - 自动幻灯片、背景音乐未实现（本次非目标，需求基线保留）。
 - 视频演示素材为 CC0 短片，真实家庭视频的编码、体积与字幕流程需在内容维护时按 `SOURCES.md` 规则替换。
 - 横屏验证为 CSS 规则与 Playwright 视口模拟，未使用真实手机横屏拍摄验证。
+
+## 视觉对齐修订（2026-09-17，复核设计稿后）
+
+第一次交付与本仓库设计稿（`docs/design-assets/*-v2.png`）差距明显，复核后做了针对性修订，本记录同步更新：
+
+- 默认主题从"中性默认"改为**海边沙滩**（`DEFAULT_THEME`），切换顺序改为海边 → 草原 → 默认，`docs/requirements.md` §4.4 同步。
+- 首页改为设计稿的**整幅环境插画 + 左侧内容卡**结构：眉标胶囊、主题标题与副标题、主次按钮、内容统计；文案作为主题语气 Slot（`THEME_COPY`），相册数据仍全部来自 content。
+- 影像卡片改为设计稿的**说明条内嵌在卡片底部**（深色条 + 白字），首页与浏览页为 16:7 宽卡、相册详情为 4:3 高卡，视频保留右上播放圆标与时长。
+- 影像浏览页改为 **hero 带 + 悬浮筛选胶囊 + 左侧"按时间定位"卡（年份与相册列表）**，小屏隐藏侧栏并回退为横向年份按钮。
+- 相册详情改为设计稿的右对齐"从这里播放"主按钮，并把相邻相册区改为"接下来的影像 + 下一本相册 →"预告。
+- 页眉标识改为 `站点名 · FAMILY ARCHIVE`，主题切换器改为设计稿的"◐ 海边主题 ⌄"胶囊；页脚改为主题脚注 + "示例内容 · 非真实影像"。
+- 运行时背景插画由设计资产导出为 `public/media/theme/{beach,grassland}-hero.webp`（约 108 KB / 101 KB），来源与许可见 `public/media/SOURCES.md`。
+
+修订后复跑：`npm run check` 98 项单测通过、`npm run build` 通过、`npm run test:e2e` 29 passed / 3 skipped；桌面 1440 与移动 360 截图肉眼对照设计稿，hero、卡片说明条、浏览页侧栏与相册预告结构一致。

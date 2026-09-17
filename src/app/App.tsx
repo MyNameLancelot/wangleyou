@@ -18,8 +18,9 @@ import {
   writeLastPlayed,
 } from '../playback';
 import type { LastPlayed, Session } from '../playback';
-import { THEME_LABELS, THEME_SHORT_LABELS, applyTheme, nextTheme, readTheme } from '../themes';
+import { THEME_COPY, THEME_HERO_ASSETS, THEME_LABELS, applyTheme, nextTheme, readTheme } from '../themes';
 import type { ThemeName } from '../themes';
+import { assetUrl } from '../content';
 import '../themes';
 import { parseRoute } from './router';
 import { ThemeDecor } from './ThemeDecor';
@@ -108,6 +109,9 @@ export function App() {
 
   const resume = resolveLastPlayed(content.albums, lastPlayed);
   const firstMedia = content.albums.map(item => ({ album: item, media: item.media[0] })).find(entry => Boolean(entry.media));
+  const heroAsset = THEME_HERO_ASSETS[theme];
+  const heroImage = heroAsset ? assetUrl(heroAsset) : null;
+  const copy = THEME_COPY[theme];
 
   const main = (() => {
     if (contentErrorMessage) {
@@ -118,8 +122,8 @@ export function App() {
         <p className={styles.stateHint}>相册配置维护在仓库的 <code>src/content/albums.json</code>，修正后重新构建即可恢复。</p>
       </section>;
     }
-    if (route.kind === 'home') return <HomePage data={content} onOpen={open} resume={resume} onResume={resume ? () => open(resume.album, resume.media.id) : undefined} />;
-    if (route.kind === 'browse') return <BrowsePage data={content} onOpen={open} />;
+    if (route.kind === 'home') return <HomePage data={content} onOpen={open} copy={copy} heroImage={heroImage} resume={resume} onResume={resume ? () => open(resume.album, resume.media.id) : undefined} />;
+    if (route.kind === 'browse') return <BrowsePage data={content} onOpen={open} heroImage={heroImage} />;
     if (route.kind === 'albums') return <AlbumsPage data={content} />;
     if (route.kind === 'album' && album) return <AlbumPage key={album.id} album={album} albums={content.albums} onOpen={open} />;
     return <section className={styles.statePage}>
@@ -138,19 +142,20 @@ export function App() {
     <a className={styles.skip} href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>跳到主要内容</a>
     {!online && <p className={styles.offline} role="status">当前处于离线状态，已加载的内容仍可查看，媒体可能无法显示。</p>}
     <header className={styles.header}>
-      <a className={styles.brand} href="#/" aria-label={`${content.site.title}，返回首页`}><span className={styles.brandIcon} aria-hidden="true">◐</span><span>{content.site.title}<small>成长相册 · OUR LITTLE DAYS</small></span></a>
+      <a className={styles.brand} href="#/" aria-label={`${content.site.title}，返回首页`}><span className={styles.brandIcon} aria-hidden="true">◐</span><span>{content.site.title} · FAMILY ARCHIVE</span></a>
       <nav className={styles.nav} aria-label="主导航">
         {NAV.map(item => <a key={item.href} href={item.href} aria-current={route.kind === item.kind || (item.kind === 'albums' && route.kind === 'album') ? 'page' : undefined}>{item.label}</a>)}
       </nav>
       <button type="button" className={styles.themeSwitch} onClick={switchTheme} aria-label={`切换主题，当前是${THEME_LABELS[theme]}`}>
         <span aria-hidden="true">◐</span>
-        <span className={styles.themeLabel}>{THEME_SHORT_LABELS[theme]}</span>
+        <span className={styles.themeLabel}>{THEME_LABELS[theme]}</span>
+        <span className={styles.themeCaret} aria-hidden="true">⌄</span>
       </button>
     </header>
     <main id="main" tabIndex={-1} className={styles.main}>{main}</main>
     <footer className={styles.footer}>
-      <span className={styles.footerBrand}>{content.site.title}<small>愿每个平凡的日子，都有迹可循。</small></span>
-      <span className={styles.demo}>演示相册 · 照片与视频来自公开演示素材（Pexels / MDN CC0）<br />演示日期与故事不代表真实家庭记录</span>
+      <span className={styles.footerNote}>{copy.footNote}</span>
+      <span className={styles.demo}>示例内容 · 非真实影像 · 演示素材来自 Pexels / MDN CC0</span>
     </footer>
     {session && <MediaViewer session={session} commands={commands} themeLabel={THEME_LABELS[theme]} />}
   </div>;
