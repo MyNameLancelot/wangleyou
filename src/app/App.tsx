@@ -22,6 +22,7 @@ import { THEME_LABELS, THEME_SHORT_LABELS, applyTheme, nextTheme, readTheme } fr
 import type { ThemeName } from '../themes';
 import '../themes';
 import { parseRoute } from './router';
+import { ThemeDecor } from './ThemeDecor';
 import styles from './App.module.css';
 import './global.css';
 
@@ -133,6 +134,7 @@ export function App() {
   })();
 
   return <div className={styles.shell}>
+    <ThemeDecor />
     <a className={styles.skip} href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>跳到主要内容</a>
     {!online && <p className={styles.offline} role="status">当前处于离线状态，已加载的内容仍可查看，媒体可能无法显示。</p>}
     <header className={styles.header}>

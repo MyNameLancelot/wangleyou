@@ -223,3 +223,22 @@ test('media skeletons resolve into real images', async ({page}) => {
   const broken = await page.evaluate(() => Array.from(document.images).filter(img => img.complete && img.naturalWidth === 0).length);
   expect(broken).toBe(0);
 });
+
+test('theme decoration stays decorative and switchable', async ({page}) => {
+  await page.goto('./');
+  const decor = page.locator('[aria-hidden="true"]').filter({ has: page.locator('span') }).first();
+  await expect(decor).toHaveCount(1);
+  expect(await page.evaluate(()=>{
+    const layer = document.querySelector('[aria-hidden="true"]') as HTMLElement | null;
+    return layer ? getComputedStyle(layer).pointerEvents : 'none';
+  })).toBe('none');
+  await page.getByRole('button',{name:/切换主题/}).click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.getByRole('button',{name:/切换主题/}).click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('grassland');
+  await page.getByRole('button',{name:/切换主题/}).click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('default');
+  await page.reload();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('default');
+});

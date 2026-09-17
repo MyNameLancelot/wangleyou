@@ -36,8 +36,8 @@
 
 ## 阶段 6：装饰资产
 
-- [ ] 6.1 两套主题装饰层接入，可隐藏可裁切，不遮挡内容与控制。
-- [ ] 6.2 资源导出与命名说明同步到 `docs/design-assets/README.md`。
+- [x] 6.1 两套主题装饰层接入（纯 CSS 图形，`aria-hidden` + `pointer-events: none`），可隐藏、不遮挡内容与控制。
+- [x] 6.2 运行时实现方式与位图资产的取舍同步到 `docs/design-assets/README.md`。
 
 ## 收尾
 
