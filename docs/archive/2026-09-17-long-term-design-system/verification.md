@@ -74,3 +74,7 @@ Penpot：[王乐悠家庭影像 - 双主题交互设计](https://design.penpot.a
 - 移动横屏真实交互：以 `Responsive / Landscape Rules / 844x390` 说明媒体优先居中、控制栏安全区、44×44 触控、WebView inset 与 reduced-motion，未建立独立横屏原型，已在 Changelog 记为明确边界而非遗漏。
 - 逐画板像素级对比度测量：本轮以 Token 级对比度实测替代，画板装饰层未做逐像素测量。
 - 浏览器 provider 层的 `Unable to load browser request-header policy` 属工具链故障，已在记录中标注；不影响本变更的设计交付结论。
+
+## 归档后更正
+
+- 2026-09-17：`docs/design-assets/build-theme-screens.mjs` 在 CI 的 `npm run check` 中触发 eslint 报错（未使用的 `img` 参数、未声明的 `Buffer`），导致 PR #4 的 check 作业失败。已显式引入 `node:buffer` 并移除未使用参数，复跑 `npm run check` 通过（lint、typecheck、8 个测试文件 66 项）。此处只补记事实，不改写原验收结论。

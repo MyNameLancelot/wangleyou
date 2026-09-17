@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs'
+import { Buffer } from 'node:buffer'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
@@ -78,7 +79,7 @@ function browse(c, img) {
     ${txt(302,858,'键盘可用方向键在网格中移动焦点；滚动时年份导航保持可见。',13,c.muted)}
   `)
 }
-function detail(c, img) {
+function detail(c) {
   return screen(c, '相册详情', `
     ${nav(c)}${txt(56,119,'首页  /  全部影像  /  夏日片段',14,c.muted)}
     ${txt(56,182,'夏日片段',38,c.ink,700)}${txt(56,221,'2026.07 — 2026.08    ·    12 项影像    ·    演示相册',17,c.muted)}
@@ -148,7 +149,7 @@ function mobileViewer(c) {
 
 for (const [key, c] of Object.entries(configs)) {
   const img = `data:image/png;base64,${readFileSync(join(dir, c.file)).toString('base64')}`
-  const positions = [[80,80,home(c,img)],[1640,80,browse(c,img)],[80,1050,detail(c,img)],[1640,1050,viewer(c)]]
+  const positions = [[80,80,home(c,img)],[1640,80,browse(c,img)],[80,1050,detail(c)],[1640,1050,viewer(c)]]
   const full = `<svg xmlns="http://www.w3.org/2000/svg" width="3160" height="2030" viewBox="0 0 3160 2030" role="img" aria-label="${c.name}桌面端首页、浏览、相册详情和媒体查看器设计"><rect width="3160" height="2030" fill="#E9EFEC"/>${positions.map(([x,y,markup])=>`<g transform="translate(${x} ${y})">${markup}</g>`).join('')}${txt(80,42,`${c.name} · 桌面端核心页面 · 1440 × 900 · 演示内容`,18,c.ink,700)}</svg>`
   writeFileSync(join(dir, `${key}-screens-v2.svg`), full)
   writeFileSync(join(dir, `${key}-mobile-v2.svg`), mobile(c,img))
