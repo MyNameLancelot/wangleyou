@@ -180,3 +180,46 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   await expect(page.getByRole('button',{name:/播放视频/})).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+test('interactive targets are at least 44px and pages never scroll horizontally', async ({page}) => {
+  for (const route of ['#/','#/browse','#/albums','#/albums/little-weekend']) {
+    await page.goto(`./${route}`);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${route} 不应横向溢出`).toBe(true);
+  }
+  const tooSmall = await page.evaluate(() => {
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>('button, a[href], input[type="range"]'));
+    return nodes
+      .filter(node => node.offsetParent !== null && node.getBoundingClientRect().top >= 0)
+      .map(node => {
+        const rect = node.getBoundingClientRect();
+        return { label: (node.getAttribute('aria-label') || node.textContent || '').trim().slice(0, 24), w: Math.round(rect.width), h: Math.round(rect.height) };
+      })
+      .filter(item => item.h > 0 && (item.h < 44 || item.w < 44));
+  });
+  expect(tooSmall).toEqual([]);
+});
+
+test('reduced motion collapses durations and focus ring stays visible', async ({page}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  const duration = await page.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue('--motion-standard-duration').trim());
+  expect(duration).toBe('1ms');
+  await page.keyboard.press('Tab');
+  const outline = await page.evaluate(() => {
+    const element = document.activeElement as HTMLElement | null;
+    if (!element) return null;
+    const style = getComputedStyle(element);
+    return { width: parseFloat(style.outlineWidth), style: style.outlineStyle };
+  });
+  expect(outline).not.toBeNull();
+  expect(outline!.style).toBe('solid');
+  expect(outline!.width).toBeGreaterThanOrEqual(3);
+});
+
+test('media skeletons resolve into real images', async ({page}) => {
+  await page.goto('./#/browse');
+  const skeletons = page.getByTestId('media-skeleton');
+  await expect(skeletons).toHaveCount(0, { timeout: 10000 });
+  const broken = await page.evaluate(() => Array.from(document.images).filter(img => img.complete && img.naturalWidth === 0).length);
+  expect(broken).toBe(0);
+});

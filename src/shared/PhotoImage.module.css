@@ -1,3 +1,7 @@
-.frame { display: block; width: 100%; height: 100%; overflow: hidden; background: var(--color-background-subtle); }
+.frame { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; background: var(--color-background-subtle); }
 .frame img { width: 100%; height: 100%; object-fit: cover; }
-.error { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 100px; padding: 20px; color: var(--color-text-secondary); font-size: 13px; }
+.skeleton { position: absolute; inset: 0; background: linear-gradient(100deg, var(--color-background-subtle) 30%, var(--color-background-surface) 50%, var(--color-background-subtle) 70%); background-size: 220% 100%; animation: shimmer 1.4s linear infinite; }
+.error { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2xs); height: 100%; min-height: 100px; padding: var(--space-md); color: var(--color-text-secondary); font-size: 13px; text-align: center; }
+.error > span[aria-hidden] { color: var(--color-state-error); font-size: 18px; }
+@keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

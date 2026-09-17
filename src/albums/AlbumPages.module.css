@@ -81,7 +81,7 @@
 /* 相册详情 */
 .detail { padding: var(--space-lg) 0 var(--space-3xl); }
 .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); font-size: var(--font-size-small); color: var(--color-text-secondary); padding: var(--space-xs) 0; }
-.breadcrumb a { min-height: var(--target-min); display: inline-flex; align-items: center; color: var(--color-action-primary); }
+.breadcrumb a { min-height: var(--target-min); min-width: var(--target-min); display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; color: var(--color-action-primary); }
 .breadcrumb span[aria-current] { color: var(--color-text-primary); }
 .detailHeader { margin: var(--space-xl) 0 var(--space-xl); }
 .detailHeader h1 { font: 600 clamp(28px, 4vw, 44px)/1.5 var(--font-title); margin: 10px 0; }
