@@ -1,9 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlbumPage, AlbumsPage, BrowsePage, HomePage } from '../albums';
 import { content, contentErrorMessage } from '../content';
 import type { Album } from '../content';
 import { MediaViewer } from '../media-viewer';
-import { openSession, readLastPlayed, resolveLastPlayed, stepSession, writeLastPlayed } from '../playback';
+import type { ViewerCommands } from '../media-viewer';
+import {
+  handleEnded,
+  markPlaybackError,
+  openSession,
+  readLastPlayed,
+  resolveLastPlayed,
+  setContinuous,
+  setIntent,
+  setProgress,
+  setStatus,
+  stepSession,
+  writeLastPlayed,
+} from '../playback';
 import type { LastPlayed, Session } from '../playback';
 import { THEME_LABELS, THEME_SHORT_LABELS, applyTheme, nextTheme, readTheme } from '../themes';
 import type { ThemeName } from '../themes';
@@ -24,9 +37,11 @@ export function App() {
   const [theme, setTheme] = useState<ThemeName>(() => readTheme());
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   const [lastPlayed, setLastPlayed] = useState<LastPlayed | null>(() => readLastPlayed());
+  const sessionRef = useRef<Session | null>(null);
 
   useEffect(() => {
     const changeRoute = () => {
+      sessionRef.current = null;
       setSession(null);
       setRoute(parseRoute(window.location.hash));
       window.scrollTo(0, 0);
@@ -49,7 +64,11 @@ export function App() {
     document.title = `${prefix}${content.site.title} · 成长相册`;
   }, [album, session]);
 
-  const remember = useCallback((next: Session) => {
+  /** 会话由 App 唯一持有；这里同时维护 ref，避免在状态更新函数里产生副作用。 */
+  const applySession = useCallback((next: Session | null) => {
+    sessionRef.current = next;
+    setSession(next);
+    if (!next) return;
     const media = next.media[next.index];
     const owner = content.albums.find(item => item.media.some(entry => entry.id === media?.id));
     if (!owner || !media) return;
@@ -59,21 +78,32 @@ export function App() {
   }, []);
 
   const open = useCallback((target: Album, id: string) => {
-    const next = openSession(target.media, id);
-    setSession(next);
-    if (next) remember(next);
-  }, [remember]);
+    applySession(openSession(target.media, id));
+  }, [applySession]);
 
-  const step = useCallback((delta: number) => {
-    setSession(current => {
-      const next = stepSession(current, delta);
-      if (next && next !== current) remember(next);
-      return next;
-    });
-  }, [remember]);
-
-  const close = useCallback(() => setSession(null), []);
   const switchTheme = useCallback(() => setTheme(current => applyTheme(nextTheme(current))), []);
+
+  const commands = useMemo<ViewerCommands>(() => ({
+    step: delta => applySession(stepSession(sessionRef.current, delta)),
+    close: () => applySession(null),
+    toggleIntent: () => {
+      const current = sessionRef.current;
+      if (current) applySession(setIntent(current, current.intent === 'playing' ? 'paused' : 'playing'));
+    },
+    toggleContinuous: () => {
+      const current = sessionRef.current;
+      if (current) applySession(setContinuous(current, !current.continuous));
+    },
+    reportProgress: (progress, duration) => applySession(setProgress(sessionRef.current, progress, duration)),
+    reportStatus: status => applySession(setStatus(sessionRef.current, status)),
+    reportEnded: () => applySession(handleEnded(sessionRef.current)),
+    reportError: () => applySession(markPlaybackError(sessionRef.current)),
+    reportBlocked: () => {
+      const current = sessionRef.current;
+      if (current) applySession(setStatus(setIntent(current, 'paused'), 'paused'));
+    },
+    toggleTheme: switchTheme,
+  }), [applySession, switchTheme]);
 
   const resume = resolveLastPlayed(content.albums, lastPlayed);
   const firstMedia = content.albums.map(item => ({ album: item, media: item.media[0] })).find(entry => Boolean(entry.media));
@@ -84,7 +114,7 @@ export function App() {
         <span className={styles.stateIcon} aria-hidden="true">⚠</span>
         <h1>内容配置暂时无法读取</h1>
         <p>{contentErrorMessage}</p>
-        <p className={styles.stateHint}>相册配置需要维护在仓库的 <code>src/content/albums.json</code>，修正后重新构建即可恢复。</p>
+        <p className={styles.stateHint}>相册配置维护在仓库的 <code>src/content/albums.json</code>，修正后重新构建即可恢复。</p>
       </section>;
     }
     if (route.kind === 'home') return <HomePage data={content} onOpen={open} resume={resume} onResume={resume ? () => open(resume.album, resume.media.id) : undefined} />;
@@ -93,7 +123,7 @@ export function App() {
     if (route.kind === 'album' && album) return <AlbumPage key={album.id} album={album} albums={content.albums} onOpen={open} />;
     return <section className={styles.statePage}>
       <span className={styles.stateIcon} aria-hidden="true">☀</span>
-      <h1>这一页好像走丢了</h1>
+      <h1>没有找到这个相册</h1>
       <p>没有找到这个相册，链接可能已更改。</p>
       <p className={styles.stateActions}>
         <a className={styles.primaryAction} href="#/">回到首页</a>
@@ -120,6 +150,6 @@ export function App() {
       <span className={styles.footerBrand}>{content.site.title}<small>愿每个平凡的日子，都有迹可循。</small></span>
       <span className={styles.demo}>演示相册 · 照片与视频来自公开演示素材（Pexels / MDN CC0）<br />演示日期与故事不代表真实家庭记录</span>
     </footer>
-    {session && <MediaViewer session={session} onStep={step} onClose={close} />}
+    {session && <MediaViewer session={session} commands={commands} themeLabel={THEME_LABELS[theme]} />}
   </div>;
 }

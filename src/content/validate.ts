@@ -125,6 +125,7 @@ function validateMedia(input: unknown, location: string): Media {
   if (input.type === 'video') {
     assertOptionalAssetPath(input.thumbnail, `${location}.thumbnail`)
     assertOptionalAssetPath(input.poster, `${location}.poster`)
+    assertOptionalAssetPath(input.captions, `${location}.captions`)
     assertOptionalDuration(input.duration, `${location}.duration`)
     return input as unknown as Video
   }

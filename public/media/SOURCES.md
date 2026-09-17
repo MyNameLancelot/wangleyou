@@ -14,3 +14,12 @@
 | picnic.jpg | https://www.pexels.com/photo/102104/ | https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg |
 
 下载时使用 Pexels 图像服务压缩至宽度 1600px；thumbs 下的派生 WebP 由本项目脚本生成，最长边 640px，不放大。素材替换时同步更新来源信息。
+
+## 演示视频来源
+
+| 发布文件 | 来源 | 许可 |
+| --- | --- | --- |
+| video/weekend-clip.mp4 | https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4 | CC0（MDN 示例媒体） |
+| video/weekend-clip.zh.vtt | 本项目编写 | 仅用于演示字幕说明，无对白 |
+
+视频封面复用 `thumbs/flowers.webp`（同一 Pexels 演示照片的派生缩略图）。演示视频没有对白，字幕用于说明画面内容与演示用途；替换真实家庭视频时同步更新本文件与字幕。

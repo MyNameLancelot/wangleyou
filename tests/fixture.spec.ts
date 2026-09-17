@@ -8,11 +8,11 @@ test('configuration-only album addition opens a single-photo viewer',async({page
   const dialog=page.getByRole('dialog');
   await expect(dialog.getByRole('img')).toBeVisible();
   await expect(dialog).toContainText('1 / 1');
-  await expect(dialog.getByRole('button',{name:'上一张'})).toBeDisabled();
-  await expect(dialog.getByRole('button',{name:'下一张'})).toBeDisabled();
+  await expect(dialog.getByRole('button',{name:'上一项'})).toBeDisabled();
+  await expect(dialog.getByRole('button',{name:'下一项'})).toBeDisabled();
   await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowLeft');
   await expect(dialog).toContainText('1 / 1');
-  await page.getByRole('button',{name:'关闭照片查看器'}).click();
+  await page.getByRole('button',{name:'关闭查看器'}).click();
   await page.reload();
   await expect(page.getByRole('heading',{name:'配置新增的单张相册'})).toBeVisible();
 });

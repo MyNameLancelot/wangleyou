@@ -14,6 +14,7 @@ export async function validateFiles(configPath: string, publicDir: string) {
       refs.push({ path: media.src, location: `${location}.src` });
       if (media.thumbnail) refs.push({ path: media.thumbnail, location: `${location}.thumbnail` });
       if (media.type === 'video' && media.poster) refs.push({ path: media.poster, location: `${location}.poster` });
+      if (media.type === 'video' && media.captions) refs.push({ path: media.captions, location: `${location}.captions` });
     });
   });
   for (const ref of refs) {
