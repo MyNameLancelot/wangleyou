@@ -115,10 +115,10 @@
   .hero { min-height: 360px; padding-top: var(--space-2xl); padding-bottom: var(--space-2xl); }
 }
 @media (max-width: 600px) {
-  .hero { min-height: 0; padding: var(--space-lg) 21px var(--space-xl); background: var(--color-background-canvas); }
-  .heroMedia { position: relative; height: 190px; margin: 0 -21px var(--space-md); background-position: center 30%; }
-  .heroMedia::after { background: linear-gradient(180deg, transparent 40%, var(--color-background-canvas)); }
-  .heroCard { width: 100%; padding: var(--space-lg); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--color-background-surface); }
+  .hero { min-height: 370px; padding: var(--space-lg) 21px var(--space-xl); background: var(--color-background-canvas); }
+  .heroMedia { position: absolute; height: auto; margin: 0; background-position: center 30%; }
+  .heroMedia::after { background: linear-gradient(180deg, color-mix(in srgb, var(--color-background-canvas) 10%, transparent) 0%, color-mix(in srgb, var(--color-background-canvas) 32%, transparent) 42%, var(--color-background-canvas) 100%); }
+  .heroCard { width: 100%; padding: var(--space-lg); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: color-mix(in srgb, var(--color-background-surface) 92%, transparent); }
   .heroCard h1 { font-size: 28px; margin-top: var(--space-sm); }
   .heroActions { flex-direction: column; }
   .heroActions .primary, .heroActions .secondary { width: 100%; }

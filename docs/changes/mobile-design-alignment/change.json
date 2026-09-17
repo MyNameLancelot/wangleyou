@@ -1,0 +1,23 @@
+{
+  "mode": "light",
+  "summary": "恢复移动端页眉、底部导航和首页主题插画与已归档设计基线的一致性",
+  "reason": "本次审查发现 390px 下桌面导航被折为三行，且首页 hero 背景因 flex 布局收缩而不可见；归档设计已明确单行页眉、底部导航和插画叠加内容卡，属于恢复既有响应式契约。",
+  "designImpact": "sync",
+  "designReason": "完全复用 docs/design-assets 中已归档的移动端布局与现有主题、导航组件语义，不引入新页面、流程或交互语义。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "npm run check：通过（SDD 结构、内容校验、类型检查、lint、10 个测试文件共 98 项单测）",
+    "npm run build：通过（静态产物构建完成）",
+    "npm run test:e2e：通过（29 passed、3 skipped；跳过项为浏览器平台不支持的全屏场景）",
+    "npm run check:sdd -- --worktree --base main：通过（105 个差异路径）",
+    "Playwright Chromium 本地预览：390×844 首页、浏览页、相册详情均显示单行页眉和固定底部导航；首页主题插画可见，documentElement.scrollWidth 与 clientWidth 均为 390"
+  ],
+  "impacts": {
+    "requirements": {"status": "none", "reason": "恢复已确认的响应式视觉契约，产品行为不变"},
+    "architecture": {"status": "none", "reason": "不改变模块边界、状态归属或依赖"},
+    "modules": {"status": "none", "reason": "App 与 albums 的公开接口和职责不变"},
+    "decisions": {"status": "none", "reason": "不涉及新的长期技术或设计治理取舍"},
+    "readme": {"status": "none", "reason": "使用方式不变"}
+  }
+}

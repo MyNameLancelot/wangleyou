@@ -142,7 +142,7 @@ export function App() {
     <a className={styles.skip} href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>跳到主要内容</a>
     {!online && <p className={styles.offline} role="status">当前处于离线状态，已加载的内容仍可查看，媒体可能无法显示。</p>}
     <header className={styles.header}>
-      <a className={styles.brand} href="#/" aria-label={`${content.site.title}，返回首页`}><span className={styles.brandIcon} aria-hidden="true">◐</span><span>{content.site.title} · FAMILY ARCHIVE</span></a>
+      <a className={styles.brand} href="#/" aria-label={`${content.site.title}，返回首页`}><span className={styles.brandIcon} aria-hidden="true">◐</span><span className={styles.brandName}>{content.site.title} · FAMILY ARCHIVE</span><span className={styles.brandMobileName}>{content.site.title}</span></a>
       <nav className={styles.nav} aria-label="主导航">
         {NAV.map(item => <a key={item.href} href={item.href} aria-current={route.kind === item.kind || (item.kind === 'albums' && route.kind === 'album') ? 'page' : undefined}>{item.label}</a>)}
       </nav>
@@ -157,6 +157,9 @@ export function App() {
       <span className={styles.footerNote}>{copy.footNote}</span>
       <span className={styles.demo}>示例内容 · 非真实影像 · 演示素材来自 Pexels / MDN CC0</span>
     </footer>
+    <nav className={styles.mobileNav} aria-label="移动端主导航">
+      {NAV.map(item => <a key={item.href} href={item.href} aria-current={route.kind === item.kind || (item.kind === 'albums' && route.kind === 'album') ? 'page' : undefined}>{item.label}</a>)}
+    </nav>
     {session && <MediaViewer session={session} commands={commands} themeLabel={THEME_LABELS[theme]} />}
   </div>;
 }

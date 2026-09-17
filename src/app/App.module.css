@@ -2,6 +2,7 @@
 .header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); border-bottom: 1px solid var(--color-border-default); min-height: 84px; background: var(--color-background-canvas); }
 .brand { display: flex; align-items: center; gap: var(--space-sm); font-family: var(--font-title); font-size: 21px; font-weight: 600; letter-spacing: 2px; min-height: var(--target-min); white-space: nowrap; }
 .brandIcon { background: var(--color-background-subtle); color: var(--color-action-primary); border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; font-family: var(--font-body); font-size: 26px; letter-spacing: 0; }
+.brandMobileName { display: none; }
 .brand small { display: block; font: 9px/1.8 var(--font-body); letter-spacing: 1.7px; color: var(--color-text-secondary); }
 .nav { display: flex; align-items: center; gap: var(--space-lg); font-size: var(--font-size-small); }
 .nav a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--target-min); min-width: var(--target-min); padding: 0 var(--space-sm); border-bottom: 2px solid transparent; color: var(--color-text-secondary); }
@@ -17,6 +18,7 @@
 .footer { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding: var(--space-lg) 0 var(--space-xl); border-top: 1px solid var(--color-border-default); }
 .footerNote { font-family: var(--font-title); font-size: var(--font-size-small); color: var(--color-text-primary); }
 .demo { text-align: right; font-size: var(--font-size-caption); color: var(--color-text-secondary); line-height: 1.9; }
+.mobileNav { display: none; }
 .skip { position: fixed; z-index: 10; left: 15px; top: -100px; padding: 10px; background: var(--color-background-surface); }
 .skip:focus { top: 10px; }
 
@@ -39,15 +41,19 @@
 }
 @media (max-width: 600px) {
   .shell { padding: 0 21px; }
-  .header { min-height: 76px; gap: var(--space-xs); flex-wrap: wrap; padding-bottom: var(--space-xs); }
-  .brand { font-size: 21px; gap: 9px; }
-  .brandIcon { width: 38px; height: 38px; font-size: 22px; }
-  .brand { font-size: 17px; letter-spacing: 1px; }
-  .nav { order: 3; flex-basis: 100%; justify-content: space-between; gap: var(--space-xs); border-top: 1px solid var(--color-border-default); }
-  .nav a { font-size: 12px; }
-  .themeLabel { font-size: 11px; }
+  .header { min-height: 66px; gap: var(--space-xs); }
+  .brand { font-size: 18px; gap: 0; letter-spacing: 1px; }
+  .brandIcon { display: none; }
+  .brandName { display: none; }
+  .brandMobileName { display: inline; }
+  .nav { display: none; }
+  .themeSwitch { width: var(--target-min); padding: 0; justify-content: center; }
+  .themeLabel { display: none; }
   .themeCaret { display: none; }
   .offline { padding: 10px 21px; }
-  .footer { align-items: flex-start; flex-direction: column; padding-bottom: max(25px, env(safe-area-inset-bottom)); }
+  .footer { align-items: flex-start; flex-direction: column; padding-bottom: calc(max(25px, env(safe-area-inset-bottom)) + 60px); }
   .demo { text-align: left; }
+  .mobileNav { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(3, 1fr); min-height: calc(60px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid var(--color-border-default); background: color-mix(in srgb, var(--color-background-surface) 96%, transparent); box-shadow: 0 -6px 20px rgb(19 67 78 / 6%); }
+  .mobileNav a { display: inline-flex; align-items: center; justify-content: center; min-height: 60px; padding: 0 var(--space-xs); color: var(--color-text-secondary); font-size: var(--font-size-small); }
+  .mobileNav a[aria-current] { color: var(--color-action-primary); font-weight: 600; }
 }
