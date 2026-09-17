@@ -19,7 +19,8 @@ export function MediaViewer({ session, onStep, onClose }: { session: NonNullable
   const mounted = useRef(false);
   const touchStart = useRef<{x:number;y:number} | null>(null);
   const [fullscreenNotice, setFullscreenNotice] = useState('');
-  const photo = session.photos[session.index];
+  const media = session.media[session.index];
+  const photo: Photo | null = media?.type === 'photo' ? media : null;
   useEffect(() => {
     mounted.current = true;
     const element = dialog.current!;
@@ -39,7 +40,7 @@ export function MediaViewer({ session, onStep, onClose }: { session: NonNullable
     };
   }, []);
   useEffect(() => {
-    const next = session.photos[session.index + 1];
+    const next = session.media[session.index + 1];
     if (!next) return;
     const image = new Image(); image.src = assetUrl(next.src);
     return () => { image.src = ''; };
@@ -58,7 +59,7 @@ export function MediaViewer({ session, onStep, onClose }: { session: NonNullable
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); onStep(event.key === 'ArrowRight' ? 1 : -1); }
   }}>
     <div ref={fullscreenTarget} className={styles.viewport}>
-    <header className={styles.header}><span className={styles.label}>收藏的这一刻</span><span className={styles.counter} aria-live="polite">{session.index + 1} / {session.photos.length}</span><div className={styles.actions}>{document.fullscreenEnabled && <button aria-label="全屏查看" onClick={() => {
+    <header className={styles.header}><span className={styles.label}>收藏的这一刻</span><span className={styles.counter} aria-live="polite">{session.index + 1} / {session.media.length}</span><div className={styles.actions}>{document.fullscreenEnabled && <button aria-label="全屏查看" onClick={() => {
       const target = fullscreenTarget.current;
       if (!target) return;
       const request = document.fullscreenElement === target ? document.exitFullscreen() : target.requestFullscreen();
@@ -75,10 +76,10 @@ export function MediaViewer({ session, onStep, onClose }: { session: NonNullable
       if(Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.5) onStep(dx<0?1:-1);
     }}>
       <button className={`${styles.arrow} ${styles.previous}`} onClick={() => onStep(-1)} disabled={session.index === 0} aria-label="上一张">←</button>
-      <FullPhoto key={`${photo.id}-${photo.src}`} photo={photo} />
-      <button className={`${styles.arrow} ${styles.next}`} onClick={() => onStep(1)} disabled={session.index === session.photos.length - 1} aria-label="下一张">→</button>
+      {photo && <FullPhoto key={`${photo.id}-${photo.src}`} photo={photo} />}
+      <button className={`${styles.arrow} ${styles.next}`} onClick={() => onStep(1)} disabled={session.index === session.media.length - 1} aria-label="下一张">→</button>
     </div>
-    <footer className={styles.footer}><h2>{photo.description || '生活里的一个瞬间'}</h2><p>{photo.date?.replaceAll('-', '.')}</p><span className={styles.hint}>左右切换 · Esc 关闭</span>{fullscreenNotice && <p role="status">{fullscreenNotice}</p>}</footer>
+    <footer className={styles.footer}><h2>{photo?.description || '生活里的一个瞬间'}</h2><p>{photo?.date?.replaceAll('-', '.')}</p><span className={styles.hint}>左右切换 · Esc 关闭</span>{fullscreenNotice && <p role="status">{fullscreenNotice}</p>}</footer>
     </div>
   </dialog>;
 }

@@ -12,7 +12,7 @@ import './global.css';
 
 export function App() {
   const [route, setRoute] = useState(() => parseRoute(window.location.hash));
-  const [session, setSession] = useState<Session>(null);
+  const [session, setSession] = useState<Session | null>(null);
   useEffect(() => {
     const changeRoute = () => { setSession(null); setRoute(parseRoute(window.location.hash)); window.scrollTo(0,0); };
     window.addEventListener('hashchange',changeRoute);
