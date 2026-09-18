@@ -3,6 +3,8 @@ import { parseRoute } from './router';
 it('parses home and album routes', () => {
   expect(parseRoute('')).toEqual({ kind: 'home' });
   expect(parseRoute('#/')).toEqual({ kind: 'home' });
+  expect(parseRoute('#/browse')).toEqual({ kind: 'browse' });
+  expect(parseRoute('#/albums')).toEqual({ kind: 'albums' });
   expect(parseRoute('#/albums/summer')).toEqual({ kind: 'album', id: 'summer' });
 });
 it('rejects malformed and unknown routes without throwing', () => {

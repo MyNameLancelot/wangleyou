@@ -15,6 +15,8 @@
   "mode": "light",
   "summary": "将展示姓名修正为王乐悠",
   "reason": "只更正文案，不改变交互、接口和架构",
+  "designImpact": "sync",
+  "designReason": "沿用既有排版和组件，仅需实现后核对展示结果",
   "behavior": false,
   "architecture": false,
   "verification": ["已核对展示文案和需求中的姓名一致"],
@@ -27,6 +29,14 @@
   }
 }
 ```
+
+`designImpact` 与 `designReason` 必填：
+
+- `none`：没有用户可见的视觉或交互变化，例如内部重构、构建维护或无 UI 影响的配置调整。写明具体理由，不操作 Penpot。
+- `sync`：用户可见结果变化，但完全沿用已确认的组件、Token、模式和交互语义。实现后对照 Penpot 验证视觉、响应式和可访问性。
+- `update`：新增或改变页面、流程、交互语义、组件语义、主题、重要响应式、空状态或错误恢复。必须使用 full，实施前更新 Penpot，并在计划中记录文件、页面、组件和原型入口。
+
+纯文案修正如果不改变层级、布局和操作含义可为 `sync`；引发布局或含义变化时为 `update`。历史归档不追溯补写，进入当前差异的声明按最新规则校验。
 
 字段必填；verification 填实际执行和结果，不能提前声称通过。`updated.paths` 是仓库根目录相对路径，必须出现在整个差异中；文档删除也可声明，但理由须解释替代位置。不适用项写具体原因，不要求每次都修改总架构。文件引用检查覆盖变更 Markdown 及被删除/移动目标的已有引用；仅验证内联相对链接目标存在，不验证标题锚点、引用式链接或外网链接。
 
@@ -51,13 +61,40 @@ npm run check:sdd -- --structure
 
 暂不安装 hook，也不改变全局 Git 配置。如果以后启用仓库级 pre-commit，调用上述 --staged 命令即可；hook 可绕过，不作为最终保障。
 
+## 提交信息
+
+提交信息使用中文，便于评审和回溯；类型与作用域沿用 Conventional Commits 的英文关键字，保持工具链可解析。
+
+```
+<type>(<scope>): <中文描述>
+```
+
+- type：feat、fix、docs、style、refactor、perf、test、build、ci、chore、revert。
+- scope：受影响的模块或领域，例如 design-system、sdd、pages；范围不明确时可省略。
+- 描述：祈使句、中文、不超过 72 字符，说明改了什么，不逐条复述 diff。
+- 正文：按需补充原因、影响和验证结论；与行为和架构有关的提交必须与 change.json 的结论一致。
+
+示例：
+
+```
+feat(design-system): 新增双主题 Penpot 设计系统与设计治理
+
+在 SDD 中定义 designImpact 三级分类、校验与变更记录规则，并交付长期 Penpot 设计系统。
+验证：Token 对比度、组件逐态、桌面与移动端原型在预览中的实际点击。
+归档：docs/archive/2026-09-17-long-term-design-system。
+```
+
+提交信息只写给人读，不替代变更声明和文档：事实来源仍是规格、总架构、module.md 与归档记录。
+
 ## 审查清单
 
 - PR 全部变化是否被声明解释？full/light 分类、behavior/architecture 布尔值是否真实？
+- `designImpact` 是否与用户可见影响一致？`sync` 是否确实复用既有契约，`update` 是否在实施前更新 Penpot？
 - 规格是否对应实际触发条件、异常行为和验收结果？恢复既有行为的 bug 是否说明原规格与回归验证？
 - requirements、architecture、module.md 是否仍准确？none 理由是否成立？
 - 实现是否遵循公开入口、依赖方向和唯一状态/资源所有权？验证证据是否真实？
 - 任务状态是否真实？完成后基线同步、链接修复及归档索引是否完成？
+- 提交信息是否使用中文，并与 change.json 的范围和结论一致？
 - 如果修改检查脚本、CI 或本指南，是否削弱原约束？不得仅靠修改后的检查自证安全。
 
 依赖检查解析 TS/JS 的静态导入、导出与字面量动态导入/require，约束现有模块的无环依赖白名单和公开入口。CSS 引用、路径别名、非字面量动态导入不在自动解析范围，采用新的导入方式前扩展检查并审查。既有业务测试继续验证内容和播放状态；文档检查不能证明架构正确。
@@ -84,3 +121,5 @@ check.yml 同时供 deploy.yml 通过 workflow_call 复用；部署只在 main �
 1. 新增自动播放：full，先定义播放/暂停/后台行为，更新 playback 的 module.md 与必要基线，测试后填写 verification 并归档。
 2. 修复最后一张照片越界：如果已有规格明确末张行为，用 light，reason 引用该规格，增加有意义的回归验证；若改变循环策略则 full。
 3. 姓名修正：light，按上面 JSON 同步实际受影响文案和需求；已有历史记录采用有日期的更正，不改写历史结论。
+
+上述示例还需声明设计影响：自动播放通常为 `update`；恢复既有末张行为通常为 `sync`；不影响布局的姓名修正为 `sync`，如果文本长度改变布局则为 `update`。

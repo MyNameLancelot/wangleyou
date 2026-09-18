@@ -85,6 +85,16 @@
           "alt": "日常生活中的静物",
           "width": 1600,
           "height": 1600
+        },
+        {
+          "id": "weekend-clip",
+          "type": "video",
+          "src": "media/video/weekend-clip.mp4",
+          "poster": "media/thumbs/flowers.webp",
+          "captions": "media/video/weekend-clip.zh.vtt",
+          "date": "2026-05-26",
+          "description": "周末的一小段",
+          "alt": "演示视频封面：盛开的花朵"
         }
       ]
     },

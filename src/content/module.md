@@ -22,12 +22,13 @@
 
 其他模块只通过 `index.ts` 引用本模块；该公开入口由应用装配工作统一维护。
 
-- `Photo`、`Video`、`Media`、`Album`、`SiteContent`：静态内容模型；照片和视频都可提供列表缩略图，视频还可提供播放海报。
+- `Photo`、`Video`、`Media`、`Album`、`SiteContent`：静态内容模型；照片和视频都可提供列表缩略图，视频还可提供播放海报与说明字幕（`captions`，WebVTT）。
 - `validateContent(input: unknown): SiteContent`：接收未受信任的配置值；成功时返回同一份已校验数据，失败时抛出包含字段位置的 `Error`。
 - `sortAlbums(albums: Album[]): Album[]`：返回新的相册数组及新的媒体数组，不改变输入数组；对象字段保持原值。
 - `assertAssetPath(path: unknown, location: string): asserts path is string`：验证发布目录内的相对资源路径，并用 `location` 定位错误。
 - `assetUrl(path: string, base?: string): string`：由公开入口关联的资源 URL 模块提供，解析静态站点基础路径。
 - `content`：由公开入口导出的已校验静态 JSON 配置。
+- `contentErrorMessage`：校验失败时的可读原因；此时 `content` 是安全的空内容，界面展示配置异常而不是白屏。构建期 `npm run validate:content` 仍然直接失败，不允许带病发布。
 
 资源路径允许普通发布相对路径；禁止协议、绝对路径、反斜杠、查询、片段、空目录段、当前或上级目录段。校验对百分号编码递归解码，编码后的越界形式同样被拒绝。
 
@@ -49,6 +50,6 @@
 
 ## 扩展与验证方法
 
-新增字段时先更新模型和规格，再补充字段类型、边界及错误位置测试。新增媒体类型需同时明确列表展示、查看器行为和构建期文件检查，不能只扩充联合类型。
+新增字段时先更新模型和规格，再补充字段类型、边界及错误位置测试。新增媒体类型需同时明确列表展示、查看器行为和构建期文件检查，不能只扩充联合类型。视频新增字幕字段时同步把资源纳入 `scripts/validate-content.ts` 的存在性检查。
 
 运行 `npm test -- --run src/content/content.test.ts` 验证内容规则；完整构建期资源存在性由 `npm run validate:content` 验证。

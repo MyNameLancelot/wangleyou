@@ -1,0 +1,73 @@
+.decor { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.shape { position: absolute; display: none; }
+
+/* 海边沙滩：潮汐曲线与贝壳、足迹感的圆点 */
+[data-theme='beach'] .wave {
+  display: block;
+  left: -6%;
+  bottom: 6%;
+  width: 48%;
+  height: 74px;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: var(--color-background-subtle);
+  opacity: 0.45;
+}
+[data-theme='beach'] .dotA {
+  display: block;
+  right: 8%;
+  top: 16%;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--color-action-accent);
+  opacity: 0.16;
+}
+[data-theme='beach'] .dotB {
+  display: block;
+  right: 16%;
+  top: 24%;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-action-accent);
+  opacity: 0.12;
+}
+
+/* 旷野草原：远山层次与野花点 */
+[data-theme='grassland'] .hill {
+  display: block;
+  left: -8%;
+  bottom: 4%;
+  width: 58%;
+  height: 104px;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: var(--color-background-subtle);
+  opacity: 0.42;
+}
+[data-theme='grassland'] .dotA {
+  display: block;
+  right: 10%;
+  top: 18%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-action-accent);
+  opacity: 0.5;
+}
+[data-theme='grassland'] .dotB {
+  display: block;
+  right: 16%;
+  top: 26%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-action-accent);
+  opacity: 0.4;
+}
+
+/* 小屏降低存在感，任何情况下都不覆盖内容与控制 */
+@media (max-width: 600px) {
+  [data-theme='beach'] .wave { opacity: 0.35; }
+  [data-theme='grassland'] .hill { opacity: 0.3; }
+  [data-theme='beach'] .dotA, [data-theme='grassland'] .dotA { opacity: 0.12; }
+}
