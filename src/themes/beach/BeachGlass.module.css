@@ -1,0 +1,2 @@
+.surface { display: block; border: 0; border-radius: 2rem; color: #073d51; }
+@supports not (backdrop-filter: blur(1px)) { .surface { background: rgb(241 252 253 / .94); } }

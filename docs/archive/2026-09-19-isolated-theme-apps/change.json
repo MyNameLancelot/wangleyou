@@ -1,0 +1,20 @@
+{
+  "mode": "full",
+  "summary": "将全站重构为海边与草原两个独立主题应用，并采用轻量液态玻璃库",
+  "reason": "用户确认主题隔离适用于首页及所有后续页面：主题不得共享 UI、CSS 或资产，只共享无 UI 的交互契约；海边首屏改用现有轻量库实现液态玻璃。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "已通过：npm run check:sdd -- --worktree --base origin/main",
+    "已通过：npm run check（SDD 结构、内容校验、TypeScript、ESLint、Vitest）",
+    "已通过：npm run build",
+    "已通过：npm run test:e2e（desktop/mobile 双主题路由、查看器、指定视口和玻璃回退路径；设备条件跳过项如实记录）"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "主题隔离和依赖优先级成为产品约束。", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "updated", "reason": "主题从共享组件换肤改为独立 UI 应用。", "paths": ["docs/architecture.md"]},
+    "modules": {"status": "updated", "reason": "themes 与 albums 的职责和依赖边界将调整。", "paths": ["src/themes/module.md", "src/albums/module.md", "src/app/module.md"]},
+    "decisions": {"status": "updated", "reason": "记录主题 UI 隔离与液态玻璃依赖的长期取舍。", "paths": ["docs/decisions/0004-isolated-theme-apps.md"]},
+    "readme": {"status": "updated", "reason": "新增主题的维护方式将改为创建独立主题应用。", "paths": ["README.md"]}
+  }
+}

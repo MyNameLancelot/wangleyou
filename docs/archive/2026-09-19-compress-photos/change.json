@@ -1,0 +1,40 @@
+{
+  "mode": "light",
+  "summary": "新增离线发布图片压缩命令 npm run compress:photos：长边封顶、统一 JPEG、填白透明背景、剥离元数据，并为 HEIC 实现外部解码降级链",
+  "reason": "站点的演示与真实照片需要先压成适合网页发布的规格。工具是独立离线脚本，与站点运行时解耦，不改变页面行为、验收标准或系统结构，属于无产品和架构语义变化的维护调整",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "npx vitest run scripts/compress-photos.test.ts：19 项通过，覆盖递归结构与子目录保留、超过 4096 长边缩到上限并保持比例、小图不放大、EXIF Orientation 6/8 摆正像素方向、动图 GIF 只取首帧、透明 PNG 输出 JPEG 填白、默认剥离元数据与 --keep-exif 保留、同目录同名冲突消歧与改名报告、非图片与隐藏文件和目录的跳过计数、损坏文件隔离与退出码 1、--dry-run 不写任何文件、输入目录不存在与非法参数和输出位于输入目录内（含 symlink 归一化）时退出码 2、重跑覆盖且保留无关文件、源目录哈希与 mtime 不变、sharp 直接解码 HEIC 的成功汇总、无解码器时 HEIC 计入失败并给出建议、HEIC 外部解码与临时文件清理、--heic-via none 跳过、体积变大清单",
+    "2026-09-18 复验：npm run check 全绿（SDD 结构检查、内容校验 3 个相册 6 个媒体、typecheck、lint、vitest 9 个文件 81 项）；npm run build 通过。运行环境为 macOS 26.5.2 / Node 26.8.2 / sharp 0.35.4",
+    "2026-09-18 复验：npm run check:sdd -- --worktree --base origin/main 通过",
+    "验收夹具实测（macOS 26.5.2 / Node 24.18.0 / sharp 0.35.4，npm run compress:photos -- /tmp/wl-accept --max-edge 3840 --out /tmp/wl-accept-out）：多层子目录结构一致；输出全部为 JPEG 且长边不超过 3840（5000×4000 → 3840×3072，比例 1.25）；600×900 与 1200×800 未被放大；竖拍 Orientation 6/8 输出 40×60 且上下半区颜色与摆正方向一致；输出 exif 为空且二进制不含源 EXIF 标识；源目录 8 个文件处理前后 sha256 与 mtime 完全一致；汇总含成功 5/跳过 5/失败 1、体积节省 68.7%、体积变大与失败清单",
+    "HEIC 降级链实测：用 sips 生成真实 .heic 后，命令经 sips 转临时 JPEG 并输出 320×200 JPEG，退出码 0，报告解码器为 /usr/bin/sips，系统临时目录无残留；注入空解码器探测时同一文件计入失败并提示安装 libheif 或改用 macOS",
+    "未验证范围：非 macOS 环境的外部 HEIC 解码命令（heif-convert、magick）未在真实安装环境下执行，仅通过注入替身验证调用参数、探测顺序与临时文件清理"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "命令仅服务维护者的本地离线预处理，产品功能、验收基线与运行时内容规则不变"
+    },
+    "architecture": {
+      "status": "none",
+      "reason": "脚本与站点运行时解耦，src 模块边界、依赖方向、状态与资源生命周期均未改变；总架构文档中的模块职责仍然准确"
+    },
+    "modules": {
+      "status": "none",
+      "reason": "沿用 scripts/thumbnails.ts、scripts/validate-content.ts 等既有脚本形态，不新增模块目录与模块契约；src 模块公开接口不变"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "复用已确定的 Node 24 + tsx 与既有 sharp 依赖，不新增 npm 依赖，没有新的长期技术选型"
+    },
+    "readme": {
+      "status": "updated",
+      "reason": "命令表新增 compress:photos，并在添加照片或相册章节说明默认长边上限、默认质量、透明背景与 GIF 首帧、输出目录命名与边界、HEIC 解码报告与重跑覆盖行为",
+      "paths": [
+        "README.md"
+      ]
+    }
+  }
+}

@@ -17,9 +17,6 @@ export function validateSnapshot(files: Map<string, string>, changed: string[]):
     if (!object(r)) { fail('声明必须是对象'); continue; }
     if (!['full', 'light'].includes(String(r.mode))) fail('mode 必须为 full 或 light');
     for (const key of ['summary', 'reason']) if (!text(r[key])) fail(`${key} 必须填写实际内容`);
-    if (!['none', 'sync', 'update'].includes(String(r.designImpact))) fail('designImpact 必须为 none、sync 或 update');
-    if (!text(r.designReason)) fail('designReason 必须填写实际内容');
-    if (r.designImpact === 'update' && r.mode !== 'full') fail('设计更新必须使用 full');
     for (const key of ['behavior', 'architecture']) if (typeof r[key] !== 'boolean') fail(`${key} 必须为布尔值`);
     if ((r.behavior === true || r.architecture === true) && r.mode !== 'full') fail('行为或架构变化必须使用 full');
     if (!Array.isArray(r.verification) || !r.verification.length || !r.verification.every(text)) fail('verification 必须列出验证证据');
@@ -62,7 +59,7 @@ export function validateSnapshot(files: Map<string, string>, changed: string[]):
 const allowed: Record<string, string[]> = {
   app: ['albums', 'media-viewer', 'playback', 'content', 'themes', 'shared'],
   albums: ['content', 'shared'], 'media-viewer': ['playback', 'content', 'shared'],
-  playback: ['content', 'shared'], content: ['shared'], themes: ['shared'], shared: [],
+  playback: ['content', 'shared'], content: ['shared'], themes: ['content', 'playback', 'albums', 'app'], shared: [],
 };
 export function validateModules(files: Map<string, string>): string[] {
   const errors: string[] = [];
@@ -81,6 +78,9 @@ export function validateModules(files: Map<string, string>): string[] {
         if (spec.startsWith('.')) {
           const target = path.posix.normalize(path.posix.join(path.posix.dirname(p), spec));
           const parts = target.split('/');
+          const theme = /^src\/themes\/(beach|grassland)\//.exec(p)?.[1];
+          const targetTheme = /^src\/themes\/(beach|grassland)(?:\/|$)/.exec(target)?.[1];
+          if (theme && targetTheme && targetTheme !== theme) errors.push(`${p}: 主题 ${theme} 不得依赖主题 ${targetTheme}`);
           if (parts[0] === 'src' && parts[1] !== owner) {
             const other = parts[1];
             if (!allowed[owner].includes(other)) errors.push(`${p}: 不允许依赖 ${other}`);

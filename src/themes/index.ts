@@ -1,48 +1,15 @@
-import './tokens.css';
+export type { ThemeApp, ThemeAppProps, ThemeViewerCommands } from './contracts';
+export { BeachApp } from './beach';
+export { GrasslandApp } from './grassland';
 
 /** 产品只交付两套主题；数组顺序就是切换顺序。 */
 export const THEMES = ['beach', 'grassland'] as const;
 export type ThemeName = (typeof THEMES)[number];
 
-/** 设计基线把海边沙滩作为站点默认外观。 */
+/** 海边沙滩是站点默认外观。 */
 export const DEFAULT_THEME: ThemeName = 'beach';
 
 export const THEME_STORAGE_KEY = 'wangleyou.theme';
-
-export const THEME_LABELS: Record<ThemeName, string> = {
-  beach: '海边主题',
-  grassland: '草原主题',
-};
-
-export const THEME_SHORT_LABELS: Record<ThemeName, string> = {
-  beach: '海边',
-  grassland: '草原',
-};
-
-/** 主题背景层插画（设计稿的环境图导出为 WebP，见 public/media/SOURCES.md）。 */
-export const THEME_HERO_ASSETS: Record<ThemeName, string | null> = {
-  beach: 'media/theme/beach-hero.webp',
-  grassland: 'media/theme/grassland-hero.webp',
-};
-
-/**
- * 主题文案 Slot：只承载主题语气，不承载相册数据。
- * 相册标题、数量、日期仍全部来自 content 配置。
- */
-export const THEME_COPY: Record<ThemeName, { eyebrow: string; title: string; subtitle: string; footNote: string }> = {
-  beach: {
-    eyebrow: '潮汐带回的日子',
-    title: '把有海风的日子，留在这里。',
-    subtitle: '照片、视频与那些值得重看的片刻。',
-    footNote: '潮线只作陪衬 · 回忆始终是主角',
-  },
-  grassland: {
-    eyebrow: '沿着地平线看回忆',
-    title: '把辽阔的日子，慢慢收好。',
-    subtitle: '阳光、远山与那些舍不得快进的片刻。',
-    footNote: '远山只作陪衬 · 回忆始终是主角',
-  },
-};
 
 type ThemeRoot = { setAttribute(name: string, value: string): void };
 type ThemeStorage = { getItem(key: string): string | null; setItem(key: string, value: string): void };

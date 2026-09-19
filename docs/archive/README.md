@@ -22,3 +22,17 @@
 | 2026-09-17 | [长期 UI/交互设计系统](2026-09-17-long-term-design-system/spec.md) | SDD 设计影响治理、双主题 Token/组件、1440 与 390 原型、开发交付与 A1–A12 验证 |
 | 2026-09-17 | [提交信息语言约定](2026-09-17-commit-message-language/change.json) | 提交信息使用中文；type(scope) 保留英文关键字 |
 | 2026-09-17 | [按设计基线实现前端](2026-09-17-ui-design-implementation/spec.md) | 三套主题运行时、照片与视频连续播放、页面结构与查看器对齐设计、状态与无障碍 |
+| 2026-09-19 | [废弃 Penpot 设计治理](2026-09-19-retire-penpot-design-governance/spec.md) | 废弃外部设计稿与设计影响门禁，改由用户口述确认交互设计 |
+| 2026-09-19 | [首页两屏主回忆](2026-09-19-home-two-screen-memory/spec.md) | 海滩 2K 首屏、两段整屏导航、主回忆与液态玻璃 |
+| 2026-09-19 | [全站隔离主题应用](2026-09-19-isolated-theme-apps/spec.md) | 海边/草原独立 UI、无 UI 交互契约、主题隔离检查与完整浏览器验证 |
+| 2026-09-19 | [悬浮主题切换](2026-09-19-floating-theme-switch/spec.md) | 移除全局顶栏、双主题独立毛玻璃悬浮开关及响应式验证 |
+| 2026-09-19 | [紧凑主题切换](2026-09-19-compact-theme-switch/spec.md) | Lucide 循环图标、图标大小的毛玻璃圆形、悬浮展开胶囊与删除演示统计行 |
+| 2026-09-19 | [主题开关紧凑胶囊](2026-09-19-theme-switch-compact-pill/change.json) | 展开宽度由 142px 收到 112px，毛玻璃移除白色描边与高光边 |
+| 2026-09-19 | [玻璃去白边与眉标文案](2026-09-19-glass-edge-and-eyebrow-copy/change.json) | 首屏眉标改为 LeYou • Growing Moments，所有毛玻璃移除白色描边与高光边 |
+| 2026-09-19 | [眉标纯文字左对齐](2026-09-19-leyou-eyebrow-plain-text/change.json) | 首屏眉标去掉底色胶囊，与标题左对齐 |
+| 2026-09-19 | [首屏按钮文案](2026-09-19-start-memory-copy/change.json) | “开始回忆”改为“开启回忆” |
+| 2026-09-19 | [夹具入口对齐](2026-09-19-fixture-entry-alignment/change.json) | 夹具用例改从相册页进入新增相册，修复 CI 夹具验证超时 |
+| 2026-09-19 | [依赖评估治理规则](2026-09-19-dependency-evaluation-policy/change.json) | 通用能力先调查现有方案和成熟第三方库，并约束依赖滥用与无依据手写 |
+| 2026-09-19 | [离线图片压缩命令](2026-09-19-compress-photos/change.json) | 新增发布图片压缩命令、长边/元数据规则与 HEIC 降级链 |
+| 2026-09-19 | [移动端响应式恢复](2026-09-19-mobile-design-alignment/change.json) | 恢复移动端页眉、底部导航与首页主题插画的既定表现 |
+| 2026-09-19 | [分支审查修复](2026-09-19-review-fixes/spec.md) | 移除上次播放入口、修正首页接管与主回忆可访问性、同步依赖与设计资产基线 |

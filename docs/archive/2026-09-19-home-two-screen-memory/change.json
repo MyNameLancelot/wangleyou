@@ -1,0 +1,19 @@
+{
+  "mode": "full",
+  "summary": "将首页改造为海滩首屏与主回忆播放组成的两段整屏体验",
+  "reason": "用户确认首页只保留两个整屏模块，并要求滚动不会停留在中间位置；首屏使用已确认的海滩图，文字区域呈现带可见纹理和立体感的毛玻璃效果。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "已通过：2026-09-19 npm run check（SDD 结构、内容校验、TypeScript、ESLint；10 个 Vitest 文件、100 项测试）",
+    "已通过：2026-09-19 npm run build（内容校验、TypeScript、Vite 静态构建）",
+    "已通过：2026-09-19 npm run test:e2e（37 项通过、3 项设备条件跳过、0 项失败；覆盖 1920×1080、2560×1440、390×844、主回忆控制及玻璃 Safari UA 回退路径）"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "首页信息架构、整屏滚动和主回忆播放成为新的产品基线", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "updated", "reason": "首页整屏导航和主回忆播放需要明确模块与状态归属", "paths": ["docs/architecture.md"]},
+    "modules": {"status": "updated", "reason": "首页两段导航、局部主回忆状态与计时器清理由 albums 明确拥有；不改变 playback 契约", "paths": ["src/albums/module.md"]},
+    "decisions": {"status": "updated", "reason": "液态玻璃依赖和主题隔离属于长期技术边界", "paths": ["docs/decisions/0004-isolated-theme-apps.md"]},
+    "readme": {"status": "none", "reason": "站点的运行、构建和内容维护方式不变"}
+  }
+}

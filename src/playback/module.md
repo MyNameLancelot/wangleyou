@@ -9,7 +9,7 @@
 - 用同一条队列承载照片与视频：`openSession(media, id)`、`stepSession(session, delta)`、`currentMedia(session)`。
 - 区分用户意图（`intent`）与实际状态（`status`），真实暂停、缓冲或失败不改写意图。
 - 管理连续播放（`continuous`）、进度与时长（`progress`、`duration`），并在视频自然结束时按意图推进（`handleEnded`）。
-- 提供失败标记（`markPlaybackError`）供界面展示重试或跳到下一项。
+- 提供失败标记（`markPlaybackError`）供界面展示重试或跳到下一项；不保存上次播放或继续浏览偏好。
 
 ## 非职责
 
@@ -27,7 +27,7 @@ DOM、媒体元素、字幕渲染、控制栏显隐、手势与全屏；主题�
 
 ## 状态与资源生命周期
 
-会话由 `App` 持有，模块本身不创建监听或计时器。媒体元素与计时器由 `media-viewer` 创建并在卸载时清理；`ended`、`timeupdate` 等事件通过 viewer 转发的命令更新会话。
+会话由 `App` 持有，模块本身不创建监听或计时器。媒体元素与计时器由当前主题的查看器创建并在卸载时清理；`ended`、`timeupdate` 等事件通过无 UI 命令契约更新会话。
 
 ## 主要文件
 

@@ -6,7 +6,7 @@
 
 ## 职责
 
-应用入口、Hash 路由（`#/`、`#/browse`、`#/albums`、`#/albums/:id`）、页面装配、站点标题、主题切换入口、离线提示、配置异常页、查看器会话创建与销毁、把查看器命令转成 playback 状态更新、上次播放记录写入。
+应用入口、Hash 路由（`#/`、`#/browse`、`#/albums`、`#/albums/:id`）、站点标题、主题选择、唯一查看器会话与 playback 命令装配、上次播放记录写入。App 把无 UI 主题契约传给当前主题的完整站点应用。
 
 ## 非职责
 
@@ -14,11 +14,11 @@
 
 ## 公开接口
 
-index.ts 导出 App；ThemeDecor 提供主题装饰 Slot；router.ts 的 parseRoute 为模块内部纯函数。
+index.ts 导出 App；router.ts 的 parseRoute 为模块内部纯函数。
 
 ## 允许依赖
 
-albums、content、media-viewer、playback、themes。
+content、playback、themes。
 
 ## 状态与资源生命周期
 
@@ -26,7 +26,7 @@ App 持有 route、唯一 Session 与当前主题；hashchange 关闭会话并�
 
 ## 主要文件
 
-App.tsx 应用装配；ThemeDecor.tsx 装饰层；router.ts 路由解析；App.module.css 布局；global.css 基础样式、焦点环与 reduced-motion。
+App.tsx 应用装配；router.ts 路由解析；global.css 基础样式、焦点环与 reduced-motion。
 
 ## 扩展与验证
 

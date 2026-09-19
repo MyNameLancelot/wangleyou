@@ -1,0 +1,21 @@
+{
+  "mode": "full",
+  "summary": "移除全站顶部导航并改为右下角毛玻璃主题切换控件",
+  "reason": "用户明确要求删除截图红框内的整条顶栏，以右下角默认仅显示图标、悬浮或聚焦后显示“主题切换”的毛玻璃按钮替代主题切换入口。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "已通过：npm run check（SDD 结构、内容校验、TypeScript、ESLint、10 个 Vitest 文件共 100 项测试）",
+    "已通过：npm run build",
+    "已通过：npm run test:e2e（39 项通过，3 项按设备能力跳过）",
+    "已通过：桌面与移动端首页截图人工核对，顶栏已移除且开关未遮挡核心内容",
+    "已通过：npm run check:sdd -- --worktree --base origin/main（96 个差异路径）"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "全局导航和主题切换的可见行为发生变化。", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "updated", "reason": "同步主题应用壳层的真实职责。", "paths": ["docs/architecture.md"]},
+    "modules": {"status": "updated", "reason": "themes 不再渲染全局顶栏，改为主题内独立悬浮控件。", "paths": ["src/themes/module.md"]},
+    "decisions": {"status": "none", "reason": "不改变主题隔离、路由或依赖方向。", "paths": []},
+    "readme": {"status": "updated", "reason": "主题扩展说明需反映无常驻顶栏和独立悬浮开关。", "paths": ["README.md"]}
+  }
+}

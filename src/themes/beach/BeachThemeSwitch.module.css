@@ -1,0 +1,12 @@
+.dock{position:fixed;right:max(1.125rem,env(safe-area-inset-right));bottom:max(1.125rem,env(safe-area-inset-bottom));z-index:40;width:44px;height:44px;display:flex;align-items:center;justify-content:flex-end;filter:drop-shadow(0 .5rem 1rem rgb(0 55 75/.2))}
+.button{position:relative;width:44px;height:44px;border:0;background:none;padding:6px;display:flex;align-items:center;justify-content:flex-end;color:#0a4a5f;cursor:pointer;overflow:visible}
+.button:focus-visible{outline:3px solid #087f91;outline-offset:3px;border-radius:999px}
+.surface{width:32px;height:32px;flex:0 0 32px;border:0;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:0;white-space:nowrap;overflow:hidden;transition:width 260ms cubic-bezier(.22,.61,.36,1),flex-basis 260ms cubic-bezier(.22,.61,.36,1)}
+/* 玻璃库把 children 包在内容层里，需要在这一层收紧宽度，否则收起时文字会把图标挤出圆外。 */
+.surface>div:last-child{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-width:0}
+.button:hover .surface,.button:focus-visible .surface{width:112px;flex-basis:112px}
+.icon{width:1.25rem;height:1.25rem;flex:0 0 auto;color:inherit}
+.label{max-width:0;min-width:0;opacity:0;overflow:hidden;font:600 .8125rem/1.2 system-ui,sans-serif;letter-spacing:.02em;transition:max-width 240ms ease,opacity 170ms ease,margin-left 240ms ease}
+.button:hover .label,.button:focus-visible .label{max-width:6rem;opacity:1;margin-left:.375rem}
+@supports not (backdrop-filter:blur(1px)){.surface{background:rgb(239 251 252/.94)}}
+@media (prefers-reduced-motion:reduce){.surface,.label{transition:none}}
