@@ -1,8 +1,8 @@
 import { accessSync, constants, statSync } from 'node:fs';
-import { mkdir, readdir, rm, stat } from 'node:fs/promises';
+import { mkdir, readdir, realpath, rm, stat } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { cpus, tmpdir } from 'node:os';
-import { basename, delimiter, dirname, extname, join, relative, resolve } from 'node:path';
+import { basename, delimiter, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
@@ -84,6 +84,12 @@ export interface CompressReport {
   heicDecoderWorked: boolean;
   /** 本次扫描到的 HEIC/HEIF 文件数。 */
   heicFiles: number;
+  /** sharp 直接解码成功的 HEIC/HEIF 文件数。 */
+  heicDirectlyDecoded: number;
+  /** 外部命令解码成功的 HEIC/HEIF 文件数。 */
+  heicExternallyDecoded: number;
+  /** 处理失败的 HEIC/HEIF 文件数。 */
+  heicFailed: number;
   heicSkipped: boolean;
 }
 
@@ -263,6 +269,28 @@ async function assertReadableDirectory(root: string): Promise<void> {
 
 const samePath = (left: string, right: string): boolean => resolve(left) === resolve(right);
 
+const pathInside = (ancestor: string, descendant: string): boolean => {
+  const rel = relative(ancestor, descendant);
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+};
+
+/** 归一化已存在部分的 symlink；尚未创建的尾部保留在真实父目录之后。 */
+async function canonicalPath(target: string): Promise<string> {
+  let cursor = resolve(target);
+  const missingParts: string[] = [];
+  for (;;) {
+    try {
+      let result = await realpath(cursor);
+      for (const part of missingParts) result = join(result, part);
+      return result;
+    } catch {
+      if (cursor === dirname(cursor)) return cursor;
+      missingParts.unshift(basename(cursor));
+      cursor = dirname(cursor);
+    }
+  }
+}
+
 /** 递归收集候选文件；隐藏项、目录、非白名单文件和输出目录只计数不处理。 */
 async function collectFiles(root: string, outputRoot: string): Promise<{ candidates: Omit<PlannedFile, 'outRel' | 'renamed'>[]; skipped: number }> {
   const candidates: Omit<PlannedFile, 'outRel' | 'renamed'>[] = [];
@@ -343,6 +371,8 @@ async function encodeToJpeg(input: string, outPath: string, options: CompressOpt
   let pipeline = sharp(input)
     // 无参 rotate() 按 EXIF Orientation 自动摆正；GIF 等多帧输入默认只读首帧。
     .rotate()
+    // JPEG 没有 alpha；显式填白，避免透明 PNG 被默认落到黑色背景。
+    .flatten({ background: '#ffffff' })
     .resize({ width: options.maxEdge, height: options.maxEdge, fit: 'inside', withoutEnlargement: true });
   if (options.keepExif) pipeline = pipeline.withMetadata();
   const info = await pipeline
@@ -444,7 +474,11 @@ async function processFile(task: PlannedFile, options: CompressOptions, outputRo
   }
 
   const outPath = join(outputRoot, task.outRel);
-  await mkdir(dirname(outPath), { recursive: true });
+  try {
+    await mkdir(dirname(outPath), { recursive: true });
+  } catch (error) {
+    return failed(task, inputBytes, `无法创建输出目录（${messageOf(error)}）`, heic);
+  }
   const existedBefore = (await readSize(outPath)) !== null;
   try {
     const result = heic ? await encodeHeic(task.input, outPath, options, context) : { dimensions: await encodeToJpeg(task.input, outPath, options), decoderPath: null };
@@ -515,10 +549,12 @@ async function inspectFile(task: PlannedFile, options: CompressOptions, context:
 export async function runCompress(options: CompressOptions, deps: CompressDeps = {}): Promise<CompressReport> {
   const log = deps.log ?? ((line: string) => console.log(line));
   sharp.cache(false);
-  const inputRoot = resolve(options.input);
-  const outputRoot = resolve(options.out);
-  await assertReadableDirectory(inputRoot);
-  if (samePath(outputRoot, inputRoot)) throw new UsageError('输出目录不能与输入目录相同：输入目录必须保持只读。');
+  await assertReadableDirectory(options.input);
+  const inputRoot = await canonicalPath(options.input);
+  const outputRoot = await canonicalPath(options.out);
+  if (samePath(outputRoot, inputRoot) || pathInside(inputRoot, outputRoot)) {
+    throw new UsageError('输出目录不能与输入目录相同或位于输入目录内：输入目录必须保持只读。');
+  }
   const existingOut = await stat(outputRoot).catch(() => null);
   if (existingOut && !existingOut.isDirectory()) throw new UsageError(`输出路径已存在且不是目录：${outputRoot}`);
 
@@ -551,6 +587,9 @@ export async function runCompress(options: CompressOptions, deps: CompressDeps =
     heicDecoderPath: outcomes.find(outcome => outcome.decoderPath)?.decoderPath ?? null,
     heicDecoderWorked: outcomes.some(outcome => outcome.status === 'success' && !!outcome.decoderPath),
     heicFiles: heicOutcomes.length,
+    heicDirectlyDecoded: heicOutcomes.filter(outcome => outcome.status === 'success' && !outcome.decoderPath).length,
+    heicExternallyDecoded: heicOutcomes.filter(outcome => outcome.status === 'success' && !!outcome.decoderPath).length,
+    heicFailed: heicOutcomes.filter(outcome => outcome.status === 'failed').length,
     heicSkipped: heicOutcomes.some(outcome => outcome.status === 'skipped'),
   };
 }
@@ -581,14 +620,25 @@ export function formatReport(report: CompressReport): string[] {
 }
 
 function describeDecoder(report: CompressReport): string {
+  const total = report.heicFiles;
   if (report.heicDecoderPath) {
-    if (report.dryRun) return `计划使用 ${report.heicDecoderPath}（本次 ${report.heicFiles} 个 HEIC/HEIF 文件）`;
-    return report.heicDecoderWorked
-      ? `${report.heicDecoderPath}（本次 ${report.heicFiles} 个 HEIC/HEIF 文件）`
-      : `${report.heicDecoderPath}（已尝试，但转换失败）`;
+    const directNote = report.heicDirectlyDecoded > 0 ? `；sharp 直接解码 ${report.heicDirectlyDecoded} 个` : '';
+    if (report.dryRun) {
+      return `计划使用 ${report.heicDecoderPath}（本次 ${total} 个 HEIC/HEIF 文件${directNote}）`;
+    }
+    if (report.heicExternallyDecoded > 0) {
+      return `${report.heicDecoderPath}（外部解码 ${report.heicExternallyDecoded}/${total} 个${directNote}）`;
+    }
+    return `${report.heicDecoderPath}（已尝试，但转换失败）`;
   }
-  if (report.heicSkipped) return `未使用（--heic-via none，已跳过 ${report.heicFiles} 个 HEIC/HEIF 文件）`;
-  if (report.heicFiles > 0) return `未找到（本次 ${report.heicFiles} 个 HEIC/HEIF 文件已计入失败）`;
+  if (report.heicSkipped) return `未使用（--heic-via none，已跳过 ${total} 个 HEIC/HEIF 文件）`;
+  if (report.heicDirectlyDecoded > 0 && report.heicFailed === 0) {
+    return `sharp 直接解码（${report.heicDirectlyDecoded}/${total} 个）`;
+  }
+  if (report.heicDirectlyDecoded > 0) {
+    return `sharp 直接解码 ${report.heicDirectlyDecoded} 个；其余未找到可用解码器（${report.heicFailed} 个已计入失败）`;
+  }
+  if (total > 0) return `未找到（本次 ${total} 个 HEIC/HEIF 文件已计入失败）`;
   return '本次未使用（输入目录没有 HEIC/HEIF 文件）';
 }
 

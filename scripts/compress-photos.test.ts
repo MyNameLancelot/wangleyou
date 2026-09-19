@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import sharp from 'sharp';
-import { main, runCompress as runCompressWithProgress, type CompressDeps, type CompressOptions } from './compress-photos';
+import { formatReport, main, runCompress as runCompressWithProgress, type CompressDeps, type CompressOptions } from './compress-photos';
 
 /** 断言报告时默认静音进度输出；需要检查文案的用例自行注入 log。 */
 const runCompress = (config: CompressOptions, deps: CompressDeps = {}) => runCompressWithProgress(config, { log: () => undefined, ...deps });
@@ -69,6 +69,12 @@ async function animatedGif(target: string): Promise<void> {
   const raw = await sharp(strip).removeAlpha().raw().toBuffer();
   await mkdir(dirname(target), { recursive: true });
   await sharp(raw, { raw: { width: 20, height: 40, channels: 3, pageHeight: 20 }, pages: 2 }).gif({ delay: [120, 120], loop: 0 }).toFile(target);
+}
+
+/** 四通道 PNG：JPEG 编码必须把透明背景落到白色，而不是 sharp 默认的黑色。 */
+async function transparentPhoto(target: string): Promise<void> {
+  await mkdir(dirname(target), { recursive: true });
+  await sharp({ create: { width: 20, height: 20, channels: 4, background: { r: 255, g: 0, b: 0, alpha: 0 } } }).png().toFile(target);
 }
 
 /** 每个文件的相对路径、大小、mtime 与哈希，用于证明输入目录未被改动。 */
@@ -255,15 +261,6 @@ it('重复运行覆盖既有输出，且不删除输出目录中的无关文件'
   expect(await metadata(join(out, 'a.jpg'))).toMatchObject({ width: 300, height: 200 });
 });
 
-it('输出目录位于输入目录内时不会被当成新输入', async () => {
-  const { input } = await workspace();
-  await photo(join(input, 'a.jpg'), 200, 100);
-  const out = join(input, 'compressed');
-  expect((await runCompress(options(input, { out }))).succeeded).toBe(1);
-  const second = await runCompress(options(input, { out }));
-  expect([second.succeeded, second.failed]).toEqual([1, 0]);
-});
-
 it('源目录在处理前后哈希与 mtime 完全一致', async () => {
   const { input, out } = await workspace();
   await photo(join(input, 'a.jpg'), 300, 200);
@@ -317,6 +314,48 @@ it('--heic-via none 跳过 HEIC 文件并警告', async () => {
   expect([report.succeeded, report.skipped, report.failed]).toEqual([1, 1, 0]);
   expect(sink.lines.join('\n')).toContain('跳过：clip.heif');
   expect((await readdir(out)).sort()).toEqual(['ok.jpg']);
+});
+
+it('sharp 直接解码 HEIC 时报告成功，而不是误报未找到解码器', async () => {
+  const { input, out } = await workspace();
+  await photo(join(input, 'direct.heic'), 120, 80);
+  const sink = capture();
+  const report = await runCompress(options(input, { out }), { log: sink.log, probeCommand: () => null });
+  expect([report.succeeded, report.failed, report.heicFiles]).toEqual([1, 0, 1]);
+  expect([report.heicDirectlyDecoded, report.heicExternallyDecoded, report.heicFailed]).toEqual([1, 0, 0]);
+  expect(await metadata(join(out, 'direct.jpg'))).toMatchObject({ width: 120, height: 80 });
+  const summary = formatReport(report).join('\n');
+  expect(summary).toContain('sharp 直接解码（1/1 个）');
+  expect(summary).not.toContain('HEIC 解码器：未找到');
+});
+
+it('透明 PNG 输出 JPEG 时填白背景', async () => {
+  const { input, out } = await workspace();
+  await transparentPhoto(join(input, 'transparent.png'));
+  const report = await runCompress(options(input, { out }));
+  expect([report.succeeded, report.failed]).toEqual([1, 0]);
+  const { data, info } = await sharp(join(out, 'transparent.jpg')).raw().toBuffer({ resolveWithObject: true });
+  expect([info.width, info.height, info.channels]).toEqual([20, 20, 3]);
+  expect([data[0], data[1], data[2]]).toEqual([255, 255, 255]);
+});
+
+it('输出目录位于输入目录内或通过 symlink 指向输入目录时拒绝执行', async () => {
+  const { root, input } = await workspace();
+  await photo(join(input, 'a.jpg'), 100, 80);
+  const nested = join(input, 'compressed');
+  const sink = capture();
+  expect(await main([input, '--out', nested], { log: sink.log, probeCommand: () => null })).toBe(2);
+  expect(sink.lines.join('\n')).toContain('输出目录不能与输入目录相同或位于输入目录内');
+  await expect(stat(nested)).rejects.toThrow();
+
+  const realInput = join(root, 'real-input');
+  await mkdir(realInput, { recursive: true });
+  await photo(join(realInput, 'a.jpg'), 100, 80);
+  const inputAlias = join(root, 'input-alias');
+  await symlink(realInput, inputAlias);
+  const aliasSink = capture();
+  expect(await main([inputAlias, '--out', realInput], { log: aliasSink.log, probeCommand: () => null })).toBe(2);
+  expect(aliasSink.lines.join('\n')).toContain('输出目录不能与输入目录相同或位于输入目录内');
 });
 
 it('体积变大时单独列出', async () => {
