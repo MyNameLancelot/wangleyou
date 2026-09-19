@@ -5,7 +5,7 @@
 ## 依赖证据
 
 - `react-liquid-glass-svg@1.0.5`，MIT；零运行时依赖，React/ReactDOM 仅为 peer dependency。
-- 本地发布 ESM 经 gzip 为 1731 字节。海边主题内部 `BeachGlass` 独占该依赖，草原主题不导入它。
+- 本地发布 ESM 经 gzip 为 1731 字节。海边 `BeachGlass`、海边悬浮开关和草原悬浮开关分别在自己的主题目录导入该依赖；不存在跨主题导入或共享玻璃组件。
 - 海边主题提供不支持 `backdrop-filter` 时的不透明背景回退；浏览器用 Safari UA 路径确认标题与操作仍可见。未将 Chromium UA 模拟等同于 Safari/WebKit 真机验证。
 
 ## 自动化证据

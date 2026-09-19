@@ -5,4 +5,3 @@
 .error > span[aria-hidden] { color: var(--color-state-error); font-size: 18px; }
 @keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
-

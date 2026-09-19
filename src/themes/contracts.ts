@@ -2,7 +2,6 @@ import type { ReactElement } from 'react';
 import type { Album, SiteContent } from '../content';
 import type { Session, PlaybackStatus } from '../playback';
 import type { Route } from '../app';
-import type { ThemeName } from './index';
 
 /** 主题 UI 只接收业务命令，不拥有 Session。 */
 export interface ThemeViewerCommands {
@@ -25,7 +24,6 @@ export interface ThemeAppProps {
   commands: ThemeViewerCommands;
   onOpen(album: Album, id: string): void;
   onSwitchTheme(): void;
-  theme: ThemeName;
   online: boolean;
   contentErrorMessage: string | null;
 }

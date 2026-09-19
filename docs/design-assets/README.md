@@ -19,11 +19,11 @@
 - `prefers-reduced-motion` 下不移动背景层，不使用视差，只允许 120ms 以内淡入或即时切换。
 - 本次图像由内置 image generation 工具生成，无真实家庭影像、品牌标识、文字或水印。
 
-## 运行时实现方式（2026-09-17）
+## 运行时实现方式（2026-09-19）
 
-当前前端**不直接引用**本目录的位图资产。整图进入运行时会产生体积、裁切、对比度与主题耦合问题。运行时的主题差异由 `src/app/ThemeDecor.tsx` + `ThemeDecor.module.css` 用纯 CSS 图形表达：
+当前前端**不直接引用**本目录的位图资产。整图进入运行时会产生体积、裁切、对比度与主题耦合问题。运行时由 `src/themes/beach/` 和 `src/themes/grassland/` 分别拥有并表达主题差异；主题间不得共享 JSX、CSS、装饰或资产引用：
 
-- 装饰层固定定位、`aria-hidden`、`pointer-events: none`，位于内容之下（`.shell` 为 `z-index: 1`），不参与布局，不遮挡媒体与控制。
-- 海边主题使用潮汐曲线与贝壳感圆点，草原主题使用远山层次与野花点；颜色全部来自语义 Token（`--color-background-subtle`、`--color-action-accent`）。
-- 小屏降低不透明度；`prefers-reduced-motion` 下无位移与循环动画。默认主题不显示装饰。
+- 装饰层固定定位、`aria-hidden`、`pointer-events: none`，位于内容之下，不参与布局，不遮挡媒体与控制。
+- 海边主题使用潮汐圆点装饰、确认的 2K 海滩图和 `BeachGlass`；草原主题使用远山装饰、草原背景和独立玻璃底色。
+- 两套主题的循环图标和悬浮开关分别实现；`prefers-reduced-motion` 下取消非必要动画。
 - 若后续要换成插画位图：按上表导出 WebP/SVG，放进 `public/media` 并在此记录来源与许可，同时保留可隐藏与低对比度降级。

@@ -28,8 +28,7 @@
 
 | 发布文件 | 来源 | 说明 |
 | --- | --- | --- |
-| theme/beach-hero.webp | 本项目设计资产 `docs/design-assets/beach-environment-v1.png` | 内置图像生成工具产出的原创演示插画；运行时按 1920px 宽导出 WebP（约 108 KB） |
 | theme/beach-home-hero-2k.webp | 用户提供的海滩图，经 AI 增强、重采样与 WebP 编码 | 2560×1440；非原始素材，用于首页海滩首屏 |
 | theme/grassland-hero.webp | 本项目设计资产 `docs/design-assets/grassland-environment-v1.png` | 同上（约 101 KB） |
 
-`beach-hero.webp` 与 `grassland-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`beach-home-hero-2k.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。
+`grassland-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`beach-home-hero-2k.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。

@@ -15,6 +15,7 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   const errors:string[]=[]; page.on('pageerror',error=>errors.push(error.message));
   await page.goto('./');
   await expect(page.getByRole('heading', {level:1})).toContainText('把有海风的日子');
+  await page.evaluate(()=>localStorage.setItem('wangleyou.lastPlayed','legacy-value'));
   await page.keyboard.press('ArrowDown');
   const memory = page.locator('[data-home-section="memory"]');
   await expect(memory.getByRole('heading', {name:'主回忆', level:2})).toBeVisible();
@@ -36,6 +37,8 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
   await page.getByRole('navigation',{name:'面包屑'}).getByRole('link',{name:'首页'}).click();
   await expect(page.getByRole('heading',{name:'把有海风的日子，留在这里。'})).toBeVisible();
+  await expect(page.locator('[data-home-section="hero"]').getByRole('button',{name:'继续播放'})).toHaveCount(0);
+  expect(await page.evaluate(()=>localStorage.getItem('wangleyou.lastPlayed'))).toBe('legacy-value');
   expect(errors).toEqual([]);
 });
 test('subpath refresh, invalid routes and empty albums',async({page})=>{
@@ -376,6 +379,7 @@ test('home memory controls and two-screen boundaries stay consistent', async ({p
   const memory = page.locator('[data-home-section="memory"]');
   await expect(memory).toBeInViewport();
   const counter = memory.getByRole('paragraph').filter({hasText:/第 \d+ \/ \d+ 张/});
+  await expect(counter).toHaveAttribute('aria-live','off');
   const before = await counter.textContent();
   await memory.getByRole('button',{name:'下一张照片'}).click();
   await expect(counter).not.toHaveText(before || '');
@@ -383,7 +387,20 @@ test('home memory controls and two-screen boundaries stay consistent', async ({p
   await expect(counter).toHaveText(before || '');
   await memory.getByRole('button',{name:'暂停主回忆'}).click();
   await expect(memory.getByRole('button',{name:'继续播放主回忆'})).toBeVisible();
+  await expect(counter).toHaveAttribute('aria-live','polite');
   await page.keyboard.press('ArrowUp');
+  await expect(page.locator('[data-home-section="hero"]')).toBeInViewport();
+});
+
+test('wheel input over the theme switch stays in the two-screen flow', async ({page}, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chrome', '移动模拟不提供真实触控板 wheel 输入');
+  await page.goto('./');
+  const dock = page.getByTestId('theme-switch');
+  const box = await dock.boundingBox();
+  await page.mouse.move((box?.x ?? 0) + (box?.width ?? 1) / 2, (box?.y ?? 0) + (box?.height ?? 1) / 2);
+  await page.mouse.wheel(0, 120);
+  await expect(page.locator('[data-home-section="memory"]')).toBeInViewport();
+  await page.mouse.wheel(0, -120);
   await expect(page.locator('[data-home-section="hero"]')).toBeInViewport();
 });
 
@@ -396,4 +413,6 @@ test('liquid glass Safari fallback keeps hero content readable', async ({page}) 
   await expect(page.getByRole('heading',{name:'把有海风的日子，留在这里。'})).toBeVisible();
   await expect(page.getByRole('button',{name:/开启回忆/})).toBeVisible();
   await expect(page.locator('[data-home-section="hero"] svg').first()).toBeAttached();
+  await expect(page.locator('[data-home-section="hero"] svg feDisplacementMap')).toHaveCount(0);
+  await expect(page.locator('[data-home-section="hero"] svg feTurbulence')).toHaveCount(1);
 });

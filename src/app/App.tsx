@@ -5,13 +5,11 @@ import {
   handleEnded,
   markPlaybackError,
   openSession,
-  readLastPlayed,
   setContinuous,
   setIntent,
   setProgress,
   setStatus,
   stepSession,
-  writeLastPlayed,
 } from '../playback';
 import type { Session } from '../playback';
 import { applyTheme, nextTheme, readTheme } from '../themes';
@@ -27,7 +25,6 @@ export function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [theme, setTheme] = useState<ThemeName>(() => readTheme());
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
-  const [, setLastPlayed] = useState(() => readLastPlayed());
   const sessionRef = useRef<Session | null>(null);
 
   useEffect(() => {
@@ -59,13 +56,6 @@ export function App() {
   const applySession = useCallback((next: Session | null) => {
     sessionRef.current = next;
     setSession(next);
-    if (!next) return;
-    const media = next.media[next.index];
-    const owner = content.albums.find(item => item.media.some(entry => entry.id === media?.id));
-    if (!owner || !media) return;
-    const value = { albumId: owner.id, mediaId: media.id, index: next.index };
-    writeLastPlayed(value);
-    setLastPlayed(value);
   }, []);
 
   const open = useCallback((target: Album, id: string) => {
@@ -97,5 +87,5 @@ export function App() {
 
   const ThemePage: ThemeApp = theme === 'beach' ? BeachApp : GrasslandApp;
 
-  return <ThemePage route={route} content={content} session={session} commands={commands} onOpen={open} onSwitchTheme={switchTheme} theme={theme} online={online} contentErrorMessage={contentErrorMessage} />;
+  return <ThemePage route={route} content={content} session={session} commands={commands} onOpen={open} onSwitchTheme={switchTheme} online={online} contentErrorMessage={contentErrorMessage} />;
 }

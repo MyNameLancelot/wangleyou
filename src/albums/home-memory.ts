@@ -52,7 +52,7 @@ export function shouldRunHomeMemoryInterval(options: {
 }): boolean {
   return options.section === 'memory'
     && options.playing
-    && options.itemCount > 0
+    && options.itemCount > 1
     && options.documentVisible
     && !options.viewerOpen
 }

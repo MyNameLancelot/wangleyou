@@ -123,7 +123,7 @@ describe('home memory interval lifecycle', () => {
   const intervalOptions = {
     section: 'memory' as const,
     playing: true,
-    itemCount: 1,
+    itemCount: 2,
     documentVisible: true,
     viewerOpen: false,
   }
@@ -133,6 +133,7 @@ describe('home memory interval lifecycle', () => {
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, section: 'hero' })).toBe(false)
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, playing: false })).toBe(false)
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, itemCount: 0 })).toBe(false)
+    expect(shouldRunHomeMemoryInterval({ ...intervalOptions, itemCount: 1 })).toBe(false)
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, documentVisible: false })).toBe(false)
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, viewerOpen: true })).toBe(false)
   })

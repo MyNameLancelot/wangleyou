@@ -58,11 +58,9 @@ function AlbumCard({ album }: { album: Album }) {
 }
 
 /** 首页 hero：整幅主题插画 + 左侧内容卡，卡片承载标题与操作。 */
-function HomeHero({ heroImage, copy, resumeLabel, onResume, onStartMemory }: {
+function HomeHero({ heroImage, copy, onStartMemory }: {
   heroImage: string | null;
   copy: { eyebrow: string; title: string; subtitle: string };
-  resumeLabel?: string;
-  onResume?: () => void;
   onStartMemory: () => void;
 }) {
   return <div className={styles.hero}>
@@ -74,17 +72,14 @@ function HomeHero({ heroImage, copy, resumeLabel, onResume, onStartMemory }: {
       <div className={styles.heroActions}>
         <button type="button" className={styles.primary} onClick={onStartMemory}>开启回忆 <span aria-hidden="true">↓</span></button>
         <a className={styles.secondary} href="#/browse">浏览全部影像 <span aria-hidden="true">→</span></a>
-        {onResume && resumeLabel && <button type="button" className={styles.secondary} onClick={onResume}>继续播放 <span aria-hidden="true">▶</span></button>}
       </div>
     </div></BeachGlass>
   </div>;
 }
 
-export function HomePage({ data, onOpen, resume, onResume, heroImage = null, copy, viewerOpen = false }: {
+export function HomePage({ data, onOpen, heroImage = null, copy, viewerOpen = false }: {
   data: SiteContent;
   onOpen: OpenMedia;
-  resume?: { album: Album; media: Media } | null;
-  onResume?: () => void;
   heroImage?: string | null;
   copy: { eyebrow: string; title: string; subtitle: string };
   viewerOpen?: boolean;
@@ -151,7 +146,11 @@ export function HomePage({ data, onOpen, resume, onResume, heroImage = null, cop
   useEffect(() => {
     const onWheel = (event: WheelEvent) => {
       const home = homeRef.current;
-      if (!home || viewerOpen || (event.target instanceof Node && event.target !== document.body && !home.contains(event.target))) return;
+      const target = event.target;
+      const inScope = target === document.body
+        || (target instanceof Node && home?.contains(target))
+        || (target instanceof Element && target.closest('[data-testid="theme-switch"]') !== null);
+      if (!home || viewerOpen || !inScope) return;
 
       event.preventDefault();
       const intent = getHomeWheelIntent(wheelDeltaRef.current, event.deltaY);
@@ -223,8 +222,6 @@ export function HomePage({ data, onOpen, resume, onResume, heroImage = null, cop
       <HomeHero
         heroImage={heroImage}
         copy={copy}
-        resumeLabel={resume?.media.description || resume?.album.title}
-        onResume={resume && onResume ? onResume : undefined}
         onStartMemory={() => scrollToSection('memory')}
       />
     </section>
@@ -232,7 +229,7 @@ export function HomePage({ data, onOpen, resume, onResume, heroImage = null, cop
       <div className={styles.homeMemory}>
         <div className={styles.sectionHeader}>
           <div><span className={styles.eyebrow}>HOME MEMORY</span><h2 id="home-memory-title">主回忆</h2></div>
-          {currentMemory && <p className={styles.homeMemoryCount} aria-live="polite">第 {homeMemory.index + 1} / {homeMemory.items.length} 张</p>}
+          {currentMemory && <p className={styles.homeMemoryCount} aria-live={homeMemory.playing ? 'off' : 'polite'}>第 {homeMemory.index + 1} / {homeMemory.items.length} 张</p>}
         </div>
         {currentMemory
           ? <div className={styles.homeMemoryPlayer}>

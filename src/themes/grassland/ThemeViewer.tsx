@@ -266,4 +266,3 @@ export function MediaViewer({ session, commands, themeLabel }: { session: Sessio
     </div>
   </dialog>;
 }
-

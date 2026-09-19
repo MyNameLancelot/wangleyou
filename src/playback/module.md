@@ -9,7 +9,7 @@
 - 用同一条队列承载照片与视频：`openSession(media, id)`、`stepSession(session, delta)`、`currentMedia(session)`。
 - 区分用户意图（`intent`）与实际状态（`status`），真实暂停、缓冲或失败不改写意图。
 - 管理连续播放（`continuous`）、进度与时长（`progress`、`duration`），并在视频自然结束时按意图推进（`handleEnded`）。
-- 提供失败标记（`markPlaybackError`）供界面展示重试或跳到下一项。
+- 提供失败标记（`markPlaybackError`）供界面展示重试或跳到下一项；不保存上次播放或继续浏览偏好。
 
 ## 非职责
 

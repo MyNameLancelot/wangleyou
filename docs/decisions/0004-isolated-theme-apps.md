@@ -1,13 +1,13 @@
 # ADR 0004：主题 UI 完整隔离与液态玻璃依赖
 
-日期：2026-09-19  
+日期：2026-09-19
 状态：已接受
 
 ## 决策
 
 海边与草原分别维护完整站点 UI、CSS、设计变量、装饰和资产引用。主题目录之间禁止导入，也不得消费共享 React UI；只共享 content、playback、albums 与路由的无 UI 类型、状态和纯交互契约。App 只持有路由、主题偏好和唯一播放会话，并按主题选择入口。
 
-海边首屏液态玻璃采用 `react-liquid-glass-svg@1.0.5`。该包为 MIT、无运行时依赖，本地 ESM gzip 1731 字节；使用 SVG filter 和 `backdrop-filter`，Safari/iOS 走库的简化路径，主题 CSS 再提供不透明可读回退。
+海边首屏液态玻璃采用 `react-liquid-glass-svg@1.0.5`；海边与草原的悬浮主题开关也在各自目录导入该包。该包为 MIT、无运行时依赖，本地 ESM gzip 1731 字节；使用 SVG filter 和 `backdrop-filter`，Safari/iOS 走库的简化路径，主题 CSS 再提供不透明可读回退。
 
 ## 取舍
 
