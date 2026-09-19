@@ -31,4 +31,5 @@
 | 2026-09-19 | [玻璃去白边与眉标文案](2026-09-19-glass-edge-and-eyebrow-copy/change.json) | 首屏眉标改为 LeYou • Growing Moments，所有毛玻璃移除白色描边与高光边 |
 | 2026-09-19 | [眉标纯文字左对齐](2026-09-19-leyou-eyebrow-plain-text/change.json) | 首屏眉标去掉底色胶囊，与标题左对齐 |
 | 2026-09-19 | [首屏按钮文案](2026-09-19-start-memory-copy/change.json) | “开始回忆”改为“开启回忆” |
+| 2026-09-19 | [夹具入口对齐](2026-09-19-fixture-entry-alignment/change.json) | 夹具用例改从相册页进入新增相册，修复 CI 夹具验证超时 |
 | 2026-09-19 | [依赖评估治理规则](2026-09-19-dependency-evaluation-policy/change.json) | 通用能力先调查现有方案和成熟第三方库，并约束依赖滥用与无依据手写 |

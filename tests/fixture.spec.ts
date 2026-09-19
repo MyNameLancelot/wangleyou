@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('configuration-only album addition opens a single-photo viewer',async({page})=>{
-  await page.goto('./');
+  // 首页已收敛为两屏，相册入口在相册页。
+  await page.goto('./#/albums');
   await page.getByRole('link',{name:'查看相册：配置新增的单张相册'}).click();
   await expect(page.getByRole('heading',{name:'配置新增的单张相册'})).toBeVisible();
   await page.getByTestId('album-media-grid').getByRole('button',{name:/查看照片/}).click();
