@@ -15,6 +15,13 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   const errors:string[]=[]; page.on('pageerror',error=>errors.push(error.message));
   await page.goto('./');
   await expect(page.getByRole('heading', {level:1})).toContainText('把有海风的日子');
+  await page.keyboard.press('ArrowDown');
+  const memory = page.locator('[data-home-section="memory"]');
+  await expect(memory.getByRole('heading', {name:'主回忆', level:2})).toBeVisible();
+  await expect(memory.getByRole('button', {name:'暂停主回忆'})).toBeVisible();
+  await expect(memory.getByRole('button', {name:'上一张照片'})).toBeVisible();
+  await expect(memory.getByRole('button', {name:'下一张照片'})).toBeVisible();
+  await expect(memory.getByRole('progressbar')).toBeVisible();
   await page.getByRole('link',{name:'查看相册：把夏天装进口袋'}).click();
   await expect(page.getByRole('heading',{name:'把夏天装进口袋',level:1})).toBeVisible();
   const trigger=page.getByRole('button',{name:firstPhoto}); await trigger.click();
@@ -28,7 +35,7 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   await expect(trigger).toBeFocused();
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
   await page.getByRole('navigation',{name:'面包屑'}).getByRole('link',{name:'首页'}).click();
-  await expect(page.getByRole('heading',{name:'一页一页，都是我们'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'把有海风的日子，留在这里。'})).toBeVisible();
   expect(errors).toEqual([]);
 });
 test('subpath refresh, invalid routes and empty albums',async({page})=>{
@@ -74,9 +81,11 @@ test('dialog focus stays modal and route navigation disposes it',async({page})=>
 });
 test('responsive layout and real image loading',async({page},testInfo)=>{
   await page.goto('./');
-  const image=page.getByRole('img',{name:'阳光下碧蓝海水与沙滩'}).first();
-  await expect(image).toBeVisible();
-  expect(await image.evaluate((img:HTMLImageElement)=>img.complete && img.naturalWidth>0)).toBe(true);
+  const heroMedia=page.locator('[data-home-section="hero"] > div > div[aria-hidden="true"]');
+  await expect(heroMedia).toBeVisible();
+  const heroBackground=await heroMedia.evaluate(element=>getComputedStyle(element).backgroundImage);
+  expect(heroBackground).toMatch(/beach-home-hero-2k\.webp/);
+  expect(await page.evaluate(()=>performance.getEntriesByType('resource').some(entry=>entry.name.includes('/media/theme/beach-home-hero-2k.webp')))).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   for (const item of await page.getByRole('img').all()) {
     await item.scrollIntoViewIfNeeded();
@@ -238,4 +247,153 @@ test('theme decoration stays decorative and switchable', async ({page}) => {
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
   await page.reload();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
+});
+
+test('floating glass theme switch replaces the global header', async ({page}, testInfo) => {
+  await page.setViewportSize({width: 1440, height: 900});
+  await page.goto('./');
+  await expect(page.getByRole('navigation', {name: '主导航'})).toHaveCount(0);
+
+  for (const theme of ['beach', 'grassland']) {
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
+    const dock = page.getByTestId('theme-switch');
+    const button = dock.getByRole('button', {name: /切换主题/});
+    const surface = dock.locator('[data-theme-switch-surface]');
+    const icon = button.locator('[data-theme-switch-icon="cycle"]');
+    const label = dock.getByText('主题切换', {exact: true});
+    await expect(button).toBeVisible();
+    await expect(icon).toBeVisible();
+    await expect(page.getByText(/个片刻.*本相册.*内容均为演示/)).toHaveCount(0);
+    await page.mouse.move(1, 1);
+    await expect.poll(async () => (await surface.boundingBox())?.width ?? 0).toBeCloseTo(32, 0);
+    await expect.poll(async () => Number(await label.evaluate(node => getComputedStyle(node).opacity))).toBe(0);
+
+    const dockBox = await dock.boundingBox();
+    const collapsedSurface = await surface.boundingBox();
+    const iconBox = await icon.boundingBox();
+    expect(dockBox?.width).toBeGreaterThanOrEqual(44);
+    expect(dockBox?.height).toBeGreaterThanOrEqual(44);
+    expect(collapsedSurface?.width).toBeCloseTo(collapsedSurface?.height ?? 0, 0);
+    expect(collapsedSurface?.width ?? 0).toBeLessThanOrEqual((iconBox?.width ?? 0) + 14);
+    expect(collapsedSurface?.x).toBeGreaterThan(1440 - 220);
+    expect(collapsedSurface?.y).toBeGreaterThan(900 - 100);
+    await page.waitForTimeout(320);
+    await page.screenshot({path: `test-results/${testInfo.project.name}-${theme}-theme-switch-collapsed.png`, clip: {x: 1290, y: 800, width: 140, height: 90}});
+
+    if (testInfo.project.name === 'desktop-chrome') {
+      await button.hover();
+      await expect.poll(async () => Number(await label.evaluate(node => getComputedStyle(node).opacity))).toBe(1);
+      await expect.poll(async () => (await surface.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(104);
+      await expect.poll(async () => (await icon.boundingBox())?.width ?? 0).toBeGreaterThan(0);
+      await page.waitForTimeout(320);
+      await page.screenshot({path: `test-results/${testInfo.project.name}-${theme}-theme-switch-expanded.png`, clip: {x: 1280, y: 800, width: 150, height: 90}});
+    }
+    await button.focus();
+    await expect(button).toBeFocused();
+    await expect.poll(async () => Number(await label.evaluate(node => getComputedStyle(node).opacity))).toBe(1);
+    await expect.poll(async () => (await surface.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(104);
+    expect((await surface.boundingBox())?.width).toBeLessThanOrEqual(122);
+    expect((await button.evaluate(node => getComputedStyle(node).outlineStyle))).toBe('solid');
+    await button.click();
+  }
+
+  await expect(page.getByRole('navigation', {name: '主导航'})).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('hero glass shows the LeYou eyebrow without any white edge', async ({page}) => {
+  await page.setViewportSize({width: 1440, height: 900});
+  await page.goto('./');
+  const heroEyebrow = page.locator('[data-home-section="hero"]').getByText('LeYou • Growing Moments', {exact: true});
+  await expect(heroEyebrow).toBeVisible();
+  const eyebrowLayout = await heroEyebrow.evaluate(node => {
+    const style = getComputedStyle(node);
+    return {background: style.backgroundColor, padding: style.paddingLeft, x: node.getBoundingClientRect().x};
+  });
+  const titleX = await page.locator('#home-title').evaluate(node => node.getBoundingClientRect().x);
+  expect(eyebrowLayout.background).toBe('rgba(0, 0, 0, 0)');
+  expect(eyebrowLayout.padding).toBe('0px');
+  expect(Math.abs(eyebrowLayout.x - titleX)).toBeLessThanOrEqual(1);
+
+  for (const theme of ['beach', 'grassland']) {
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
+    const glass = page.locator('[data-hero-glass]');
+    await expect(glass).toBeVisible();
+    const edges = await glass.evaluate(node => {
+      const style = getComputedStyle(node);
+      return {top: style.borderTopWidth, left: style.borderLeftWidth, shadow: style.boxShadow};
+    });
+    expect(edges.top).toBe('0px');
+    expect(edges.left).toBe('0px');
+    expect(edges.shadow).not.toContain('inset');
+    await page.getByTestId('theme-switch').getByRole('button', {name: /切换主题/}).click();
+  }
+});
+
+test('grassland independently renders every route and its viewer', async ({page}) => {
+  await page.goto('./');
+  await page.getByRole('button',{name:/切换主题/}).click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('grassland');
+  await expect(page.getByRole('heading',{level:1})).toContainText('把辽阔的日子');
+  await page.goto('./#/browse');
+  await expect(page.getByRole('heading',{name:'全部影像',level:1})).toBeVisible();
+  await page.goto('./#/albums');
+  await expect(page.getByRole('heading',{name:'相册',level:1})).toBeVisible();
+  await page.goto('./#/albums/summer-days');
+  await expect(page.getByRole('heading',{name:'把夏天装进口袋',level:1})).toBeVisible();
+  await page.getByRole('button',{name:firstPhoto}).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+});
+
+test('both themes fill the approved desktop and mobile viewports', async ({page}) => {
+  for (const viewport of [{width:1920,height:1080},{width:2560,height:1440},{width:390,height:844}]) {
+    await page.setViewportSize(viewport);
+    await page.goto('./');
+    await page.evaluate(()=>localStorage.setItem('wangleyou.theme','beach'));
+    await page.reload();
+    for (const theme of ['beach','grassland']) {
+      await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe(theme);
+      const sections = page.locator('[data-home-section]');
+      await expect(sections).toHaveCount(2);
+      for (const section of await sections.all()) {
+        const box = await section.boundingBox();
+        expect(box?.height).toBeGreaterThanOrEqual(viewport.height - 1);
+      }
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      if (theme === 'beach') {
+        await expect(page.locator('[data-home-section="hero"] svg').first()).toBeAttached();
+        await page.getByRole('button',{name:/切换主题/}).click();
+      }
+    }
+  }
+});
+
+test('home memory controls and two-screen boundaries stay consistent', async ({page}) => {
+  await page.setViewportSize({width:1440,height:900});
+  await page.goto('./');
+  await page.keyboard.press('ArrowDown');
+  const memory = page.locator('[data-home-section="memory"]');
+  await expect(memory).toBeInViewport();
+  const counter = memory.getByRole('paragraph').filter({hasText:/第 \d+ \/ \d+ 张/});
+  const before = await counter.textContent();
+  await memory.getByRole('button',{name:'下一张照片'}).click();
+  await expect(counter).not.toHaveText(before || '');
+  await memory.getByRole('button',{name:'上一张照片'}).click();
+  await expect(counter).toHaveText(before || '');
+  await memory.getByRole('button',{name:'暂停主回忆'}).click();
+  await expect(memory.getByRole('button',{name:'继续播放主回忆'})).toBeVisible();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.locator('[data-home-section="hero"]')).toBeInViewport();
+});
+
+test('liquid glass Safari fallback keeps hero content readable', async ({page}) => {
+  await page.addInitScript(() => Object.defineProperty(Navigator.prototype, 'userAgent', {
+    configurable: true,
+    get: () => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15',
+  }));
+  await page.goto('./');
+  await expect(page.getByRole('heading',{name:'把有海风的日子，留在这里。'})).toBeVisible();
+  await expect(page.getByRole('button',{name:/开启回忆/})).toBeVisible();
+  await expect(page.locator('[data-home-section="hero"] svg').first()).toBeAttached();
 });

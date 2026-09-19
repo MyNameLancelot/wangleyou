@@ -22,8 +22,10 @@
     "check:sdd": "tsx scripts/sdd/cli.ts"
   },
   "dependencies": {
+    "lucide-react": "^1.47.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "react-liquid-glass-svg": "^1.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -2,32 +2,32 @@
 
 ## 目的
 
-首页与相册浏览。
+首页交互纯契约。
 
 ## 职责
 
-首页（影像入口、精选回忆、相册入口、继续浏览）、影像浏览（类型筛选、年份分组与定位）、相册索引、相册详情（元信息、从这里播放、相邻相册）、图片与视频共用的缩略图组件、空状态。
+首页两段整屏导航、主回忆照片队列、输入意图与 interval 生命周期等无 UI 纯逻辑。首页只从内容配置派生最多 12 张最新照片；不把视频放入主回忆队列。
 
 ## 非职责
 
-维护当前查看索引、播放资源、主题变量、路由解析。
+渲染主题 UI、维护查看器的当前索引或播放资源、主题变量、路由解析。首页主回忆不是 playback 会话，不控制查看器的媒体调度。
 
 ## 公开接口
 
-index.ts 导出 HomePage({data,onOpen,resume,onResume})、BrowsePage({data,onOpen})、AlbumsPage({data})、AlbumPage({album,albums,onOpen}) 与类型 OpenMedia。onOpen(album,id) 把打开媒体的请求交给 app。
+index.ts 仅导出 `home-memory.ts` 的纯函数、类型与计时器控制器；主题 UI 通过公开入口使用它们。
 
 ## 允许依赖
 
-content、shared。
+content。
 
 ## 状态与资源生命周期
 
-无持久业务状态；所有内容来自 props，图片加载与失败状态交给 PhotoImage。浏览页的筛选与年份定位是本地视图状态。
+无持久业务状态。主题 UI 自己持有视图状态；纯控制器负责确保 interval 在同步条件失效与释放时清理。
 
 ## 主要文件
 
-AlbumPages.tsx 页面；AlbumPages.module.css 响应式样式。
+home-memory.ts 首页纯状态、输入意图与计时器控制器。
 
 ## 扩展与验证
 
-新增内容仅修改配置；新增交互需要更新回调契约。browser 测试覆盖首页入口、年份分组与筛选、相邻相册、空状态、44×44 触控目标与无横向溢出。
+新增交互需要更新纯契约。home-memory.test.ts 覆盖两段边界、输入阈值、照片筛选/排序、循环推进与 interval 清理；每个主题自行测试其 UI 和浏览器行为。

@@ -1,15 +1,4 @@
-/*
- * 运行时设计变量。命名与 Penpot 语义 Token 一一对应：
- *   color.background.canvas      -> --color-background-canvas
- *   color.action.primary         -> --color-action-primary
- *   mediaViewer.control.height   -> --media-viewer-control-height
- * 业务组件只能消费本文件的语义变量，不得引用主题专属原始色或维护主题条件分支。
- *
- * 产品只交付两套主题：海边沙滩（默认）与旷野草原。
- * :root 取值即海边沙滩，保证首屏渲染与 JS 未就绪时就是默认主题，不存在第三套中性外观。
- */
-
-:root {
+[data-theme='grassland'] {
   color-scheme: light;
 
   /* 字体：typography Token */
@@ -97,10 +86,6 @@
   --color-focus-ring-inverse: #ffffff;
   --color-state-error: #a94736;
   --color-state-success: #24775f;
-}
-
-/* 旷野草原主题 */
-[data-theme='grassland'] {
   --color-background-canvas: #f7f8f0;
   --color-background-surface: #ffffff;
   --color-background-subtle: #e4f0e2;
@@ -122,3 +107,4 @@
   --color-state-error: #a94736;
   --color-state-success: #36765b;
 }
+

@@ -15,3 +15,4 @@ function ImageState({ src, alt, className, width, height, eager }: Props) {
 }
 
 export function PhotoImage(props: Props) { return <ImageState key={props.src} {...props} />; }
+

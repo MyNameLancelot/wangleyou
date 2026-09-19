@@ -1,8 +1,21 @@
-import { useMemo, useState } from 'react';
-import type { Album, Media, SiteContent, Video } from '../content';
-import { assetUrl } from '../content';
-import { PhotoImage } from '../shared';
-import styles from './AlbumPages.module.css';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Album, Media, SiteContent, Video } from '../../content';
+import { assetUrl } from '../../content';
+import { PhotoImage } from './PhotoImage';
+import { BeachGlass } from './BeachGlass';
+import {
+  canChangeHomeSection,
+  createHomeMemory,
+  createHomeMemoryIntervalController,
+  getHomeKeyIntent,
+  getHomeTouchIntent,
+  getHomeWheelIntent,
+  nextHomeSection,
+  shouldRunHomeMemoryInterval,
+  stepHomeMemory,
+  type HomeSection,
+} from '../../albums';
+import styles from './ThemePages.module.css';
 
 export type OpenMedia = (album: Album, id: string) => void;
 type Filter = 'all' | 'photo' | 'video';
@@ -15,6 +28,10 @@ const durationText = (seconds?: number) => (seconds && seconds > 0 ? `${Math.flo
 const thumbnailOf = (media: Media) => media.thumbnail || (isVideo(media) ? media.poster : undefined) || (media.type === 'photo' ? media.src : undefined);
 const mediaLabel = (media: Media) => (isVideo(media) ? `播放视频：${media.description || media.id}` : `查看照片：${media.description || media.id}`);
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const HOME_TRANSITION_LOCK_MS = 600;
+
+const isInteractiveTarget = (target: EventTarget | null) => target instanceof Element
+  && Boolean(target.closest('a, button, input, select, textarea, summary, [role="button"], [role="link"], [contenteditable="true"]'));
 
 /** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识，演示内容统一标注。 */
 function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean }) {
@@ -40,65 +57,201 @@ function AlbumCard({ album }: { album: Album }) {
   </a>;
 }
 
-/** 首页 hero：整幅主题插画 + 左侧内容卡，卡片承载标题、操作与内容统计。 */
-function HomeHero({ data, heroImage, copy, resumeLabel, onResume, totalMedia }: {
-  data: SiteContent;
+/** 首页 hero：整幅主题插画 + 左侧内容卡，卡片承载标题与操作。 */
+function HomeHero({ heroImage, copy, resumeLabel, onResume, onStartMemory }: {
   heroImage: string | null;
   copy: { eyebrow: string; title: string; subtitle: string };
   resumeLabel?: string;
   onResume?: () => void;
-  totalMedia: number;
+  onStartMemory: () => void;
 }) {
-  return <section className={styles.hero} aria-labelledby="home-title">
+  return <div className={styles.hero}>
     <div className={styles.heroMedia} style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} aria-hidden="true" />
-    <div className={styles.heroCard}>
+    <BeachGlass><div className={styles.heroCard}>
       <span className={styles.heroEyebrow}>{copy.eyebrow}</span>
       <h1 id="home-title">{copy.title}</h1>
       <p>{copy.subtitle}</p>
       <div className={styles.heroActions}>
-        <a className={styles.primary} href="#/browse">浏览全部影像 <span aria-hidden="true">→</span></a>
+        <button type="button" className={styles.primary} onClick={onStartMemory}>开启回忆 <span aria-hidden="true">↓</span></button>
+        <a className={styles.secondary} href="#/browse">浏览全部影像 <span aria-hidden="true">→</span></a>
         {onResume && resumeLabel && <button type="button" className={styles.secondary} onClick={onResume}>继续播放 <span aria-hidden="true">▶</span></button>}
       </div>
-      <p className={styles.heroMeta}>{totalMedia} 个片刻 · {data.albums.length} 本相册 · 内容均为演示</p>
-    </div>
-  </section>;
+    </div></BeachGlass>
+  </div>;
 }
 
-export function HomePage({ data, onOpen, resume, onResume, heroImage = null, copy }: {
+export function HomePage({ data, onOpen, resume, onResume, heroImage = null, copy, viewerOpen = false }: {
   data: SiteContent;
   onOpen: OpenMedia;
   resume?: { album: Album; media: Media } | null;
   onResume?: () => void;
   heroImage?: string | null;
   copy: { eyebrow: string; title: string; subtitle: string };
+  viewerOpen?: boolean;
 }) {
-  const items = useMemo(() => data.albums.flatMap(album => album.media.map(media => ({ album, media }))), [data]);
-  const recent = useMemo(() => [...items].sort((a, b) => (b.media.date || '').localeCompare(a.media.date || '')).slice(0, 3), [items]);
-  return <>
-    <HomeHero
-      data={data}
-      heroImage={heroImage}
-      copy={copy}
-      totalMedia={items.length}
-      resumeLabel={resume?.media.description || resume?.album.title}
-      onResume={resume && onResume ? onResume : undefined}
-    />
-    {recent.length > 0 && <section className={styles.recent} aria-labelledby="recent-title">
-      <div className={styles.sectionHeader}>
-        <h2 id="recent-title">最近留下的片刻</h2>
-        <a className={styles.sectionLink} href="#/browse">查看全部 <span aria-hidden="true">→</span></a>
-      </div>
-      <div className={styles.recentGrid}>{recent.map(({ album, media }, i) => <MediaTile key={`${album.id}-${media.id}`} album={album} media={media} onOpen={onOpen} eager={i === 0} />)}</div>
-    </section>}
-    <section className={styles.albumsSection} id="albums" aria-labelledby="albums-title">
-      <div className={styles.sectionHeader}>
-        <h2 id="albums-title">一页一页，都是我们</h2>
-        <a className={styles.sectionLink} href="#/albums">全部相册 <span aria-hidden="true">→</span></a>
-      </div>
-      {data.albums.length ? <div className={styles.albumGrid}>{data.albums.map(album => <AlbumCard key={album.id} album={album} />)}</div>
-        : <div className={styles.empty}><h3>相册还在准备中</h3><p>新的故事会在这里出现。</p></div>}
+  const [section, setSection] = useState<HomeSection>('hero');
+  const [homeMemory, setHomeMemory] = useState(() => createHomeMemory(data.albums));
+  const [documentVisible, setDocumentVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
+  const homeRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const memoryRef = useRef<HTMLElement>(null);
+  const wheelDeltaRef = useRef(0);
+  const transitionLockRef = useRef(false);
+  const transitionTimerRef = useRef<number | undefined>(undefined);
+  const touchStartRef = useRef<{ x: number; y: number; target: EventTarget | null } | null>(null);
+  const memoryIntervalRef = useRef<ReturnType<typeof createHomeMemoryIntervalController<number>> | undefined>(undefined);
+
+  useEffect(() => {
+    setHomeMemory(createHomeMemory(data.albums));
+  }, [data.albums]);
+
+  useEffect(() => () => {
+    if (transitionTimerRef.current !== undefined) window.clearTimeout(transitionTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    const updateVisibility = () => setDocumentVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
+
+  useEffect(() => {
+    const controller = createHomeMemoryIntervalController({
+      setInterval: (callback, delay) => window.setInterval(callback, delay),
+      clearInterval: handle => window.clearInterval(handle),
+    }, () => setHomeMemory(current => current.playing ? stepHomeMemory(current, 1) : current));
+    memoryIntervalRef.current = controller;
+    return () => {
+      controller.dispose();
+      memoryIntervalRef.current = undefined;
+    };
+  }, []);
+
+  const scrollToSection = useCallback((nextSection: HomeSection) => {
+    if (!canChangeHomeSection(section, nextSection, transitionLockRef.current)) return;
+
+    transitionLockRef.current = true;
+    wheelDeltaRef.current = 0;
+    setSection(nextSection);
+    (nextSection === 'hero' ? heroRef.current : memoryRef.current)?.scrollIntoView({
+      behavior: reducedMotion() ? 'auto' : 'smooth',
+      block: 'start',
+    });
+    if (transitionTimerRef.current !== undefined) window.clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = window.setTimeout(() => {
+      transitionLockRef.current = false;
+      transitionTimerRef.current = undefined;
+    }, HOME_TRANSITION_LOCK_MS);
+  }, [section]);
+
+  const moveSection = useCallback((delta: -1 | 1) => {
+    scrollToSection(nextHomeSection(section, delta));
+  }, [scrollToSection, section]);
+
+  useEffect(() => {
+    const onWheel = (event: WheelEvent) => {
+      const home = homeRef.current;
+      if (!home || viewerOpen || (event.target instanceof Node && event.target !== document.body && !home.contains(event.target))) return;
+
+      event.preventDefault();
+      const intent = getHomeWheelIntent(wheelDeltaRef.current, event.deltaY);
+      wheelDeltaRef.current = intent.accumulatedDeltaY;
+      if (intent.direction) moveSection(intent.direction);
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, [moveSection, viewerOpen]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const home = homeRef.current;
+      if (!home || (event.target instanceof Node && event.target !== document.body && !home.contains(event.target))) return;
+      const direction = getHomeKeyIntent(event.key, {
+        viewerOpen,
+        defaultPrevented: event.defaultPrevented,
+        interactiveTarget: isInteractiveTarget(event.target),
+      });
+      if (!direction) return;
+      event.preventDefault();
+      moveSection(direction);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [moveSection, viewerOpen]);
+
+  useEffect(() => {
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch || viewerOpen || !homeRef.current?.contains(event.target as Node)) return;
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY, target: event.target };
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      const start = touchStartRef.current;
+      touchStartRef.current = null;
+      const touch = event.changedTouches[0];
+      if (!start || !touch || viewerOpen || !homeRef.current?.contains(start.target as Node)) return;
+      const direction = getHomeTouchIntent(start, { x: touch.clientX, y: touch.clientY });
+      if (direction) moveSection(direction);
+    };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [moveSection, viewerOpen]);
+
+  const shouldRunMemoryInterval = shouldRunHomeMemoryInterval({
+    section,
+    playing: homeMemory.playing,
+    itemCount: homeMemory.items.length,
+    documentVisible,
+    viewerOpen,
+  });
+
+  useEffect(() => {
+    memoryIntervalRef.current?.sync(shouldRunMemoryInterval);
+  }, [shouldRunMemoryInterval]);
+
+  const currentMemory = homeMemory.items[homeMemory.index];
+  const previousMemory = () => setHomeMemory(current => stepHomeMemory(current, -1));
+  const nextMemory = () => setHomeMemory(current => stepHomeMemory(current, 1));
+  const toggleMemory = () => setHomeMemory(current => ({ ...current, playing: !current.playing }));
+
+  return <div ref={homeRef} className={styles.home} tabIndex={-1}>
+    <section ref={heroRef} className={styles.homeSection} data-home-section="hero" aria-labelledby="home-title">
+      <HomeHero
+        heroImage={heroImage}
+        copy={copy}
+        resumeLabel={resume?.media.description || resume?.album.title}
+        onResume={resume && onResume ? onResume : undefined}
+        onStartMemory={() => scrollToSection('memory')}
+      />
     </section>
-  </>;
+    <section ref={memoryRef} className={styles.homeSection} data-home-section="memory" aria-labelledby="home-memory-title">
+      <div className={styles.homeMemory}>
+        <div className={styles.sectionHeader}>
+          <div><span className={styles.eyebrow}>HOME MEMORY</span><h2 id="home-memory-title">主回忆</h2></div>
+          {currentMemory && <p className={styles.homeMemoryCount} aria-live="polite">第 {homeMemory.index + 1} / {homeMemory.items.length} 张</p>}
+        </div>
+        {currentMemory
+          ? <div className={styles.homeMemoryPlayer}>
+            <button type="button" className={styles.homeMemoryPhoto} onClick={() => onOpen(currentMemory.album, currentMemory.media.id)} aria-label={`查看当前照片：${currentMemory.media.description || currentMemory.media.id}`}>
+              <PhotoImage src={assetUrl(currentMemory.media.thumbnail || currentMemory.media.src)} alt={currentMemory.media.alt || currentMemory.album.title || currentMemory.media.description || '主回忆照片'} eager />
+            </button>
+            <div className={styles.homeMemoryControls} aria-label="主回忆操作">
+              <button type="button" className={styles.secondary} onClick={previousMemory} aria-label="上一张照片">上一张</button>
+              <button type="button" className={styles.secondary} onClick={toggleMemory} aria-label={homeMemory.playing ? '暂停主回忆' : '继续播放主回忆'}>{homeMemory.playing ? '暂停' : '继续播放'}</button>
+              <button type="button" className={styles.secondary} onClick={nextMemory} aria-label="下一张照片">下一张</button>
+              <button type="button" className={styles.primary} onClick={() => onOpen(currentMemory.album, currentMemory.media.id)}>查看当前照片</button>
+              <a className={styles.sectionLink} href={`#/albums/${currentMemory.album.id}`}>查看相册：{currentMemory.album.title}</a>
+            </div>
+            <progress className={styles.homeMemoryProgress} value={homeMemory.index + 1} max={homeMemory.items.length}>第 {homeMemory.index + 1} / {homeMemory.items.length} 张</progress>
+          </div>
+          : <div className={styles.empty}><h3>主回忆还在准备中</h3><p>添加照片后，这里会自动挑选最新的回忆。</p><a className={styles.primary} href="#/albums">查看相册</a></div>}
+      </div>
+    </section>
+  </div>;
 }
 
 export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteContent; onOpen: OpenMedia; heroImage?: string | null }) {

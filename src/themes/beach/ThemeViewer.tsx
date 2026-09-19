@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { assetUrl } from '../content';
-import type { Photo } from '../content';
-import { isVideo } from '../playback';
-import type { PlaybackStatus, Session } from '../playback';
-import styles from './MediaViewer.module.css';
+import { assetUrl } from '../../content';
+import type { Photo } from '../../content';
+import { isVideo } from '../../playback';
+import type { PlaybackStatus, Session } from '../../playback';
+import styles from './ThemeViewer.module.css';
 
 /** 查看器只转发命令，不维护第二套业务状态。 */
 export interface ViewerCommands {
@@ -266,3 +266,4 @@ export function MediaViewer({ session, commands, themeLabel }: { session: Sessio
     </div>
   </dialog>;
 }
+

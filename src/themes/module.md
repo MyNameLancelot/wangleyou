@@ -2,28 +2,27 @@
 
 ## 目的
 
-运行时主题设计变量与主题选择：把 Penpot 已确认的三套模式（Default、Beach、Grassland）映射为语义 CSS 自定义属性，并提供读取、切换与偏好持久化。
+运行时主题选择和完整主题应用装配：提供 Beach、Grassland 两个互不依赖的站点 UI、主题读取、切换与偏好持久化。
 
 ## 职责
 
-- `tokens.css` 提供跨主题稳定的 Token（字体、间距、形状、高度、动效、布局、媒体查看器）与两套颜色模式：海边沙滩（`:root` 默认值）与旷野草原（`[data-theme='grassland']`）。
-- `index.ts` 提供 `THEMES`、`DEFAULT_THEME`、`isThemeName`、`readTheme`、`applyTheme`、`nextTheme`、`initTheme`、主题标签、主题文案 Slot（`THEME_COPY`）与背景插画 Slot（`THEME_HERO_ASSETS`）。
+- `index.ts` 提供 `THEMES`、`DEFAULT_THEME`、`isThemeName`、`readTheme`、`applyTheme`、`nextTheme`、`initTheme` 与主题标签。
+- `beach/`、`grassland/` 各自拥有完整 JSX、CSS、装饰与资产引用；目录间禁止导入，也不得消费共享 React UI。
+- 两套主题均不渲染常驻全局顶部导航；各自在右下角实现毛玻璃主题开关：默认只显示 `lucide-react` 的循环图标，毛玻璃圆形仅包住图标（20px 图标配 32px 圆形），命中区域保持 44×44px，悬浮或键盘聚焦时展开为约 112px 胶囊并显示“主题切换”；玻璃表面不使用白色描边或高光边。
 - 通过 `document.documentElement` 的 `data-theme` 切换模式，偏好写入 `localStorage` 的 `wangleyou.theme`。
 
 ## 非职责
 
-不承载任何业务 UI、路由或播放状态；不实现主题专属的业务组件；不保存除主题名以外的偏好。
+不持有路由或播放状态，不保存除主题名以外的偏好；主题间不共享 UI 实现。
 
 ## 公开接口
 
-- 变量契约：颜色 `--color-*`、字体 `--font-*`、间距 `--space-*`、形状 `--radius-*`、高度 `--shadow-*`、动效 `--motion-*`、媒体查看器 `--media-viewer-*`。
 - 函数契约：`applyTheme(name, root?, storage?)` 返回实际生效主题；`readTheme(storage?)` 缺省与非法值回退 `DEFAULT_THEME`（海边沙滩）；`nextTheme(current)` 在 `THEMES` 之间循环（海边 ↔ 草原）。
-- `THEME_LABELS` / `THEME_SHORT_LABELS` 供界面显示名称；`THEME_COPY` 只提供主题语气文案（eyebrow、标题、副标题、脚注），相册数据仍全部来自 content。
-- `THEME_HERO_ASSETS` 指向 `public/media/theme/*-hero.webp`，由设计稿环境插画导出。
+- `contracts.ts` 只定义无 UI 的主题应用输入和回调；各主题入口实现该契约。
 
 ## 允许依赖
 
-无业务模块依赖。
+可依赖 content、playback、albums 的公开无 UI 契约和 app 导出的路由类型；可依赖 `react-liquid-glass-svg`、`lucide-react` 等无状态展示库；不得依赖另一主题目录或共享 React UI。
 
 ## 状态与资源生命周期
 
@@ -31,12 +30,12 @@
 
 ## 主要文件
 
-- `tokens.css`：三套模式与稳定 Token。
-- `index.ts`：主题读写与切换。
+- `index.ts`：主题读写与切换；`contracts.ts`：无 UI 装配契约。
+- `beach/`、`grassland/`：完全隔离的主题应用、悬浮主题开关、页面、查看器、图片状态、Token 与样式。
 - `theme.test.ts`：默认回退、非法值、持久化、存储异常与循环切换。
 
 ## 扩展与验证
 
-新增主题：先在 Penpot 建立 mode 集合并映射全部语义 Token，再在 `tokens.css` 增加一个 `[data-theme='<name>']` 块并加入 `THEMES`、`THEME_LABELS`、`THEME_COPY`、`THEME_HERO_ASSETS`，最后补一条 `theme.test.ts` 用例。变量名不得引入主题专属语义，业务组件不得出现主题条件分支。
+新增主题：创建独立主题目录，独立实现其站点 UI、CSS 与资产引用，再加入 `THEMES` 和标签并补齐主题及浏览器测试。只能导入无 UI 的公开领域契约，不能导入既有主题或共享 React UI。
 
 验证至少覆盖：默认与非法值回退、存储异常、切换后路由/媒体/播放上下文保持、1440 与 390 视口、对比度、焦点可见、reduced-motion。
