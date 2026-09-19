@@ -1,6 +1,6 @@
 # 主题设计资产
 
-本目录保存 Penpot 设计基线使用的原创演示资产，不是当前前端运行时资源。未经后续实现变更，不应从这里直接建立产品代码依赖。
+本目录保存历史主题探索使用的原创演示资产，不是当前前端运行时资源，也不是产品或交互设计基线。未经后续实现变更，不应从这里直接建立产品代码依赖。
 
 | 文件 | 主题 | 角色 | 桌面行为 | 移动行为 | 导出建议 |
 | --- | --- | --- | --- | --- | --- |
@@ -9,7 +9,7 @@
 | `beach-keepsake-v1.png` | 海边沙滩 | `decorative` 边缘点缀 | 贝壳、卵石和漂流木只放在非媒体内容边缘 | 可全部隐藏 | 单独裁成透明 WebP 或 SVG；不得合入交互图标 |
 | `grassland-keepsake-v1.png` | 旷野草原 | `decorative` 边缘点缀 | 野花和草叶只放在非媒体内容边缘 | 可全部隐藏 | 单独裁成透明 WebP 或 SVG；不得合入交互图标 |
 
-`build-theme-screens.mjs` 生成 `*-screens-v2.svg/png`、`*-mobile-v2.svg/png` 及按 Home/Browse/Album/Viewer 拆分的 PNG。它们是 Penpot 高保真演示素材和设计回溯源，不是应当整图塞进 React 页面或承担真实业务数据的资产。前端实现须重建语义结构、组件与设计变量；图中“演示媒体占位”不应被写死为相册内容。
+`build-theme-screens.mjs` 生成 `*-screens-v2.svg/png`、`*-mobile-v2.svg/png` 及按 Home/Browse/Album/Viewer 拆分的 PNG。它们仅供历史视觉回顾，不是应当整图塞进 React 页面或承担真实业务数据的资产；后续页面与交互以用户口述和活动规格为准。图中“演示媒体占位”不应被写死为相册内容。
 
 ## 共同约束
 
@@ -21,7 +21,7 @@
 
 ## 运行时实现方式（2026-09-17）
 
-当前前端**不直接引用**本目录的位图资产。原因：这些图是设计基线与还原依据，整图进入运行时会产生体积、裁切、对比度与主题耦合问题。运行时的主题差异由 `src/app/ThemeDecor.tsx` + `ThemeDecor.module.css` 用纯 CSS 图形表达：
+当前前端**不直接引用**本目录的位图资产。整图进入运行时会产生体积、裁切、对比度与主题耦合问题。运行时的主题差异由 `src/app/ThemeDecor.tsx` + `ThemeDecor.module.css` 用纯 CSS 图形表达：
 
 - 装饰层固定定位、`aria-hidden`、`pointer-events: none`，位于内容之下（`.shell` 为 `z-index: 1`），不参与布局，不遮挡媒体与控制。
 - 海边主题使用潮汐曲线与贝壳感圆点，草原主题使用远山层次与野花点；颜色全部来自语义 Token（`--color-background-subtle`、`--color-action-accent`）。

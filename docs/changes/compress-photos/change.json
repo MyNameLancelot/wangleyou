@@ -2,8 +2,6 @@
   "mode": "light",
   "summary": "新增离线发布图片压缩命令 npm run compress:photos：长边封顶、统一 JPEG、剥离元数据，并为 HEIC 实现外部解码降级链",
   "reason": "站点的演示与真实照片需要先压成适合网页发布的规格。工具是独立离线脚本，与站点运行时解耦，不改变页面行为、验收标准或系统结构，属于无产品和架构语义变化的维护调整",
-  "designImpact": "none",
-  "designReason": "纯命令行离线工具，不新增或改变页面、组件、主题、交互语义和响应式表现，用户可见界面没有变化，无需操作 Penpot",
   "behavior": false,
   "architecture": false,
   "verification": [

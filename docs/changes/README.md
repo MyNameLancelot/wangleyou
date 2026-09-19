@@ -1,10 +1,10 @@
 # 活动变更规范
 
-每个变更使用有意义的独立目录名并创建 change.json，字段见 [SDD 指南](../sdd.md)。声明必须包含 `designImpact` 与 `designReason`；设计更新使用 full，并在实施前记录 Penpot 文件、页面、组件和原型入口。完整流程开始实施前创建以下三份文件；轻量流程只需要声明、理由、影响及验证证据。
+每个变更使用有意义的独立目录名并创建 change.json，字段见 [SDD 指南](../sdd.md)。完整流程开始实施前创建以下三份文件；轻量流程只需要声明、理由、影响及验证证据。
 
 ## spec.md
 
-记录状态（草案、已确认、实施中、验证中、完成或阻塞）、背景、目标、非目标、需求与架构引用、设计影响、行为及异常处理、编号验收条件、未决事项。区分用户明确要求与开发默认决策。
+记录状态（草案、已确认、实施中、验证中、完成或阻塞）、背景、目标、非目标、需求与架构引用、用户确认的交互要求、行为及异常处理、编号验收条件、未决事项。区分用户明确要求与开发默认决策。
 
 ## plan.md
 
@@ -20,4 +20,4 @@
 
 ## 阅读与归档
 
-执行规则见 [AGENTS.md](../../AGENTS.md)，归档规则见 [archive/README.md](../archive/README.md)。最近完成：[按设计基线实现前端](../archive/2026-09-17-ui-design-implementation/spec.md)。最近完成：[提交信息语言约定](../archive/2026-09-17-commit-message-language/change.json)。最近完成：[长期 UI/交互设计系统](../archive/2026-09-17-long-term-design-system/spec.md)。最近完成部署配置：[GitHub Pages 部署配置](../archive/2026-09-16-github-pages-deploy/spec.md)。最近完成工程保障：[SDD 维护保障](../archive/2026-09-15-sdd-enforcement/spec.md)。最近完成：[工程初始化与相册浏览闭环](../archive/2026-09-15-foundation-album-browsing/spec.md)。
+执行规则见 [AGENTS.md](../../AGENTS.md)，归档规则见 [archive/README.md](../archive/README.md)。最近完成：[依赖评估治理规则](../archive/2026-09-19-dependency-evaluation-policy/change.json)、[首屏按钮文案](../archive/2026-09-19-start-memory-copy/change.json)、[眉标纯文字左对齐](../archive/2026-09-19-leyou-eyebrow-plain-text/change.json)、[玻璃去白边与眉标文案](../archive/2026-09-19-glass-edge-and-eyebrow-copy/change.json)、[主题开关紧凑胶囊](../archive/2026-09-19-theme-switch-compact-pill/change.json)、[紧凑主题切换](../archive/2026-09-19-compact-theme-switch/spec.md)、[悬浮主题切换](../archive/2026-09-19-floating-theme-switch/spec.md)、[全站隔离主题应用](../archive/2026-09-19-isolated-theme-apps/spec.md)、[首页两屏主回忆](../archive/2026-09-19-home-two-screen-memory/spec.md)与[废弃 Penpot 设计治理](../archive/2026-09-19-retire-penpot-design-governance/spec.md)。最近完成：[按设计基线实现前端](../archive/2026-09-17-ui-design-implementation/spec.md)。最近完成：[提交信息语言约定](../archive/2026-09-17-commit-message-language/change.json)。最近完成：[长期 UI/交互设计系统](../archive/2026-09-17-long-term-design-system/spec.md)。最近完成部署配置：[GitHub Pages 部署配置](../archive/2026-09-16-github-pages-deploy/spec.md)。最近完成工程保障：[SDD 维护保障](../archive/2026-09-15-sdd-enforcement/spec.md)。最近完成：[工程初始化与相册浏览闭环](../archive/2026-09-15-foundation-album-browsing/spec.md)。

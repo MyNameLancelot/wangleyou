@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 
-// Penpot import source. All content is explicitly fictitious demo content.
+// Historical visual-reference source. All content is explicitly fictitious demo content.
 const dir = dirname(fileURLToPath(import.meta.url))
 const esc = (value) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
 const rect = (x, y, w, h, fill, r = 0, extra = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}" ${extra}/>`
@@ -15,7 +15,7 @@ const circle = (cx, cy, r, fill, extra = '') => `<circle cx="${cx}" cy="${cy}" r
 const configs = {
   beach: {
     name: '海边沙滩', file: 'beach-environment-v1.png', ink: '#153A45', muted: '#49656B', canvas: '#FBF7EE', surface: '#FFFFFF', primary: '#087E8B', pale: '#F2FCFB', accent: '#E88E69', border: '#D8E5E1', dark: '#0C2931',
-    eyebrow: '潮汐带回的日子', hero: '把有海风的日子，留在这里。', sub: '照片、视频与那些值得重看的片刻。', footer: '潮线只作陪衬 · 回忆始终是主角',
+    eyebrow: 'LeYou • Growing Moments', hero: '把有海风的日子，留在这里。', sub: '照片、视频与那些值得重看的片刻。', footer: '潮线只作陪衬 · 回忆始终是主角',
     chip: '海边主题', alt: '沙滩、海浪、椰树与贝壳的装饰性插画',
   },
   grassland: {

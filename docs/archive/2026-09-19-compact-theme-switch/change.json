@@ -1,0 +1,21 @@
+{
+  "mode": "full",
+  "summary": "主题开关改用 Lucide 循环图标、默认紧贴图标并删除首页演示统计文案",
+  "reason": "用户要求停止手写图标，改用 lucide-react 现成循环图标；默认只显示图标且毛玻璃只有图标大小，悬浮或聚焦展开为图标加“主题切换”的胶囊，同时删除首页演示统计行。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "已通过：npm run check（SDD 结构、内容校验、TypeScript、ESLint、10 个 Vitest 文件共 100 项测试）",
+    "已通过：npm run build（JS 295.41 kB / gzip 85.87 kB）",
+    "已通过：npm run test:e2e（39 项通过，3 项按设备能力跳过）",
+    "已通过：两主题收起与展开截图人工核对，以及无头 Chrome 几何数据核对（32px 玻璃圆居中 20px 图标、142px 胶囊）",
+    "已通过：npm run check:sdd -- --worktree --base origin/main"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "主题开关尺寸、图标来源和首页可见文案发生变化。", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "updated", "reason": "新增 lucide-react 图标依赖，主题隔离与依赖方向不变。", "paths": ["docs/architecture.md"]},
+    "modules": {"status": "updated", "reason": "补充主题开关视觉表面、图标来源和命中区域契约。", "paths": ["src/themes/module.md"]},
+    "decisions": {"status": "none", "reason": "不产生新的长期架构取舍。", "paths": []},
+    "readme": {"status": "none", "reason": "使用、配置与主题扩展方式不变。", "paths": []}
+  }
+}

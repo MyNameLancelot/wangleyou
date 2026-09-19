@@ -1,0 +1,19 @@
+{
+  "mode": "full",
+  "summary": "废弃 Penpot 设计治理和设计影响声明，改由用户口述确认交互设计",
+  "reason": "用户明确要求不再使用 Penpot，并指定交互设计以口述方式确认；需要移除当前流程、文档和自动校验中的外部设计稿依赖。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "npm run check:sdd -- --worktree --base origin/main：通过（21 个差异路径）",
+    "npm run check：通过（内容校验 3 个相册、7 个媒体；TypeScript、ESLint；Vitest 10 个文件、94 项测试）",
+    "npm run build：通过（Vite 静态产物构建完成）"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "视觉与交互设计的确认和验收方式从外部设计稿改为用户口述与规格", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "updated", "reason": "移除外部设计稿事实来源和设计影响分级的架构边界", "paths": ["docs/architecture.md"]},
+    "modules": {"status": "updated", "reason": "themes 模块不再依赖外部设计稿作为主题扩展前置条件", "paths": ["src/themes/module.md"]},
+    "decisions": {"status": "updated", "reason": "以 ADR 0003 替代 ADR 0002 中的外部设计稿治理决定", "paths": ["docs/decisions/0002-design-system-governance.md", "docs/decisions/0003-retire-penpot-design-governance.md"]},
+    "readme": {"status": "updated", "reason": "说明新的口述交互设计流程和当前治理决策", "paths": ["README.md"]}
+  }
+}

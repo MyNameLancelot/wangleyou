@@ -13,7 +13,7 @@ function repo() {
   git('init'); git('config', 'user.email', 'test@example.invalid'); git('config', 'user.name', 'SDD test');
   put('README.md', '# Test'); git('add', '.'); git('commit', '-m', 'base'); const base = git('rev-parse', 'HEAD');
   const run = (...args: string[]) => spawnSync(process.execPath, ['--import', path.resolve('node_modules/tsx/dist/loader.mjs'), path.resolve('scripts/sdd/cli.ts'), ...args], {cwd: root, encoding:'utf8'});
-  const declare = () => put('docs/changes/test/change.json', JSON.stringify({mode:'light', summary:'Documentation', reason:'No behavior change', designImpact:'none', designReason:'No user-visible design change', behavior:false, architecture:false, verification:['Reviewed'], impacts:Object.fromEntries(['requirements','architecture','modules','decisions','readme'].map(k => [k,{status:'none',reason:'No contract change'}]))}));
+  const declare = () => put('docs/changes/test/change.json', JSON.stringify({mode:'light', summary:'Documentation', reason:'No behavior change', behavior:false, architecture:false, verification:['Reviewed'], impacts:Object.fromEntries(['requirements','architecture','modules','decisions','readme'].map(k => [k,{status:'none',reason:'No contract change'}]))}));
   return {root, git, put, base, run, declare};
 }
 it('uses entire multi-commit range and rejects missing base', () => {
@@ -38,4 +38,12 @@ it('handles archive rename and deleted references', () => {
 it('enforces module direction and public imports including dynamic imports', () => {
   const files = new Map([['src/shared/module.md','# Shared'],['src/shared/x.ts',"export { App } from '../app/App'; import('../albums');"]]);
   const errors = validateModules(files).join(); expect(errors).toContain('不允许依赖 app'); expect(errors).toContain('公开入口'); expect(errors).toContain('不允许依赖 albums');
+});
+it('rejects imports between isolated theme UI trees', () => {
+  const files = new Map([
+    ['src/themes/module.md', '# Themes'],
+    ['src/themes/beach/Card.tsx', "import { Meadow } from '../grassland/Meadow'; export const Card = Meadow;"],
+    ['src/themes/grassland/Meadow.tsx', 'export const Meadow = () => null;'],
+  ]);
+  expect(validateModules(files).join()).toContain('主题 beach 不得依赖主题 grassland');
 });

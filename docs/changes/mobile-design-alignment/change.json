@@ -1,9 +1,7 @@
 {
   "mode": "light",
-  "summary": "恢复移动端页眉、底部导航和首页主题插画与已归档设计基线的一致性",
-  "reason": "本次审查发现 390px 下桌面导航被折为三行，且首页 hero 背景因 flex 布局收缩而不可见；归档设计已明确单行页眉、底部导航和插画叠加内容卡，属于恢复既有响应式契约。",
-  "designImpact": "sync",
-  "designReason": "完全复用 docs/design-assets 中已归档的移动端布局与现有主题、导航组件语义，不引入新页面、流程或交互语义。",
+  "summary": "恢复移动端页眉、底部导航和首页主题插画的既定响应式表现",
+  "reason": "本次审查发现 390px 下桌面导航被折为三行，且首页 hero 背景因 flex 布局收缩而不可见；既有产品要求明确单行页眉、底部导航和可见主题插画，属于恢复既有响应式契约。",
   "behavior": false,
   "architecture": false,
   "verification": [

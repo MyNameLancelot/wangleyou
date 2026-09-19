@@ -1,0 +1,23 @@
+{
+  "mode": "light",
+  "summary": "收紧主题开关展开胶囊并移除毛玻璃白边",
+  "reason": "用户在紧凑主题切换归档后要求展开状态更紧凑、毛玻璃不要白色描边或高光边；交互语义不变，仅调整尺寸与表面描边。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "已通过：npx playwright test tests/browsing.spec.ts -g \"floating glass theme switch|interactive targets\"（桌面与移动共 4 项）",
+    "已通过：两主题展开截图人工核对（test-results/desktop-chrome-<theme>-theme-switch-expanded.png）；胶囊 112px、无白边",
+    "已通过：npm run check（SDD 结构、内容校验、TypeScript、ESLint、10 个 Vitest 文件共 100 项测试）",
+    "已通过：npm run build",
+    "已通过：npm run test:e2e（39 项通过，3 项按设备能力跳过）",
+    "已通过：npm run check:sdd -- --worktree --base origin/main",
+    "如实记录：一次并行运行中 video 播放用例因暂停状态 5 秒内未生效而失败，单独复跑两次与后续完整回归均通过，属既有并发抖动，与本次样式改动无关"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "主题开关展开宽度与玻璃表面描边要求变化。", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "none", "reason": "依赖、隔离和状态归属不变。", "paths": []},
+    "modules": {"status": "updated", "reason": "themes 模块契约同步展开尺寸与表面描边。", "paths": ["src/themes/module.md"]},
+    "decisions": {"status": "none", "reason": "不产生新的架构取舍。", "paths": []},
+    "readme": {"status": "none", "reason": "使用与扩展说明不受影响。", "paths": []}
+  }
+}
