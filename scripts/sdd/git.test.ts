@@ -47,3 +47,11 @@ it('rejects imports between isolated theme UI trees', () => {
   ]);
   expect(validateModules(files).join()).toContain('主题 beach 不得依赖主题 grassland');
 });
+
+it('rejects theme imports from app to keep theme-to-app assembly one-way', () => {
+  const files = new Map([
+    ['src/themes/module.md', '# Themes'],
+    ['src/themes/beach/Card.tsx', "import type { Route } from '../../app'; export const Card = () => null;"],
+  ]);
+  expect(validateModules(files).join()).toContain('src/themes/beach/Card.tsx: 不允许依赖 app');
+});

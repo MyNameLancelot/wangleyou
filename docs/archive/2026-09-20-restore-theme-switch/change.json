@@ -1,0 +1,21 @@
+{
+  "mode": "light",
+  "summary": "恢复两套主题右下角的毛玻璃主题切换按钮",
+  "reason": "当前背景音乐开发改动误删了已实现且仍属于产品基线的主题切换入口；本次只恢复既有设计和行为，不改变按钮语义、主题持久化或模块边界。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "已通过：npm run build（Vite 生产构建成功，JS 297.78 kB / gzip 86.42 kB，CSS 58.12 kB / gzip 8.50 kB）",
+    "已通过：桌面 Chrome 定向 Playwright 验收 2 项，覆盖主题切换与偏好刷新、主题按钮和背景音乐按钮共存、收起/展开尺寸及键盘焦点",
+    "已通过：npm run check（SDD 结构、内容校验、TypeScript、ESLint、11 个 Vitest 文件共 106 项测试）",
+    "已通过：npm run test:e2e（42 项通过，4 项按设备能力跳过）",
+    "已通过：npm run check:sdd -- --worktree --base origin/main（归档后最终检查覆盖 30 个差异路径）"
+  ],
+  "impacts": {
+    "requirements": {"status": "none", "reason": "docs/requirements.md 已明确规定右下角紧凑毛玻璃主题切换按钮，本次恢复实现以重新符合基线。", "paths": []},
+    "architecture": {"status": "none", "reason": "主题状态归属、依赖方向与主题 UI 隔离不变。", "paths": []},
+    "modules": {"status": "none", "reason": "src/themes/module.md 已包含按钮尺寸、展开行为和主题独立实现契约。", "paths": []},
+    "decisions": {"status": "none", "reason": "不产生新的架构取舍。", "paths": []},
+    "readme": {"status": "none", "reason": "README 已将悬浮主题开关列为每套主题的一部分。", "paths": []}
+  }
+}

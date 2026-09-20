@@ -13,12 +13,11 @@
 /* 首页：两个完整视口，JS 负责意图阈值，scroll-snap 负责桌面端的原生兜底。 */
 .home { margin: 0 calc(50% - 50vw); }
 .homeSection { position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always; }
-.homeSection[data-home-section='memory'] { display: flex; align-items: center; background: linear-gradient(145deg, color-mix(in srgb, var(--color-background-subtle) 72%, var(--color-background-canvas)) 0%, var(--color-background-canvas) 46%, color-mix(in srgb, var(--color-background-subtle) 42%, var(--color-background-surface)) 100%); border-top: 1px solid color-mix(in srgb, var(--color-border-default) 76%, transparent); }
+.homeSection[data-home-section='memory'] { display: flex; align-items: center; background: linear-gradient(145deg, color-mix(in srgb, var(--color-background-subtle) 72%, var(--color-background-canvas)) 0%, var(--color-background-canvas) 46%, color-mix(in srgb, var(--color-background-subtle) 42%, var(--color-background-surface)) 100%); background-size: cover; background-position: center; background-repeat: no-repeat; }
 
 /* 首页 hero：整幅主题图 + 左侧可读、带纹理的立体玻璃卡。 */
-.home .hero { position: relative; width: 100%; min-height: inherit; padding: var(--space-3xl) max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); display: flex; align-items: center; overflow: hidden; border-bottom: 1px solid var(--color-border-default); }
+.home .hero { position: relative; width: 100%; min-height: inherit; padding: var(--space-3xl) max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); display: flex; align-items: center; overflow: hidden; }
 .heroMedia { position: absolute; z-index: 0; inset: 0; background-size: cover; background-position: center center; background-color: var(--color-background-subtle); }
-.heroMedia::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--color-background-canvas) 82%, transparent) 0%, color-mix(in srgb, var(--color-background-canvas) 51%, transparent) 40%, color-mix(in srgb, var(--color-background-canvas) 12%, transparent) 69%, transparent 100%), linear-gradient(0deg, color-mix(in srgb, var(--color-media-overlay) 24%, transparent), transparent 46%); }
 .heroCard { position: relative; z-index: 1; width: min(660px, 100%); padding: var(--space-xl) var(--space-xl) var(--space-lg); }
 .heroCard > * { position: relative; z-index: 1; }
 .heroEyebrow { display: block; padding: 0; border: 0; background: none; color: var(--color-action-primary); font-size: var(--font-size-small); letter-spacing: .02em; text-align: left; }
@@ -28,19 +27,37 @@
 
 /* 第二屏：照片为视觉中心，控制区保持可扫读且全为 44px 以上目标。 */
 .homeMemory { width: min(var(--layout-max-width), calc(100% - (var(--layout-gutter) * 2))); margin: auto; padding: clamp(36px, 7dvh, 78px) 0; }
-.homeMemory .sectionHeader { margin-bottom: clamp(var(--space-lg), 4dvh, var(--space-2xl)); }
-.homeMemoryCount { flex-shrink: 0; padding: 7px 12px; border: 1px solid color-mix(in srgb, var(--color-border-default) 84%, transparent); border-radius: var(--radius-pill); background: rgb(255 255 255 / 54%); color: var(--color-text-secondary); font: var(--font-size-small) var(--font-caption); }
-.homeMemoryPlayer { display: grid; grid-template-areas: 'photo controls' 'progress progress'; grid-template-columns: minmax(0, 1.65fr) minmax(278px, 0.8fr); gap: var(--space-lg) clamp(var(--space-lg), 4vw, var(--space-2xl)); align-items: center; }
-.homeMemoryPhoto { grid-area: photo; position: relative; display: block; width: 100%; min-height: var(--target-min); padding: 0; overflow: hidden; aspect-ratio: 16 / 10; border: 1px solid rgb(255 255 255 / 72%); border-radius: var(--radius-xl); background: var(--color-background-subtle); box-shadow: 0 22px 52px rgb(12 57 66 / 22%), inset 0 1px 0 rgb(255 255 255 / 78%); }
-.homeMemoryPhoto img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--motion-slow-duration) var(--motion-standard-easing); }
-.homeMemoryPhoto:hover img { transform: scale(1.018); }
-.homeMemoryControls { grid-area: controls; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); align-content: center; }
-.homeMemoryControls .primary, .homeMemoryControls .secondary { width: 100%; min-width: var(--target-min); min-height: var(--target-min); padding-right: var(--space-sm); padding-left: var(--space-sm); }
-.homeMemoryControls .sectionLink { grid-column: 1 / -1; justify-content: center; min-width: var(--target-min); padding: var(--space-xs); overflow-wrap: anywhere; text-align: center; border-top: 1px solid color-mix(in srgb, var(--color-border-default) 80%, transparent); }
-.homeMemoryProgress { grid-area: progress; width: 100%; height: 8px; overflow: hidden; border: 0; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-background-subtle) 75%, var(--color-background-surface)); color: var(--color-action-primary); }
-.homeMemoryProgress::-webkit-progress-bar { background: color-mix(in srgb, var(--color-background-subtle) 75%, var(--color-background-surface)); border-radius: inherit; }
+
+/* 第二屏：居中照片浮在毛玻璃底板上，左右箭头切换，进度条保留在照片下方。 */
+.homeMemoryPlayer { --memory-mat: clamp(10px, 1.6vw, 22px); --memory-frame-height: clamp(190px, 56dvh, 520px); --memory-arrow-gap: calc(var(--target-min) + var(--space-md)); display: grid; justify-items: center; gap: clamp(var(--space-sm), 2dvh, var(--space-lg)); padding-inline: var(--memory-arrow-gap); }
+.memoryFrame { position: relative; display: grid; gap: var(--space-sm); width: 100%; max-width: min(100%, calc(var(--memory-frame-height) * 1.5 + var(--memory-mat) * 2)); }
+.memoryGlassBox { position: relative; }
+.memoryMat { width: 100%; padding: var(--memory-mat); }
+.homeMemoryPhoto { display: block; width: 100%; aspect-ratio: 3 / 2; margin: 0; padding: 0; overflow: hidden; border: 0; border-radius: var(--radius-lg); background: color-mix(in srgb, var(--color-background-canvas) 58%, transparent); cursor: pointer; }
+.homeMemoryPhoto:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-gap); }
+.memoryImage { display: block; width: 100%; height: 100%; }
+.memoryImage img { width: 100%; height: 100%; object-fit: contain; animation: memoryFade 600ms var(--motion-standard-easing); }
+.memoryArrow { position: absolute; top: 50%; z-index: 4; display: inline-flex; align-items: center; justify-content: center; width: var(--target-min); height: var(--target-min); transform: translateY(-50%); border: 0; border-radius: 50%; background: rgb(237 252 255 / 42%); color: var(--color-action-primary); box-shadow: 0 10px 26px rgb(12 57 66 / 22%); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); cursor: pointer; }
+.memoryArrow:hover { background: rgb(237 252 255 / 64%); }
+.memoryArrow:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-gap); }
+.memoryArrow svg { width: 22px; height: 22px; }
+.memoryArrowPrev { left: calc(-1 * var(--memory-arrow-gap)); }
+.memoryArrowNext { right: calc(-1 * var(--memory-arrow-gap)); }
+@keyframes memoryFade { from { opacity: 0; } to { opacity: 1; } }
+.memoryPlaySlot { display: grid; place-items: center; min-height: var(--target-min); }
+.memoryPlay { display: inline-flex; align-items: center; justify-content: center; width: var(--target-min); height: var(--target-min); border: 0; border-radius: 50%; background: rgb(237 252 255 / 42%); color: var(--color-action-primary); box-shadow: 0 10px 26px rgb(12 57 66 / 22%); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); cursor: pointer; }
+.memoryPlay:hover { background: rgb(237 252 255 / 64%); }
+.memoryPlay:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus-ring); outline-offset: var(--focus-ring-gap); }
+.memoryPlay svg { width: 22px; height: 22px; }
+.homeMemoryProgress { width: 100%; height: 8px; overflow: hidden; border: 0; border-radius: var(--radius-pill); background: rgb(237 252 255 / 38%); box-shadow: 0 8px 20px rgb(12 57 66 / 16%); -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); color: var(--color-action-primary); }
+.homeMemoryProgress::-webkit-progress-bar { background: transparent; border-radius: inherit; }
 .homeMemoryProgress::-webkit-progress-value { border-radius: inherit; background: linear-gradient(90deg, var(--color-action-primary), color-mix(in srgb, var(--color-action-primary) 54%, var(--color-action-accent))); }
 .homeMemoryProgress::-moz-progress-bar { border-radius: inherit; background: linear-gradient(90deg, var(--color-action-primary), color-mix(in srgb, var(--color-action-primary) 54%, var(--color-action-accent))); }
+
+@supports not (backdrop-filter: blur(1px)) {
+  .memoryArrow, .memoryPlay { background: rgb(237 252 255 / 94%); }
+  .homeMemoryProgress { background: color-mix(in srgb, var(--color-background-subtle) 75%, var(--color-background-surface)); }
+}
 
 @media (min-width: 901px) {
   :global(html):has(.home) { scroll-snap-type: y mandatory; }
@@ -137,22 +154,20 @@
   .browseGrid, .recentGrid, .photoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
   .upNextGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
   .albumGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
-  .homeMemoryPlayer { grid-template-areas: 'photo' 'controls' 'progress'; grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
-  .homeMemoryControls { max-width: 620px; width: 100%; margin: auto; }
+  .homeMemoryPlayer { --memory-arrow-gap: 0px; padding-inline: 0; }
+  .memoryArrow { display: none; }
 }
 @media (max-width: 600px) {
   .home .hero { padding: var(--space-lg) 21px var(--space-xl); background: var(--color-background-canvas); }
   .heroMedia { background-position: 66% 28%; }
   .heroMedia::after { background: linear-gradient(180deg, color-mix(in srgb, var(--color-background-canvas) 6%, transparent) 0%, color-mix(in srgb, var(--color-background-canvas) 24%, transparent) 28%, color-mix(in srgb, var(--color-background-canvas) 69%, transparent) 68%, var(--color-background-canvas) 100%); }
-  .heroCard { width: 100%; padding: var(--space-lg); border-radius: var(--radius-lg); box-shadow: 0 20px 44px rgb(7 39 48 / 23%), 0 6px 16px rgb(7 39 48 / 14%), inset 0 1px 0 rgb(255 255 255 / 90%); }
+  .heroCard { width: 100%; padding: var(--space-lg); border-radius: var(--radius-lg); }
   .heroCard h1 { font-size: 28px; margin-top: var(--space-sm); }
   .heroActions { flex-direction: column; }
   .heroActions .primary, .heroActions .secondary { width: 100%; }
   .homeMemory { width: calc(100% - 42px); padding-top: var(--space-xl); padding-bottom: var(--space-xl); }
-  .homeMemory .sectionHeader { align-items: flex-start; flex-wrap: wrap; }
-  .homeMemoryPhoto { aspect-ratio: 4 / 3; border-radius: var(--radius-lg); }
-  .homeMemoryControls { grid-template-columns: minmax(0, 1fr); }
-  .homeMemoryControls .sectionLink { min-height: var(--target-min); }
+  .homeMemoryPlayer { --memory-frame-height: clamp(150px, 38dvh, 300px); }
+  .memoryFrame { gap: var(--space-xs); }
   .recent { padding-top: var(--space-lg); }
   .recentGrid, .browseGrid, .photoGrid, .upNextGrid { grid-template-columns: minmax(0, 1fr); }
   .albumGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
@@ -170,10 +185,8 @@
   .heroCard { padding: 20px 16px 18px; }
   .heroCard h1 { font-size: 26px; }
   .homeMemory { width: calc(100% - 32px); }
-  .homeMemoryCount { max-width: 100%; overflow-wrap: anywhere; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .heroCard, .homeMemoryPhoto, .homeMemoryPhoto img { animation: none; transition: none; transform: none; }
-  .homeMemoryPhoto:hover img { transform: none; }
+  .heroCard, .memoryImage img { animation: none; transition: none; transform: none; }
 }

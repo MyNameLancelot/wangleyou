@@ -59,7 +59,7 @@ export function validateSnapshot(files: Map<string, string>, changed: string[]):
 const allowed: Record<string, string[]> = {
   app: ['albums', 'media-viewer', 'playback', 'content', 'themes', 'shared'],
   albums: ['content', 'shared'], 'media-viewer': ['playback', 'content', 'shared'],
-  playback: ['content', 'shared'], content: ['shared'], themes: ['content', 'playback', 'albums', 'app'], shared: [],
+  playback: ['content', 'shared'], content: ['shared'], themes: ['content', 'playback', 'albums', 'shared'], shared: [],
 };
 export function validateModules(files: Map<string, string>): string[] {
   const errors: string[] = [];

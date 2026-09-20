@@ -1,0 +1,21 @@
+{
+  "mode": "full",
+  "summary": "首页两屏分别提供同步的音乐按钮",
+  "reason": "用户确认音乐控制在首页第二屏仍然需要，但主题按钮只属于第一屏；两个音乐按钮应随各自屏幕移动，而非固定悬浮。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "定向 Playwright：桌面与移动端 4 项通过，覆盖两屏入口、单一 audio、跨屏状态同步和主题仅第一屏",
+    "npm run check：通过（11 个测试文件、106 项单元测试）",
+    "npm run build：通过（内容校验、TypeScript 与 Vite 生产构建）",
+    "npm run test:e2e：通过（46 项通过、4 项按平台条件跳过）",
+    "npm run check:sdd -- --worktree --base origin/main：归档前通过（55 个差异路径）"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "已把首页音乐按钮从仅第一屏改为两屏各自提供。", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "updated", "reason": "已明确两个按钮共享单一 audio 与 playback 状态。", "paths": ["docs/architecture.md"]},
+    "modules": {"status": "updated", "reason": "已同步 themes 音乐组件的双入口与单一资源生命周期。", "paths": ["src/themes/module.md"]},
+    "decisions": {"status": "none", "reason": "沿用现有主题隔离和 playback 状态归属，不产生新架构决策。", "paths": []},
+    "readme": {"status": "none", "reason": "不改变使用方式或开发命令。", "paths": []}
+  }
+}

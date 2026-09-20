@@ -6,7 +6,7 @@
 
 ## 职责
 
-应用入口、Hash 路由（`#/`、`#/browse`、`#/albums`、`#/albums/:id`）、站点标题、主题选择、唯一查看器会话与 playback 命令装配、上次播放记录写入。App 把无 UI 主题契约传给当前主题的完整站点应用。
+应用入口、Hash 路由（`#/`、`#/browse`、`#/albums`、`#/albums/:id`）、站点标题、主题选择、唯一查看器会话与背景音乐状态及 playback 命令装配。App 把无 UI 主题契约传给当前主题的完整站点应用。
 
 ## 非职责
 
@@ -22,7 +22,7 @@ content、playback、themes。
 
 ## 状态与资源生命周期
 
-App 持有 route、唯一 Session 与当前主题；hashchange 关闭会话并回顶；会话写入 `localStorage` 的上次播放记录用于"继续浏览"；监听 online/offline；卸载时移除所有监听。
+App 持有 route、唯一 Session、背景音乐状态与当前主题；hashchange 关闭会话并回顶；背景音乐意图和音量只在用户显式切换或调整时写入偏好，初始化时读回；页面隐藏造成的待恢复状态只由 `setBackgroundMusicVisibility` 表达，不写偏好。获取 localStorage 属性以及读写失败均静默降级。已移除上次播放记录与“继续浏览”。监听 online/offline，卸载时移除所有监听。
 
 ## 主要文件
 

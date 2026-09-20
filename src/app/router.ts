@@ -1,4 +1,6 @@
-export type Route = { kind: 'home' } | { kind: 'browse' } | { kind: 'albums' } | { kind: 'album'; id: string } | { kind: 'not-found' };
+import type { Route } from '../shared';
+
+export type { Route };
 export function parseRoute(hash: string): Route {
   if (hash === '' || hash === '#' || hash === '#/') return { kind: 'home' };
   if (hash === '#/browse') return { kind: 'browse' };

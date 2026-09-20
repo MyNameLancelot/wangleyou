@@ -1,4 +1,4 @@
-.dock{position:fixed;right:max(1.125rem,env(safe-area-inset-right));bottom:max(1.125rem,env(safe-area-inset-bottom));z-index:40;width:44px;height:44px;display:flex;align-items:center;justify-content:flex-end;filter:drop-shadow(0 .5rem 1rem rgb(50 70 34/.22))}
+.dock{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:flex-end}
 .button{position:relative;width:44px;height:44px;border:0;background:none;padding:6px;display:flex;align-items:center;justify-content:flex-end;color:#2d482c;cursor:pointer;overflow:visible}
 .button:focus-visible{outline:3px solid #526d32;outline-offset:3px;border-radius:999px}
 .surface{width:32px;height:32px;flex:0 0 32px;border:0;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:0;white-space:nowrap;overflow:hidden;transition:width 260ms cubic-bezier(.22,.61,.36,1),flex-basis 260ms cubic-bezier(.22,.61,.36,1)}

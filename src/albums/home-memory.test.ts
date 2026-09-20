@@ -5,11 +5,15 @@ import {
   canChangeHomeSection,
   createHomeMemoryIntervalController,
   getHomeKeyIntent,
+  getHomeMemorySwipeIntent,
   getHomeTouchIntent,
   getHomeWheelIntent,
   HOME_MEMORY_INTERVAL_MS,
+  createHomeMemoryWheelState,
   createHomeMemory,
   nextHomeSection,
+  reduceHomeMemoryWheel,
+  setHomeMemoryPlaying,
   shouldRunHomeMemoryInterval,
   stepHomeMemory,
 } from './home-memory'
@@ -72,6 +76,33 @@ describe('home section input', () => {
     expect(getHomeTouchIntent({ x: 0, y: 100 }, { x: 56, y: 44 })).toBeNull()
     expect(getHomeTouchIntent({ x: 0, y: 100 }, { x: 12, y: 55 })).toBeNull()
   })
+
+  it('only treats threshold-crossing horizontal swipes as memory steps', () => {
+    expect(getHomeMemorySwipeIntent({ x: 260, y: 200 }, { x: 180, y: 210 })).toBe(1)
+    expect(getHomeMemorySwipeIntent({ x: 180, y: 200 }, { x: 260, y: 210 })).toBe(-1)
+    expect(getHomeMemorySwipeIntent({ x: 260, y: 200 }, { x: 240, y: 200 })).toBeNull()
+    expect(getHomeMemorySwipeIntent({ x: 260, y: 400 }, { x: 180, y: 200 })).toBeNull()
+    expect(getHomeMemorySwipeIntent({ x: 260, y: 200 }, { x: 180, y: 210 }, 120)).toBeNull()
+  })
+
+  it('merges small horizontal wheel input and only steps once per gesture', () => {
+    let state = createHomeMemoryWheelState()
+    const first = reduceHomeMemoryWheel(state, { deltaX: 30, at: 1_000 })
+    expect(first).toEqual({ state: { accumulatedDeltaX: 30, consumed: false, lastEventAt: 1_000 }, direction: null })
+
+    const second = reduceHomeMemoryWheel(first.state, { deltaX: 30, at: 1_040 })
+    expect(second.direction).toBe(1)
+    expect(second.state).toEqual({ accumulatedDeltaX: 0, consumed: true, lastEventAt: 1_040 })
+
+    // 触控板动量继续发事件，但同一次手势不再换图
+    state = reduceHomeMemoryWheel(second.state, { deltaX: 90, at: 1_080 }).state
+    expect(reduceHomeMemoryWheel(state, { deltaX: 90, at: 1_120 }).direction).toBeNull()
+
+    // 停手超过手势间隔（400ms）后开启下一次手势
+    const nextGesture = reduceHomeMemoryWheel(state, { deltaX: -80, at: 1_520 })
+    expect(nextGesture.direction).toBe(-1)
+    expect(createHomeMemoryWheelState()).toEqual({ accumulatedDeltaX: 0, consumed: false, lastEventAt: 0 })
+  })
 })
 
 describe('createHomeMemory', () => {
@@ -114,8 +145,16 @@ describe('stepHomeMemory', () => {
     expect(stepHomeMemory({ ...memory, index: 0 }, -1, false)).toMatchObject({ index: 0, playing: true })
   })
 
-  it('uses a five-second interval', () => {
-    expect(HOME_MEMORY_INTERVAL_MS).toBe(5000)
+  it('uses a two-second interval', () => {
+    expect(HOME_MEMORY_INTERVAL_MS).toBe(2000)
+  })
+
+  it('records the explicit play intent without touching the queue', () => {
+    const memory = { ...createHomeMemory(albums, 2), index: 1 }
+    const paused = setHomeMemoryPlaying(memory, false)
+    expect(paused).toMatchObject({ index: 1, playing: false })
+    expect(setHomeMemoryPlaying(paused, false)).toBe(paused)
+    expect(setHomeMemoryPlaying(paused, true)).toMatchObject({ index: 1, playing: true })
   })
 })
 
@@ -126,6 +165,7 @@ describe('home memory interval lifecycle', () => {
     itemCount: 2,
     documentVisible: true,
     viewerOpen: false,
+    foregroundResumeRequired: false,
   }
 
   it('only authorizes the interval for a visible, active memory section', () => {
@@ -135,6 +175,7 @@ describe('home memory interval lifecycle', () => {
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, itemCount: 0 })).toBe(false)
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, itemCount: 1 })).toBe(false)
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, documentVisible: false })).toBe(false)
+    expect(shouldRunHomeMemoryInterval({ ...intervalOptions, foregroundResumeRequired: true })).toBe(false)
     expect(shouldRunHomeMemoryInterval({ ...intervalOptions, viewerOpen: true })).toBe(false)
   })
 

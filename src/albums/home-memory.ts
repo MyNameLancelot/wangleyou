@@ -9,7 +9,8 @@ export type HomeMemory = {
   playing: boolean
 }
 
-export const HOME_MEMORY_INTERVAL_MS = 5_000
+/** 主回忆自动播放间隔：照片为视觉主体，2 秒保持轻快又不至于看不清。 */
+export const HOME_MEMORY_INTERVAL_MS = 2_000
 export const HOME_GESTURE_THRESHOLD = 56
 
 export function getHomeWheelIntent(accumulatedDeltaY: number, deltaY: number, threshold = HOME_GESTURE_THRESHOLD): {
@@ -43,17 +44,69 @@ export function getHomeTouchIntent(start: { x: number; y: number }, end: { x: nu
   return deltaY < 0 ? 1 : -1
 }
 
+/** 第二屏内的横向滑动换图：横向位移必须达到阈值且大于纵向位移，纵向滑动留给切屏。 */
+export function getHomeMemorySwipeIntent(start: { x: number; y: number }, end: { x: number; y: number }, threshold = HOME_GESTURE_THRESHOLD): HomeDirection | null {
+  const deltaX = end.x - start.x
+  const deltaY = end.y - start.y
+  if (Math.abs(deltaX) < threshold || Math.abs(deltaX) <= Math.abs(deltaY)) return null
+  return deltaX < 0 ? 1 : -1
+}
+
+/** 手势结束判定：事件静默超过这个时间才认为上一段滑动结束（慢速滑动的事件间隔通常小于它）。 */
+export const HOME_MEMORY_WHEEL_GAP_MS = 400
+
+export type HomeMemoryWheelState = {
+  accumulatedDeltaX: number
+  /** 本次手势是否已经换过图：触控板动量会继续发事件，但一次手势只换一张。 */
+  consumed: boolean
+  lastEventAt: number
+}
+
+export function createHomeMemoryWheelState(): HomeMemoryWheelState {
+  return { accumulatedDeltaX: 0, consumed: false, lastEventAt: 0 }
+}
+
+/**
+ * 触控板横向滚动：同一手势内累积到位只换一张，停手超过 gap 才开启下一次手势。
+ * 手指向左（deltaX 为正）前进一张，与触屏滑动方向一致。
+ */
+export function reduceHomeMemoryWheel(
+  state: HomeMemoryWheelState,
+  event: { deltaX: number; at: number },
+  threshold = HOME_GESTURE_THRESHOLD,
+  gap = HOME_MEMORY_WHEEL_GAP_MS,
+): { state: HomeMemoryWheelState; direction: HomeDirection | null } {
+  const nextState = event.at - state.lastEventAt > gap
+    ? { accumulatedDeltaX: 0, consumed: false, lastEventAt: event.at }
+    : { ...state, lastEventAt: event.at }
+
+  if (nextState.consumed) return { state: nextState, direction: null }
+
+  const accumulatedDeltaX = nextState.accumulatedDeltaX + event.deltaX
+  if (Math.abs(accumulatedDeltaX) < threshold) {
+    return { state: { ...nextState, accumulatedDeltaX }, direction: null }
+  }
+
+  return {
+    state: { accumulatedDeltaX: 0, consumed: true, lastEventAt: event.at },
+    direction: accumulatedDeltaX > 0 ? 1 : -1,
+  }
+}
+
 export function shouldRunHomeMemoryInterval(options: {
   section: HomeSection
   playing: boolean
   itemCount: number
   documentVisible: boolean
   viewerOpen: boolean
+  /** 页面隐藏造成的待恢复状态；回前台必须由用户显式恢复。 */
+  foregroundResumeRequired?: boolean
 }): boolean {
   return options.section === 'memory'
     && options.playing
     && options.itemCount > 1
     && options.documentVisible
+    && !options.foregroundResumeRequired
     && !options.viewerOpen
 }
 
@@ -130,4 +183,9 @@ export function stepHomeMemory(memory: HomeMemory, delta: HomeDirection, loop = 
   }
 
   return { ...memory, index: nextIndex < 0 ? memory.items.length - 1 : 0 }
+}
+
+/** 用户点击照片或播放按钮后的播放意图，不改动当前照片与队列。 */
+export function setHomeMemoryPlaying(memory: HomeMemory, playing: boolean): HomeMemory {
+  return memory.playing === playing ? memory : { ...memory, playing }
 }
