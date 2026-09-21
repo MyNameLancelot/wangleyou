@@ -2,7 +2,6 @@ export interface Photo {
   id: string
   type: 'photo'
   src: string
-  thumbnail?: string
   date?: string
   description?: string
   alt?: string
@@ -14,7 +13,6 @@ export interface Video {
   id: string
   type: 'video'
   src: string
-  thumbnail?: string
   poster?: string
   /** 说明字幕（WebVTT）：无对白的家庭短片也应有文字说明，供无法听音的场景使用。 */
   captions?: string
@@ -25,6 +23,9 @@ export interface Video {
   height?: number
   duration?: number
 }
+
+/** 首页主回忆由 photos/home-memory.json 显式给出，数组顺序即播放顺序。 */
+export type HomeMemoryPhoto = Photo
 
 export type Media = Photo | Video
 

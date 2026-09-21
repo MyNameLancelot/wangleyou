@@ -1,10 +1,10 @@
-import type { Album, Photo } from '../content'
+import type { Photo } from '../content'
 
 export type HomeSection = 'hero' | 'memory'
 export type HomeDirection = -1 | 1
 
 export type HomeMemory = {
-  items: Array<{ album: Album; media: Photo }>
+  items: Photo[]
   index: number
   playing: boolean
 }
@@ -146,28 +146,8 @@ export function nextHomeSection(section: HomeSection, delta: HomeDirection): Hom
   return section
 }
 
-export function createHomeMemory(albums: Album[], limit = 12): HomeMemory {
-  const candidates: Array<{ album: Album; media: Photo; order: number }> = []
-  let order = 0
-
-  for (const album of albums) {
-    for (const media of album.media) {
-      if (media.type === 'photo') {
-        candidates.push({ album, media, order })
-      }
-      order += 1
-    }
-  }
-
-  candidates.sort((a, b) => {
-    if (a.media.date === undefined) return b.media.date === undefined ? a.order - b.order : 1
-    if (b.media.date === undefined) return -1
-    return b.media.date.localeCompare(a.media.date) || a.order - b.order
-  })
-
-  const count = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 12
-  const items = candidates.slice(0, count).map(({ album, media }) => ({ album, media }))
-  return { items, index: 0, playing: true }
+export function createHomeMemory(items: Photo[]): HomeMemory {
+  return { items: [...items], index: 0, playing: true }
 }
 
 export function stepHomeMemory(memory: HomeMemory, delta: HomeDirection, loop = true): HomeMemory {

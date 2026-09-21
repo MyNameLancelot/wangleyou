@@ -7,9 +7,9 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "validate:content": "tsx scripts/validate-content.ts",
-    "thumbnails": "tsx scripts/thumbnails.ts",
+    "generate:photo-index": "tsx scripts/generate-photo-index.ts",
+    "dev": "npm run generate:photo-index && vite --host 127.0.0.1",
+    "validate:content": "npm run generate:photo-index && tsx scripts/validate-content.ts src/content/generated-photo-index.json public",
     "compress:photos": "tsx scripts/compress-photos.ts",
     "typecheck": "tsc -b",
     "lint": "eslint .",
@@ -18,7 +18,6 @@
     "build": "npm run validate:content && npm run typecheck && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test:e2e": "playwright test",
-    "verify:fixtures": "node scripts/verify-fixtures.mjs",
     "check:sdd": "tsx scripts/sdd/cli.ts"
   },
   "dependencies": {

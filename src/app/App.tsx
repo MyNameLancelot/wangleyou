@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { content, contentErrorMessage } from '../content';
+import { content, contentErrorMessage, homeMemory } from '../content';
 import type { Album } from '../content';
 import {
   clearBackgroundMusicResume,
@@ -139,5 +139,5 @@ export function App() {
 
   const ThemePage: ThemeApp = theme === 'beach' ? BeachApp : GrasslandApp;
 
-  return <ThemePage route={route} content={content} session={session} commands={commands} music={music} musicCommands={musicCommands} onOpen={open} onSwitchTheme={switchTheme} online={online} contentErrorMessage={contentErrorMessage} />;
+  return <ThemePage route={route} content={content} homeMemory={homeMemory} session={session} commands={commands} music={music} musicCommands={musicCommands} onOpen={open} onSwitchTheme={switchTheme} online={online} contentErrorMessage={contentErrorMessage} />;
 }
