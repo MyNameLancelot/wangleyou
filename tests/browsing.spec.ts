@@ -279,13 +279,16 @@ test('media skeletons resolve into real images', async ({page}) => {
 
 test('theme decoration stays decorative and switchable', async ({page}) => {
   await page.goto('./');
-  const decor = page.getByTestId('theme-decor');
-  await expect(decor).toHaveCount(1);
-  expect(await decor.evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none');
+  // 海边主题不再渲染背景装饰层
+  await expect(page.getByTestId('theme-decor')).toHaveCount(0);
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
   await page.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('grassland');
   await expect(page.getByRole('heading',{level:1})).toContainText('把辽阔的日子');
+  // 草原主题保留装饰层，且仍然不拦截指针
+  const decor = page.getByTestId('theme-decor');
+  await expect(decor).toHaveCount(1);
+  expect(await decor.evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
