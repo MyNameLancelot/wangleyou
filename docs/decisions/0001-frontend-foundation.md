@@ -1,6 +1,6 @@
 # 0001：纯静态相册的工程基础
 
-日期：2026-09-15。状态：采纳。关联变更：[foundation-album-browsing](../archive/2026-09-15-foundation-album-browsing/spec.md)。
+日期：2026-09-15。状态：采纳。
 
 ## 背景
 

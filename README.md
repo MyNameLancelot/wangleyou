@@ -123,9 +123,9 @@ VITE_MEDIA_BASE_URL=https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/pu
 5. 若 GitHub 要求环境审批，按已有规则审批；在 **Settings → Environments → github-pages** 核实允许 `main` 部署。不要为通过检查而绕过现有审批。
 6. 发布成功后打开运行中 `github-pages` 环境给出的链接，核对首页、相册直接链接和刷新、照片原图与缩略图。Pages 设置页也会显示访问地址。
 
-`.github/workflows/deploy.yml` 监听 main 更新，也支持 **Run workflow → Branch: main** 手动重试。选择其他分支会跳过发布。每次先复用 `.github/workflows/check.yml` 运行内容/SDD 结构/类型/lint/单元测试/构建、内容夹具与桌面和移动模拟浏览器验证；全部成功才从同一提交重新构建并上传 `dist/`。Node/npm 只用于构建，访客浏览器加载编译后的 HTML/CSS/JS。
+`.github/workflows/deploy.yml` 监听 main 更新，也支持 **Run workflow → Branch: main** 手动重试。选择其他分支会跳过发布。每次先复用 `.github/workflows/check.yml` 运行内容校验、模块结构、类型检查、单元测试、构建和桌面/移动浏览器验证；全部成功才从同一提交重新构建并上传 `dist/`。Node/npm 只用于构建，访客浏览器加载编译后的 HTML/CSS/JS。
 
-check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检查和部署内检查两次运行；检查命令只维护一份。`SDD policy` 的完整变更声明门禁仍在 PR 执行，保护 main 仍需要 [分支保护](docs/sdd.md)。deploy.yml 不赋予构建任务 Pages 写权限；只有发布任务获得 Pages 写入与身份令牌权限，无需新增 PAT 或 secrets。
+check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检查和部署内检查两次运行；检查命令只维护一份。`SDD policy` 的完整变更声明门禁在 PR 执行；实际保护规则以仓库 Settings 为准。deploy.yml 不赋予构建任务 Pages 写权限；只有发布任务获得 Pages 写入与身份令牌权限，无需新增 PAT 或 secrets。
 
 发布只上传 dist/，不提交 dist/，不创建 gh-pages 分支。工作流明确设置 `SITE_BASE=/wangleyou/`；若以后绑定根域名或改仓库名，需同步工作流、Vite 默认路径和浏览器验证配置，不只填写 Custom domain。
 
@@ -135,7 +135,7 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 - Pages 配置失败：确认 Source=GitHub Actions；发布权限/环境错误则检查 job 权限及 github-pages 的分支/审批设置。
 - 工作流已在 main 但没有运行：在 Actions 手动运行并选择 main。重跑历史运行会使用该次旧提交；恢复正常发布应运行当前 main。
 - 页面能开但资源 404：核对 /wangleyou/ 基础路径、相册媒体配置和真实 Pages 地址。
-- 暂停自动发布：在 Actions 禁用 Deploy GitHub Pages。恢复旧版本通过新 PR revert 问题提交，记录相应 SDD 说明，合并 main 后重新验证部署；禁用工作流不会删除已发布网站。
+- 暂停自动发布：在 Actions 禁用 Deploy GitHub Pages。恢复旧版本通过新 PR revert 问题提交，合并 main 后重新验证部署；禁用工作流不会删除已发布网站。
 
 ### 状态与容量
 
@@ -163,10 +163,8 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 | src/shared | 跨模块无 UI 类型契约（当前：路由形状） |
 | scripts | 内容文件校验、缩略图生成与发布图片压缩 |
 | tests | 浏览器验收 |
-| docs/changes | 活动规格、计划与任务 |
-| docs/archive | 已完成变更与验证记录 |
 
-每个实际模块包含 module.md。新增功能按“spec → plan → tasks → 实现 → 验证 → 同步架构 → 归档”推进。
+每个实际模块包含 module.md。新增功能按“spec → plan → tasks → 实现 → 验证 → 同步架构”推进。
 
 页面、主题与交互变化以用户口述为准；新增或改变用户可见交互时，使用 full 流程并在规格中记录可验证的要求。详细规则见 [SDD 维护指南](docs/sdd.md)。
 
@@ -174,8 +172,6 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 未来 WebView 通过独立适配边界接入。当前无原生 SDK、桥接或离线缓存；移动模拟测试不能代表 iOS、Android 真机或套壳验证。全屏等功能按浏览器能力降级。
 
-本里程碑的 [规格、计划和任务归档](docs/archive/2026-09-15-foundation-album-browsing/spec.md) 与 [验证记录](docs/archive/2026-09-15-foundation-album-browsing/verification.md) 已完成。
-
 ## SDD 维护检查
 
-规则、声明示例、完整/轻量流程及 GitHub 必需检查设置见 [SDD 维护指南](docs/sdd.md)。提交前可执行 `npm run check:sdd -- --staged`；审查整个工作区执行 `npm run check:sdd -- --worktree --base origin/main`。`npm run check` 包含模块依赖结构检查，PR CI 校验完整差异与变更声明。远端保护尚未核实，工作流存在不代表已经限制合并。
+规则、声明示例及完整/轻量流程见 [SDD 维护指南](docs/sdd.md)。提交前可执行 `npm run check:sdd -- --staged`；审查整个工作区执行 `npm run check:sdd -- --worktree --base origin/main`。`npm run check` 包含模块依赖结构检查，PR CI 校验完整差异与变更声明；实际保护规则以仓库 Settings 为准。

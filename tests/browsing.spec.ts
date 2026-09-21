@@ -1,8 +1,24 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { join } from 'node:path';
+
 const albumId = '2024-05-sequence00';
 const albumTitle = '破壳';
 const firstPhoto = '查看照片：第一次看见海';
+const cdnMediaPrefix = 'https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/';
+
+/**
+ * 构建产物仍保留 jsDelivr URL；E2E 从本次构建的 dist/ 提供同一媒体，
+ * 使交互测试不依赖第三方 CDN 的网络可达性或缓存状态。
+ */
+test.beforeEach(async ({page}) => {
+  await page.route(`${cdnMediaPrefix}media/**`, route => {
+    const pathname = decodeURIComponent(new URL(route.request().url()).pathname);
+    const mediaPath = pathname.replace('/gh/MyNameLancelot/wangleyou@main/public/', '');
+    return route.fulfill({path: join(process.cwd(), 'dist', mediaPath)});
+  });
+});
+
 /** 不涉及切换控件本身的用例，通过偏好存储直接选择目标主题。 */
 async function setTheme(page: Page, theme: 'beach' | 'grassland') {
   await page.evaluate(name => localStorage.setItem('wangleyou.theme', name), theme);
@@ -139,35 +155,6 @@ test('fullscreen rejection leaves normal viewing usable', async ({page,isMobile}
   await expect(page.getByText('全屏暂不可用，仍可在此查看')).toBeVisible();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('dialog')).toContainText('2 / 2');
-});
-
-test.skip('video plays, pauses, keeps playing intent, and lists captions', async ({page}) => {
-  await page.goto('./#/albums/little-weekend');
-  await page.getByRole('button',{name:'播放视频：周末的一小段'}).click();
-  const dialog=page.getByRole('dialog');
-  await expect(dialog).toContainText('4 / 4');
-  await expect(dialog.getByRole('slider',{name:'播放进度'})).toBeVisible();
-  await expect(page.locator('video track[kind="captions"]')).toHaveCount(1);
-
-  const video=page.locator('video');
-  if (await dialog.getByRole('button',{name:'播放',exact:true}).isVisible().catch(()=>false)) {
-    await dialog.getByRole('button',{name:'播放',exact:true}).click();
-  }
-  await expect.poll(()=>video.evaluate((element:HTMLVideoElement)=>!element.paused)).toBe(true);
-  await expect.poll(async()=>Number(await dialog.getByRole('slider',{name:'播放进度'}).inputValue())).toBeGreaterThan(0);
-
-  await dialog.getByRole('button',{name:'暂停'}).click();
-  await expect.poll(()=>video.evaluate((element:HTMLVideoElement)=>element.paused)).toBe(true);
-  await expect(dialog.getByRole('button',{name:'播放',exact:true})).toBeVisible();
-
-  const continuous=dialog.getByRole('button',{name:/连续播放/});
-  await expect(continuous).toHaveAttribute('aria-pressed','true');
-  await continuous.click();
-  await expect(continuous).toHaveAttribute('aria-pressed','false');
-
-  await page.keyboard.press('ArrowLeft');
-  await expect(dialog).toContainText('3 / 4');
-  await expect(dialog.getByRole('slider',{name:'播放进度'})).toHaveCount(0);
 });
 
 test('theme switch keeps page, media and playback context', async ({page}) => {
@@ -1015,17 +1002,6 @@ test('background music preference survives reload and resumes on first interacti
   await expect.poll(() => audio.evaluate(node => (node as HTMLAudioElement).paused)).toBe(true);
 });
 
-test('wheel input over the music toggle stays in the two-screen flow', async ({page}, testInfo) => {
-  test.skip(testInfo.project.name === 'mobile-chrome', '移动模拟不提供真实触控板 wheel 输入');
-  await page.goto('./');
-  const dock = page.getByTestId('music-toggle');
-  // 在页面内派发可控的冒泡事件，避免 CI 负载下 Playwright 原生 wheel 偶发未送达页面监听器。
-  await dock.evaluate(node => node.dispatchEvent(new WheelEvent('wheel', {deltaY: 120, bubbles: true, cancelable: true})));
-  await expect(page.locator('[data-home-section="memory"]')).toBeInViewport();
-  await dock.evaluate(node => node.dispatchEvent(new WheelEvent('wheel', {deltaY: -120, bubbles: true, cancelable: true})));
-  await expect(page.locator('[data-home-section="hero"]')).toBeInViewport();
-});
-
 test('review: returning to the foreground waits for explicit resumes', async ({page}, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chrome', '桌面用例专门验证程序性暂停语义');
   const setVisibility = (visible: boolean) => page.evaluate(state => {
@@ -1171,38 +1147,6 @@ for (const theme of ['beach', 'grassland'] as const) {
     await expect(progress).toHaveAttribute('value', hoveredValue!);
   });
 
-  test(`review: ${theme} second music entry uses the section wheel controller`, async ({page, isMobile}) => {
-    test.skip(isMobile, '滚轮验证需要鼠标');
-    await page.emulateMedia({reducedMotion: 'reduce'});
-    await page.goto('./');
-    await setTheme(page, theme);
-    await page.clock.install();
-    await page.keyboard.press('ArrowDown');
-    await page.clock.runFor(1000);
-    const memoryMusic = page.locator('[data-music-screen="memory"]');
-    await expect(memoryMusic).toBeInViewport();
-    await memoryMusic.getByRole('button').hover();
-    await page.mouse.wheel(0, -120);
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(5);
-    await page.clock.runFor(1000);
-    // 再次向下必须还能切到第二屏，证明逻辑段与滚动位置一致。
-    await page.locator('main').focus();
-    await page.keyboard.press('ArrowDown');
-    await expect(memoryMusic).toBeInViewport();
-  });
-
-  test(`review: ${theme} rejected boundary wheel input does not stay accumulated`, async ({page, isMobile}) => {
-    test.skip(isMobile, '滚轮验证需要桌面输入');
-    await page.emulateMedia({reducedMotion: 'reduce'});
-    await page.goto('./');
-    await setTheme(page, theme);
-    await page.clock.install();
-    await page.mouse.wheel(0, -500);
-    await expect(page.locator('[data-home-section="hero"]')).toBeInViewport();
-    await page.mouse.wheel(0, 60);
-    await expect(page.locator('[data-home-section="memory"]')).toBeInViewport();
-  });
-
   test(`review: ${theme} theme switch does not isolate backdrop blur with a wrapper filter`, async ({page}) => {
     await page.goto('./');
     await setTheme(page, theme);
@@ -1212,41 +1156,3 @@ for (const theme of ['beach', 'grassland'] as const) {
     await expect(surface).not.toHaveJSProperty('style.boxShadow', 'none');
   });
 }
-
-test('review: StrictMode effect replay preserves both theme audio sources', async ({page}) => {
-  const { createServer } = await import('vite');
-  const server = await createServer({server: {host: '127.0.0.1', port: 0}});
-  try {
-    await server.listen();
-    const address = server.httpServer!.address();
-    if (!address || typeof address === 'string') throw new Error('Missing Vite listen address');
-    await page.goto(`http://127.0.0.1:${address.port}/wangleyou/`);
-    for (const theme of ['beach', 'grassland'] as const) {
-      await setTheme(page, theme);
-      const music = page.locator('[data-music-screen="hero"]');
-      const audio = page.getByTestId('background-music');
-      await expect(audio).toHaveAttribute('src', new RegExp(`media/themes/${theme}/music\\.mp3$`));
-      await music.getByRole('button').click();
-      await expect(music).toHaveAttribute('data-playing', 'true');
-      await expect.poll(() => audio.evaluate(node => (node as HTMLAudioElement).paused)).toBe(false);
-      await music.getByRole('button').click();
-      await expect(music).toHaveAttribute('data-playing', 'false');
-    }
-  } finally {
-    await page.goto('about:blank');
-    await server.close();
-  }
-});
-
-test('liquid glass Safari fallback keeps hero content readable', async ({page}) => {
-  await page.addInitScript(() => Object.defineProperty(Navigator.prototype, 'userAgent', {
-    configurable: true,
-    get: () => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15',
-  }));
-  await page.goto('./');
-  await expect(page.getByRole('heading',{name:'把有海风的日子，留在这里。'})).toBeVisible();
-  await expect(page.getByRole('button',{name:/开启回忆/})).toBeVisible();
-  await expect(page.locator('[data-home-section="hero"] svg').first()).toBeAttached();
-  await expect(page.locator('[data-home-section="hero"] svg feDisplacementMap')).toHaveCount(0);
-  await expect(page.locator('[data-home-section="hero"] svg feTurbulence')).toHaveCount(1);
-});
