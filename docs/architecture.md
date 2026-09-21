@@ -54,7 +54,7 @@
 - 源素材由维护者保留在仓库外；发布大图为 public/media 顶层图片，派生缩略图为 public/media/thumbs，演示视频为 public/media/video，均提交 Git，只由 src/content/albums.json 引用。主题私有资源按主题分目录：public/media/themes/<主题>/ 存放该主题的首屏图、第二屏背景与背景音乐，只由对应主题代码引用，不进入内容配置，主题之间不互相引用。
 - 构建校验和运行时容错分层，详情见需求文档。
 - 主题样式、资产和 React UI 限定在各主题目录；全局样式仅包含基础重置与可访问性通用规则。
-- 首页使用 `100dvh`、scroll snap 与 `color-mix()`；海边首屏与两套主题的页面控件分别在自己的主题目录导入 `react-liquid-glass-svg` 提供 SVG 折射和模糊增强，不支持时由主题 CSS 回退到不透明玻璃底色；`prefers-reduced-motion` 取消卡片与照片非必要动效。兼容性结论必须来自实际浏览器验证，不能由代码存在推断。
+- 首页使用 `100dvh`、scroll snap 与 `color-mix()`；两屏交界由主题私有的装饰层用第二屏背景做跨屏淡入（`mask-image` 渐变，位于首屏之上、第二屏之下，不覆盖第二屏内容），不支持遮罩时该层保持隐藏并退回两屏直接相接；海边首屏与两套主题的页面控件分别在自己的主题目录导入 `react-liquid-glass-svg` 提供 SVG 折射和模糊增强，不支持时由主题 CSS 回退到不透明玻璃底色；`prefers-reduced-motion` 取消卡片与照片非必要动效。兼容性结论必须来自实际浏览器验证，不能由代码存在推断。
 
 ## 设计系统边界
 
