@@ -1,0 +1,15 @@
+{
+  "mode": "light",
+  "summary": "稳定音乐控件滚轮切屏浏览器回归",
+  "reason": "CI 中 Playwright 原生滚轮偶发未到达页面监听器，导致既有两屏切换断言超时；改为页面内冒泡事件，保持相同验收语义。",
+  "behavior": false,
+  "architecture": false,
+  "verification": ["npx playwright test tests/browsing.spec.ts --project=desktop-chrome --grep 'wheel input over the music toggle' 通过"],
+  "impacts": {
+    "requirements": {"status": "none", "reason": "不改变产品行为"},
+    "architecture": {"status": "none", "reason": "不改变应用架构"},
+    "modules": {"status": "none", "reason": "仅调整浏览器测试实现"},
+    "decisions": {"status": "none", "reason": "没有新的长期技术决策"},
+    "readme": {"status": "none", "reason": "使用方法不变"}
+  }
+}

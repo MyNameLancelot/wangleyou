@@ -4,7 +4,8 @@ import { pathToFileURL } from 'node:url';
 import { validateContent } from '../src/content/validate';
 
 export async function validateFiles(configPath: string, publicDir: string) {
-  const parsed = validateContent(JSON.parse(await readFile(configPath, 'utf8')));
+  const raw = JSON.parse(await readFile(configPath, 'utf8'));
+  const parsed = validateContent(raw.content ?? raw);
   const root = await realpath(publicDir);
   const refs: { path: string; location: string }[] = [];
   parsed.albums.forEach((album, ai) => {
@@ -12,7 +13,6 @@ export async function validateFiles(configPath: string, publicDir: string) {
     album.media.forEach((media, mi) => {
       const location = `albums[${ai}].media[${mi}]`;
       refs.push({ path: media.src, location: `${location}.src` });
-      if (media.thumbnail) refs.push({ path: media.thumbnail, location: `${location}.thumbnail` });
       if (media.type === 'video' && media.poster) refs.push({ path: media.poster, location: `${location}.poster` });
       if (media.type === 'video' && media.captions) refs.push({ path: media.captions, location: `${location}.captions` });
     });
@@ -30,7 +30,7 @@ export async function validateFiles(configPath: string, publicDir: string) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  validateFiles(process.argv[2] || 'src/content/albums.json', process.argv[3] || 'public')
+  validateFiles(process.argv[2] || 'src/content/generated-photo-index.json', process.argv[3] || 'public')
     .then(data => console.log(`内容校验通过：${data.albums.length} 个相册，${data.albums.reduce((sum, a) => sum + a.media.length, 0)} 个媒体`))
     .catch((error: Error) => { console.error(error.message); process.exitCode = 1; });
 }

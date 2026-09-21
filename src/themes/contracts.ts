@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { Album, SiteContent } from '../content';
+import type { Album, HomeMemoryPhoto, SiteContent } from '../content';
 import type { Session, PlaybackStatus } from '../playback';
 import type { BackgroundMusic, MusicStatus } from '../playback';
 import type { Route } from '../shared';
@@ -21,6 +21,7 @@ export interface ThemeViewerCommands {
 export interface ThemeAppProps {
   route: Route;
   content: SiteContent;
+  homeMemory: HomeMemoryPhoto[];
   session: Session | null;
   commands: ThemeViewerCommands;
   music: BackgroundMusic;

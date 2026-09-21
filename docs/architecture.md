@@ -51,7 +51,7 @@
 
 ## 内容与样式边界
 
-- 源素材由维护者保留在仓库外；发布大图为 public/media 顶层图片，派生缩略图为 public/media/thumbs，演示视频为 public/media/video，均提交 Git，只由 src/content/albums.json 引用。主题私有资源按主题分目录：public/media/themes/<主题>/ 存放该主题的首屏图、第二屏背景与背景音乐，只由对应主题代码引用，不进入内容配置，主题之间不互相引用。
+- 源素材由维护者保留在仓库外；发布照片位于 `public/media/photos/YYYY-MM-SequenceNN-相册名/`，构建期脚本扫描目录、`meta.json` 与 `home-memory.json` 后生成 `src/content/generated-photo-index.json`，浏览器不枚举目录。主题私有资源按主题分目录：public/media/themes/<主题>/ 存放该主题的首屏图、第二屏背景与背景音乐，只由对应主题代码引用，不进入内容配置，主题之间不互相引用。
 - 构建校验和运行时容错分层，详情见需求文档。
 - 主题样式、资产和 React UI 限定在各主题目录；全局样式仅包含基础重置与可访问性通用规则。
 - 首页使用 `100dvh`、scroll snap 与 `color-mix()`；两屏交界由主题私有的装饰层用第二屏背景做跨屏淡入（`mask-image` 渐变，位于首屏之上、第二屏之下，不覆盖第二屏内容），不支持遮罩时该层保持隐藏并退回两屏直接相接；海边首屏与两套主题的页面控件分别在自己的主题目录导入 `react-liquid-glass-svg` 提供 SVG 折射和模糊增强，不支持时由主题 CSS 回退到不透明玻璃底色；`prefers-reduced-motion` 取消卡片与照片非必要动效。兼容性结论必须来自实际浏览器验证，不能由代码存在推断。
@@ -72,7 +72,7 @@ SDD 根据实际行为与架构影响选择 full 或 light。新增或改变用�
 - `src/main.tsx` → `src/app/index.ts`：应用入口；各模块 index.ts 为公开入口。
 - `src/app/router.ts`：Hash 导航；静态网站默认 `/wangleyou/`，SITE_BASE 可覆盖。
 - `scripts/validate-content.ts`：配置与本地资源校验，构建前必须通过。
-- `scripts/thumbnails.ts`：发布大图生成缩略图。
+- `scripts/generate-photo-index.ts`：扫描照片目录、校验 `meta.json`，生成应用读取的相册索引。
 - `npm run check`、`npm run build`、`npm run test:e2e`：验证入口，使用说明见 README。
 - `.github/workflows/check.yml`：独立 push/PR 检查，也提供 workflow_call 供部署复用；自身不发布。
 - `.github/workflows/deploy.yml`：main push/手动运行，依次复用检查、构建 dist/、发布 Pages；权限和接口见 [工作流模块](../.github/workflows/module.md)。

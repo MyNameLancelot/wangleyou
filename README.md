@@ -25,7 +25,7 @@ npm run dev
 | 命令 | 用途 |
 | --- | --- |
 | `npm run dev` | 本地开发 |
-| `npm run thumbnails` | 从发布大图生成缩略图，不修改大图 |
+| `npm run generate:photo-index` | 扫描照片相册目录并生成应用使用的内容索引 |
 | `npm run compress:photos` | 离线把照片压成发布规格：长边封顶、统一 JPEG、剥离元数据，不改动源文件 |
 | `npm run validate:content` | 检查配置结构、日期、ID 和实际文件 |
 | `npm run typecheck` | TypeScript 检查 |
@@ -35,54 +35,40 @@ npm run dev
 | `npm run build` | 校验后生成 dist 静态产物 |
 | `npm run preview` | 预览构建结果，默认端口 4173 |
 | `npm run test:e2e` | 构建产物上的桌面与移动端 Chrome 验收 |
-| `npm run verify:fixtures` | 临时新增单张相册并验证浏览器行为，结束后恢复原配置及构建；请串行执行 |
 
 浏览器测试前先 `npm run build`。测试使用 scripts/serve-built.mjs 提供严格静态服务，未知文件返回 404，不做 SPA 回退。需要 Chrome；环境尚未安装时运行 `npx playwright install chrome`。Linux CI 使用 `npx playwright install --with-deps chrome`。报告在 playwright-report，截图/失败 trace 在 test-results，均不提交 Git。
 
 ## 添加照片或相册
 
 1. 相机源素材自行保存在仓库外，准备适合网页显示的 JPEG、PNG 或 WebP 大图。
-2. 将发布大图加入 `public/media/`，使用不同文件名避免覆盖现有内容。照片文件名建议小写英文和连字符。
-3. 运行 `npm run thumbnails`。脚本读取 media 目录顶层图片，在 `public/media/thumbs/` 生成最长边 640px、质量 78 的 WebP，不放大、不覆盖源文件。派生文件需要一并提交。
-4. 编辑 `src/content/albums.json`，添加相册或媒体项。
-5. 运行 `npm run check` 和 `npm run build`，预览确认；重新部署后更新线上内容。
+2. 新建 `public/media/photos/YYYY-MM-SequenceNN-相册名/`，将发布照片放入目录；`top01.jpg`、`top02.jpg` 会优先显示，其余按文件名自然排序。
+3. 在目录中编辑 `meta.json`，以照片文件名为键填写 `id`、日期、说明和替代文本；不维护照片列表或缩略图。
+4. 编辑 `public/media/photos/home-memory.json`，显式填写首页主回忆照片及播放顺序。
+5. 运行 `npm run check` 和 `npm run build`；命令会自动生成索引并校验目录、元信息和实际资源。
 
-新增相册示例（先准备引用文件）：
+相册元信息示例（`meta.json`）：
 
 ```json
 {
-  "id": "autumn-walk",
-  "title": "秋天的散步",
-  "date": "2026-10-01",
-  "description": "一起踩过落叶的小路。",
-  "cover": "media/thumbs/autumn-walk.webp",
-  "media": [
-    {
+  "top01.jpg": {
       "id": "leaves-on-path",
-      "type": "photo",
-      "src": "media/autumn-walk.jpg",
-      "thumbnail": "media/thumbs/autumn-walk.webp",
       "date": "2026-10-01",
       "description": "收集一片秋天",
       "alt": "铺着金黄色落叶的小路",
       "width": 1600,
       "height": 1067
-    }
-  ]
+  }
 }
 ```
 
 ### 配置规则
 
-- 顶层 `site.title`、`site.subtitle` 控制站点文案，`albums` 是相册数组。
-- 相册必填 `id`、`title`、`media`；`date`、`description`、`cover` 可选。
-- 媒体必填 `id`、`type`、`src`；`thumbnail`、`date`、`description`、`alt`、`width`、`height` 可选。
-- `type` 为 `photo` 或 `video`；视频另外支持 `poster` 和非负 `duration`（秒）。
-- ID 使用小写字母、数字、单个连字符分隔。相册 ID 全局唯一，媒体 ID 在相册内唯一。
-- 日期使用真实的 `YYYY-MM-DD`。相册新到旧、媒体旧到新；缺日期排末尾，同日期保持配置顺序。
+- 相册目录名必须是 `YYYY-MM-SequenceNN-相册名`；构建期按年月和序列发现相册，页面从新到旧显示。
+- `meta.json` 只记录照片元信息；每张图片均需 `id`，可选 `date`、`description`、`alt`、`width`、`height`。
+- 照片 ID 在同相册内唯一。照片顺序由文件名决定：`topNN` 最先，其他文件自然排序。
+- 首页主回忆由 `home-memory.json` 完整且显式定义，不从相册派生。
 - 路径相对 public，例如 `media/photo.jpg`。不写 `/wangleyou/` 或 `public/` 前缀，不写外部 URL、查询参数、反斜杠或 `../`。路径由应用统一加部署前缀。
-- 不指定封面时选择第一个可用预览资源；空相册使用占位。
-- 可选尺寸必须为正整数；大图按原比例显示，缩略图容器可以裁切。
+- 相册封面默认使用排序后的第一张照片；可选尺寸必须为正整数。
 - 显式引用文件不存在、配置格式错误、重复 ID 会使校验和构建失败，并指出字段位置。运行时网络失败可在大图查看器重试。
 - 背景音乐不进入相册内容配置；主题私有资产（首屏图、第二屏背景、背景音乐）统一放在 `public/media/themes/<主题>/`，由对应主题代码引用，来源未确认前仅用于非商业占位。替换真实音乐时同步主题组件、素材说明和许可确认。
 

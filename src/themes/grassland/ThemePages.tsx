@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, TouchEvent as ReactTouchEvent } from 'react';
-import type { Album, Media, SiteContent, Video } from '../../content';
+import type { Album, HomeMemoryPhoto, Media, SiteContent, Video } from '../../content';
 import { assetUrl } from '../../content';
 import { PhotoImage } from './PhotoImage';
 import {
@@ -30,7 +30,7 @@ const dateText = (date?: string) => (date ? date.replaceAll('-', '.') : '待续'
 const yearOf = (date?: string) => (date && /^\d{4}/.test(date) ? date.slice(0, 4) : '未标注日期');
 const isVideo = (media: Media): media is Video => media.type === 'video';
 const durationText = (seconds?: number) => (seconds && seconds > 0 ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : '');
-const thumbnailOf = (media: Media) => media.thumbnail || (isVideo(media) ? media.poster : undefined) || (media.type === 'photo' ? media.src : undefined);
+const thumbnailOf = (media: Media) => (isVideo(media) ? media.poster : undefined) || (media.type === 'photo' ? media.src : undefined);
 const mediaLabel = (media: Media) => (isVideo(media) ? `播放视频：${media.description || media.id}` : `查看照片：${media.description || media.id}`);
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HOME_TRANSITION_LOCK_MS = 600;
@@ -82,14 +82,14 @@ function HomeHero({ heroImage, copy, onStartMemory }: {
   </div>;
 }
 
-export function HomePage({ data, heroImage = null, copy, viewerOpen = false }: {
-  data: SiteContent;
+export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }: {
+  memory: HomeMemoryPhoto[];
   heroImage?: string | null;
   copy: { eyebrow: string; title: string; subtitle: string };
   viewerOpen?: boolean;
 }) {
   const [section, setSection] = useState<HomeSection>('hero');
-  const [homeMemory, setHomeMemory] = useState(() => createHomeMemory(data.albums));
+  const [homeMemory, setHomeMemory] = useState(() => createHomeMemory(memory));
   const [memoryHovered, setMemoryHovered] = useState(false);
   const [memoryFocused, setMemoryFocused] = useState(false);
   const [memoryResumeRequired, setMemoryResumeRequired] = useState(false);
@@ -109,8 +109,8 @@ export function HomePage({ data, heroImage = null, copy, viewerOpen = false }: {
   const memoryIntervalRef = useRef<ReturnType<typeof createHomeMemoryIntervalController<number>> | undefined>(undefined);
 
   useEffect(() => {
-    setHomeMemory(createHomeMemory(data.albums));
-  }, [data.albums]);
+    setHomeMemory(createHomeMemory(memory));
+  }, [memory]);
 
   useEffect(() => () => {
     if (transitionTimerRef.current !== undefined) window.clearTimeout(transitionTimerRef.current);
@@ -341,8 +341,8 @@ export function HomePage({ data, heroImage = null, copy, viewerOpen = false }: {
                   <ChevronLeft aria-hidden="true" />
                 </button>
                 <div className={styles.memoryMat} data-memory-mat>
-                  <button type="button" className={styles.homeMemoryPhoto} onClick={toggleMemoryPlayback} aria-label={`${homeMemory.playing ? '暂停主回忆自动播放' : '继续主回忆自动播放'}：${currentMemory.media.description || currentMemory.media.id}`}>
-                    <PhotoImage className={styles.memoryImage} src={assetUrl(currentMemory.media.thumbnail || currentMemory.media.src)} alt={currentMemory.media.alt || currentMemory.album.title || currentMemory.media.description || '主回忆照片'} eager draggable={false} />
+                  <button type="button" className={styles.homeMemoryPhoto} onClick={toggleMemoryPlayback} aria-label={`${homeMemory.playing ? '暂停主回忆自动播放' : '继续主回忆自动播放'}：${currentMemory.description || currentMemory.id}`}>
+                    <PhotoImage className={styles.memoryImage} src={assetUrl(currentMemory.src)} alt={currentMemory.alt || currentMemory.description || '主回忆照片'} eager draggable={false} />
                   </button>
                 </div>
                 <button type="button" className={`${styles.memoryArrow} ${styles.memoryArrowNext}`} onClick={nextMemory} aria-label="下一张照片">

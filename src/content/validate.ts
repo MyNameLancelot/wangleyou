@@ -119,11 +119,9 @@ function validateMedia(input: unknown, location: string): Media {
   validateCommonMedia(input, location)
 
   if (input.type === 'photo') {
-    assertOptionalAssetPath(input.thumbnail, `${location}.thumbnail`)
     return input as unknown as Photo
   }
   if (input.type === 'video') {
-    assertOptionalAssetPath(input.thumbnail, `${location}.thumbnail`)
     assertOptionalAssetPath(input.poster, `${location}.poster`)
     assertOptionalAssetPath(input.captions, `${location}.captions`)
     assertOptionalDuration(input.duration, `${location}.duration`)
@@ -168,17 +166,14 @@ export function validateContent(input: unknown): SiteContent {
   return input as unknown as SiteContent
 }
 
-function compareDates(a: { date?: string }, b: { date?: string }, direction: 1 | -1): number {
-  if (a.date === undefined) return b.date === undefined ? 0 : 1
-  if (b.date === undefined) return -1
-  return a.date.localeCompare(b.date) * direction
-}
-
-export function sortAlbums(albums: Album[]): Album[] {
-  return albums
-    .map((album) => ({
-      ...album,
-      media: [...album.media].sort((a, b) => compareDates(a, b, 1)),
-    }))
-    .sort((a, b) => compareDates(a, b, -1))
+export function validateHomeMemory(input: unknown): Photo[] {
+  if (!Array.isArray(input)) fail('home-memory', 'must be an array')
+  const ids = new Set<string>()
+  return input.map((item, index) => {
+    const photo = validateMedia(item, `home-memory[${index}]`)
+    if (photo.type !== 'photo') fail(`home-memory[${index}].type`, 'must be photo')
+    if (ids.has(photo.id)) fail(`home-memory[${index}].id`, `duplicates photo id '${photo.id}'`)
+    ids.add(photo.id)
+    return photo
+  })
 }
