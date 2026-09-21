@@ -183,29 +183,28 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   await expect(page.getByRole('button',{name:'全部',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'照片',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'视频',exact:true})).toBeVisible();
-  // 浏览页不展示任何统计数量、相册快捷入口或键盘提示
+  // 浏览页不展示任何统计数量、相册快捷入口、排序说明或键盘提示
   await expect(page.getByText(/\d+\s*项/)).toHaveCount(0);
   await expect(page.locator('aside').getByRole('link')).toHaveCount(0);
+  await expect(page.getByText('最新优先')).toHaveCount(0);
   await expect(page.getByText('键盘可用方向键')).toHaveCount(0);
+  // 定位栏标题与卡片上的相册名称
+  await expect(page.getByRole('heading',{name:'光阴刻度'})).toBeVisible();
+  await expect(page.locator('aside').getByRole('button',{name:'2025'})).toBeVisible();
+  await expect(page.getByText(albumTitle,{exact:true}).first()).toBeVisible();
   // 定位栏与 hero 文案同边，网格不贴窗口右边缘
   const layout = await page.evaluate(() => {
     const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect() ?? null;
     const rail = box('[class*="railCard"]');
     const title = box('#browse-title');
     const grid = box('[class*="browseGrid"]');
-    const yearTitle = box('[id^="year-title-"]');
-    const note = box('[class*="sectionNote"]');
     return {
       railLeft: rail?.left ?? 0, titleLeft: title?.left ?? 0, gridRight: grid?.right ?? 0,
-      noteLeft: note?.left ?? 0, noteRight: note?.right ?? 0, yearTitleRight: yearTitle?.right ?? 0,
       innerWidth: window.innerWidth,
     };
   });
   expect(Math.abs(layout.railLeft - layout.titleLeft)).toBeLessThanOrEqual(1);
   expect(layout.gridRight).toBeLessThan(layout.innerWidth - 100);
-  // “最新优先”紧邻年份标题，不再被推到行尾
-  expect(layout.noteLeft - layout.yearTitleRight).toBeLessThanOrEqual(24);
-  expect(layout.noteRight).toBeLessThan(layout.gridRight - 100);
   await page.getByRole('button',{name:'照片',exact:true}).click();
   await expect(page.getByRole('button',{name:/播放视频/})).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

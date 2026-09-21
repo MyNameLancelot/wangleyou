@@ -2,7 +2,6 @@
 .sectionHeader { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); margin-bottom: var(--space-lg); }
 .sectionHeader h2 { font-family: var(--font-title); font-size: var(--font-size-h3); font-weight: 600; }
 .sectionLink { color: var(--color-action-primary); font-size: var(--font-size-small); min-height: var(--target-min); display: inline-flex; align-items: center; gap: var(--space-2xs); }
-.sectionNote { color: var(--color-text-secondary); font-size: var(--font-size-small); }
 .primary { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--target-min); padding: 12px 22px; background: var(--color-action-primary); color: var(--color-action-on-primary); border: 0; border-radius: var(--radius-sm); font-size: 13px; transition: background var(--motion-fast-duration) var(--motion-standard-easing); }
 .primary:hover { background: var(--color-action-primary-hover); }
 .primary:active { background: var(--color-action-primary-pressed); }
@@ -99,6 +98,7 @@
 .mediaThumb img { transition: transform var(--motion-standard-duration) var(--motion-standard-easing); }
 .mediaTile:hover .mediaThumb img { transform: scale(1.02); }
 .mediaBar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; min-height: 56px; padding: var(--space-xs) var(--space-md); background: var(--color-media-control); color: var(--color-action-on-primary); font-size: var(--font-size-small); }
+.mediaAlbum { flex: none; max-width: 45%; margin-right: var(--space-xs); padding-right: var(--space-xs); border-right: 1px solid rgb(255 255 255 / 38%); opacity: 0.82; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .demoTag { position: absolute; left: 12px; top: 12px; background: var(--color-background-surface); color: var(--color-text-primary); font-size: 10px; padding: 4px 10px; border-radius: var(--radius-pill); }
 .videoBadge { position: absolute; right: 12px; top: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 36px; height: 36px; border-radius: 50%; background: var(--color-background-surface); color: var(--color-action-primary); font-size: 12px; }
 .videoBadge small { position: absolute; right: 44px; background: var(--color-media-control); color: var(--color-action-on-primary); padding: 2px 6px; border-radius: var(--radius-pill); font-family: var(--font-caption); font-size: 10px; }
@@ -133,8 +133,7 @@
 .yearNavLabel { font-family: var(--font-caption); font-size: 10px; color: var(--color-text-secondary); letter-spacing: 1px; }
 .yearChip { min-height: var(--target-min); min-width: var(--target-min); padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid transparent; background: var(--color-background-subtle); color: var(--color-text-primary); font-size: var(--font-size-small); }
 .yearGroup { padding-bottom: var(--space-xl); scroll-margin-top: var(--space-xl); }
-.yearHeader { display: flex; align-items: baseline; justify-content: flex-start; gap: var(--space-sm); margin-bottom: var(--space-md); }
-.yearHeader h2 { font-family: var(--font-title); font-size: var(--font-size-h2); font-weight: 600; }
+.yearTitle { font-family: var(--font-title); font-size: var(--font-size-h2); font-weight: 600; margin-bottom: var(--space-md); }
 .browseGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
 .pageHeader { padding: var(--space-2xl) 0 var(--space-sm); }
 .pageHeader h1 { font-family: var(--font-title); font-size: clamp(30px, 3.4vw, 44px); font-weight: 600; }

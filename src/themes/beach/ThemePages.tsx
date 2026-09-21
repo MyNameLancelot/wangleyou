@@ -40,14 +40,14 @@ const isInteractiveTarget = (target: EventTarget | null) => target instanceof El
   && Boolean(target.closest('a, button, input, select, textarea, summary, [role="button"], [role="link"], [contenteditable="true"]'));
 
 /** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识，演示内容统一标注。 */
-function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean }) {
+function MediaTile({ media, onOpen, album, variant = 'wide', eager, showAlbum = false }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean; showAlbum?: boolean }) {
   const source = thumbnailOf(media);
   return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(media)}>
     <span className={styles.mediaThumb}>
       {source ? <PhotoImage src={mediaUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
       <span className={styles.demoTag}>演示素材</span>
       {isVideo(media) && <span className={styles.videoBadge}><span aria-hidden="true">▶</span>{durationText(media.duration) && <small>{durationText(media.duration)}</small>}</span>}
-      <span className={styles.mediaBar}>{media.description || '生活里的一个瞬间'}</span>
+      <span className={styles.mediaBar}>{showAlbum && <span className={styles.mediaAlbum}>{album.title}</span>}{media.description || '生活里的一个瞬间'}</span>
     </span>
   </button>;
 }
@@ -383,9 +383,9 @@ export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteConte
       </div>
     </div>
     <div className={styles.browseBody}>
-      <aside className={styles.rail} aria-label="按时间定位">
+      <aside className={styles.rail} aria-labelledby="rail-title">
         <div className={styles.railCard}>
-          <h2>按时间定位</h2>
+          <h2 id="rail-title">光阴刻度</h2>
           <ul className={styles.railList}>{years.map(year => <li key={year}><button type="button" className={styles.railYear} onClick={() => goToYear(year)}>{year}</button></li>)}</ul>
         </div>
       </aside>
@@ -397,8 +397,8 @@ export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteConte
         {visible.length === 0
           ? <div className={styles.empty}><span aria-hidden="true">☀</span><h2>这里还没有影像</h2><p>换一个筛选条件，或回到首页看看相册。</p><a className={styles.primary} href="#/">返回首页 <span aria-hidden="true">↗</span></a></div>
           : years.map(year => <section key={year} id={`year-${year}`} className={styles.yearGroup} aria-labelledby={`year-title-${year}`}>
-            <div className={styles.yearHeader}><h2 id={`year-title-${year}`}>{year} 年</h2><span className={styles.sectionNote}>最新优先</span></div>
-            <div className={styles.browseGrid}>{visible.filter(item => yearOf(item.media.date) === year).map(({ album, media }, i) => <MediaTile key={`${album.id}-${media.id}`} album={album} media={media} onOpen={onOpen} eager={i < 3} />)}</div>
+            <h2 className={styles.yearTitle} id={`year-title-${year}`}>{year} 年</h2>
+            <div className={styles.browseGrid}>{visible.filter(item => yearOf(item.media.date) === year).map(({ album, media }, i) => <MediaTile key={`${album.id}-${media.id}`} album={album} media={media} onOpen={onOpen} eager={i < 3} showAlbum />)}</div>
           </section>)}
       </div>
     </div>
