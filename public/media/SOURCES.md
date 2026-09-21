@@ -15,6 +15,33 @@
 
 下载时使用 Pexels 图像服务压缩至宽度 1600px；thumbs 下的派生 WebP 由本项目脚本生成，最长边 640px，不放大。素材替换时同步更新来源信息。
 
+## 相册测试图来源（第二批）
+
+每个相册另加了 6 张测试图，用于验证多图布局、层叠封面与查看器翻页，同样不代表真实家庭记录。
+
+来源：Lorem Picsum（`https://picsum.photos`，图片由 Unsplash 提供），适用 [Unsplash License](https://unsplash.com/license)：允许免费使用与修改，不得原样转售或用于训练竞品服务。下表列出每张图的作者与 Unsplash 原始页面；下载后经本项目 `npm run compress:photos` 统一为 JPEG（长边 1600px、质量 82、剥离元数据）。
+
+| 发布文件 | 作者 | 原始照片页面 |
+| --- | --- | --- |
+| 2024-05-sequence00-破壳/003.jpg | Jon Eckert | [Unsplash](https://unsplash.com/photos/umLpP7uCZs0) |
+| 2024-05-sequence00-破壳/004.jpg | Rula Sibai | [Unsplash](https://unsplash.com/photos/qVj3KuEikvg) |
+| 2024-05-sequence00-破壳/005.jpg | Rula Sibai | [Unsplash](https://unsplash.com/photos/-vq7mi4oF0s) |
+| 2024-05-sequence00-破壳/006.jpg | Jean Kleisz | [Unsplash](https://unsplash.com/photos/4yzPVohNuVI) |
+| 2024-05-sequence00-破壳/007.jpg | Kundan Ramisetti | [Unsplash](https://unsplash.com/photos/87TJNWkepvI) |
+| 2024-05-sequence00-破壳/008.jpg | Rafael Souza | [Unsplash](https://unsplash.com/photos/QxkBP3A9XmU) |
+| 2024-08-sequence01-百日/003.jpg | Alexander Shustov | [Unsplash](https://unsplash.com/photos/AHBiSKaENwc) |
+| 2024-08-sequence01-百日/004.jpg | Jassy Onyae | [Unsplash](https://unsplash.com/photos/1gBUXhf0PtA) |
+| 2024-08-sequence01-百日/005.jpg | May Pamintuan | [Unsplash](https://unsplash.com/photos/j9nfqTi5T5o) |
+| 2024-08-sequence01-百日/006.jpg | Caroline Sada | [Unsplash](https://unsplash.com/photos/r1XwWjI4PyE) |
+| 2024-08-sequence01-百日/007.jpg | Vectorbeast | [Unsplash](https://unsplash.com/photos/rsJtMXn3p_c) |
+| 2024-08-sequence01-百日/008.jpg | Jon Eckert | [Unsplash](https://unsplash.com/photos/IoIbdFdGCnQ) |
+| 2025-05-sequence00-周岁/003.jpg | Alexander Shustov | [Unsplash](https://unsplash.com/photos/2FrX56QL7P8) |
+| 2025-05-sequence00-周岁/004.jpg | Julie Geiger | [Unsplash](https://unsplash.com/photos/dYshDcTI1Js) |
+| 2025-05-sequence00-周岁/005.jpg | Sander Weeteling | [Unsplash](https://unsplash.com/photos/rlxZqmc6D_I) |
+| 2025-05-sequence00-周岁/006.jpg | Daniel Genser | [Unsplash](https://unsplash.com/photos/PzPbh-faPgU) |
+| 2025-05-sequence00-周岁/007.jpg | Gozha Net | [Unsplash](https://unsplash.com/photos/xDrxJCdedcI) |
+| 2025-05-sequence00-周岁/008.jpg | Dorothy Lin | [Unsplash](https://unsplash.com/photos/OokBLPrkCNk) |
+
 ## 演示视频来源
 
 | 发布文件 | 来源 | 许可 |

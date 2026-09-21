@@ -82,7 +82,7 @@
 .albumGridSpaced { margin-top: var(--space-xl); }
 .albumCard { min-width: 0; border-radius: var(--radius-lg); }
 /* 相册封面：最多三张照片向右上错位层叠，第一张压在最上面且完整可见。 */
-.cover { position: relative; height: 212px; --stack-gap: 12px; --stack-reach: calc(var(--stack-gap) * 2); }
+.cover { position: relative; aspect-ratio: 3 / 2; --stack-gap: 12px; --stack-reach: calc(var(--stack-gap) * 2); }
 .cover[data-stack='1'] { --stack-reach: 0px; }
 .cover[data-stack='2'] { --stack-reach: var(--stack-gap); }
 .coverLayer { position: absolute; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-background-subtle); transition: inset var(--motion-slow-duration) var(--motion-standard-easing); }
@@ -101,7 +101,7 @@
 
 /* 影像卡片：说明条压在卡片底部，与设计稿一致 */
 .mediaTile { display: block; width: 100%; border: 0; background: transparent; padding: 0; text-align: left; min-width: 0; }
-.mediaThumb { position: relative; display: block; aspect-ratio: 16 / 7; overflow: hidden; border-radius: var(--radius-md); background: var(--color-background-subtle); }
+.mediaThumb { position: relative; display: block; aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--radius-md); background: var(--color-background-subtle); }
 .mediaTileTall .mediaThumb { aspect-ratio: 4 / 3; }
 .mediaThumb img { transition: transform var(--motion-standard-duration) var(--motion-standard-easing); }
 .mediaTile:hover .mediaThumb img { transform: scale(1.02); }
@@ -161,7 +161,6 @@
 .upNext { padding-top: var(--space-2xl); }
 .upNextGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); }
 
-@media (min-width: 1400px) { .cover { height: 240px; } }
 @media (max-width: 900px) {
   .browseBody { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); padding-top: var(--space-2xl); }
   .rail { display: none; }

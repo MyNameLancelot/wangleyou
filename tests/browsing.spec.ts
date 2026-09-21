@@ -5,6 +5,8 @@ import { join } from 'node:path';
 const albumId = '2024-05-sequence00';
 const albumTitle = '破壳';
 const firstPhoto = '查看照片：破壳 第 1 张';
+/** 破壳相册的公开照片数量：卡片数量角标、查看器位置提示都据此断言。 */
+const albumPhotoCount = 8;
 const cdnMediaPrefix = 'https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/';
 
 /**
@@ -57,9 +59,11 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   const trigger=page.getByRole('button',{name:firstPhoto}); await trigger.click();
   const dialog=page.getByRole('dialog'); await expect(dialog.getByRole('img')).toBeVisible();
   await expect(dialog.getByRole('button',{name:'上一项'})).toBeDisabled();
-  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText('2 / 2');
+  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
+  for (let index = 3; index <= albumPhotoCount; index += 1) await page.keyboard.press('ArrowRight');
+  await expect(dialog).toContainText(`${albumPhotoCount} / ${albumPhotoCount}`);
   await expect(dialog.getByRole('button',{name:'下一项'})).toBeDisabled();
-  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText('2 / 2');
+  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText(`${albumPhotoCount} / ${albumPhotoCount}`);
   await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
@@ -87,18 +91,18 @@ test('image failure can be retried without leaving the viewer',async({page})=>{
   await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
   await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
 });
 test('rapid switching isolates slow image errors, close/reopen resets session',async({page})=>{
   await page.route('**/media/photos/**/002.jpg',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.abort();});
   await openFirst(page);
   await page.keyboard.press('ArrowRight');
-  const dialog=page.getByRole('dialog'); await expect(dialog).toContainText('2 / 2');
+  const dialog=page.getByRole('dialog'); await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
   await page.keyboard.press('ArrowLeft');
   await expect(dialog.getByRole('img')).toBeVisible();
   await page.waitForTimeout(400); await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
   await page.getByRole('button',{name:'关闭查看器'}).click();
-  await page.getByRole('button',{name:firstPhoto}).click(); await expect(page.getByRole('dialog')).toContainText('1 / 2');
+  await page.getByRole('button',{name:firstPhoto}).click(); await expect(page.getByRole('dialog')).toContainText(`1 / ${albumPhotoCount}`);
 });
 test('dialog focus stays modal and route navigation disposes it',async({page})=>{
   await openFirst(page);
@@ -131,11 +135,11 @@ test('horizontal swipe navigates, vertical swipe does not',async({page,isMobile}
   const image=page.getByRole('dialog').getByRole('img');
   await image.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:250,clientY:250}]});
   await image.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:80,clientY:260}]});
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
   const next=page.getByRole('dialog').getByRole('img');
   await next.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:170,clientY:250}]});
   await next.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:165,clientY:500}]});
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
 });
 
 test('fullscreen enters and is released on close',async({page,isMobile})=>{
@@ -154,7 +158,7 @@ test('fullscreen rejection leaves normal viewing usable', async ({page,isMobile}
   await page.getByRole('button',{name:'全屏查看'}).click();
   await expect(page.getByText('全屏暂不可用，仍可在此查看')).toBeVisible();
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
 });
 
 test('theme switch keeps page, media and playback context', async ({page}) => {
@@ -162,12 +166,12 @@ test('theme switch keeps page, media and playback context', async ({page}) => {
   await page.getByRole('button',{name:firstPhoto}).click();
   const dialog=page.getByRole('dialog');
   await page.keyboard.press('ArrowRight');
-  await expect(dialog).toContainText('2 / 2');
+  await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
 
   const before=await page.evaluate(()=>document.documentElement.dataset.theme);
   await dialog.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).not.toBe(before);
-  await expect(dialog).toContainText('2 / 2');
+  await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(await page.evaluate(()=>location.hash)).toBe(`#/albums/${albumId}`);
 
@@ -241,18 +245,24 @@ test('album cards stack up to three photos and show album level metadata', async
   await expect(card).toBeVisible();
   // 相册日期缺省取目录名的年月
   await expect(card).toContainText('2024.05');
-  await expect(card).toContainText('第一次看见海，也第一次走进树林。');
-  await expect(card.getByText('2 个瞬间')).toBeVisible();
-  const layers = await card.evaluate(node => Array.from(node.querySelectorAll<HTMLElement>('[class*="coverLayer"]')).map(layer => {
-    const box = layer.getBoundingClientRect();
+  await expect(card).toContainText('小小的你，第一次和我们见面。');
+  await expect(card.getByText(`${albumPhotoCount} 个瞬间`)).toBeVisible();
+  const layerBox = (kind: string) => card.locator(`[class*="coverLayer${kind}"]`).evaluate(node => {
+    const box = node.getBoundingClientRect();
     return { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) };
-  }));
-  // 两张照片层叠：后排照片向右上探出，尺寸与前排一致
-  expect(layers).toHaveLength(2);
-  expect(layers[0].x).toBeGreaterThan(layers[1].x);
-  expect(layers[0].y).toBeLessThan(layers[1].y);
-  expect(layers[0].w).toBe(layers[1].w);
-  expect(await card.locator('img').count()).toBe(2);
+  });
+  const [front, mid, back] = await Promise.all([layerBox('Front'), layerBox('Mid'), layerBox('Back')]);
+  // 三张照片层叠：后排向右上探出，尺寸一致
+  expect(await card.locator('[class*="coverLayer"]').count()).toBe(3);
+  expect(back.x).toBeGreaterThan(mid.x);
+  expect(mid.x).toBeGreaterThan(front.x);
+  expect(back.y).toBeLessThan(mid.y);
+  expect(mid.y).toBeLessThan(front.y);
+  expect(back.w).toBe(front.w);
+  expect(await card.locator('img').count()).toBe(3);
+  // 封面保持普通相机横拍的 3:2 比例
+  const cover = await card.locator('[data-stack]').evaluate(node => { const box = node.getBoundingClientRect(); return box.width / box.height; });
+  expect(Math.abs(cover - 1.5)).toBeLessThan(0.02);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 

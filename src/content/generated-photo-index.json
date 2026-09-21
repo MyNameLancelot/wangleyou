@@ -20,6 +20,36 @@
             "id": "002",
             "type": "photo",
             "src": "media/photos/2025-05-sequence00-周岁/002.jpg"
+          },
+          {
+            "id": "003",
+            "type": "photo",
+            "src": "media/photos/2025-05-sequence00-周岁/003.jpg"
+          },
+          {
+            "id": "004",
+            "type": "photo",
+            "src": "media/photos/2025-05-sequence00-周岁/004.jpg"
+          },
+          {
+            "id": "005",
+            "type": "photo",
+            "src": "media/photos/2025-05-sequence00-周岁/005.jpg"
+          },
+          {
+            "id": "006",
+            "type": "photo",
+            "src": "media/photos/2025-05-sequence00-周岁/006.jpg"
+          },
+          {
+            "id": "007",
+            "type": "photo",
+            "src": "media/photos/2025-05-sequence00-周岁/007.jpg"
+          },
+          {
+            "id": "008",
+            "type": "photo",
+            "src": "media/photos/2025-05-sequence00-周岁/008.jpg"
           }
         ]
       },
@@ -38,6 +68,36 @@
             "id": "002",
             "type": "photo",
             "src": "media/photos/2024-08-sequence01-百日/002.jpg"
+          },
+          {
+            "id": "003",
+            "type": "photo",
+            "src": "media/photos/2024-08-sequence01-百日/003.jpg"
+          },
+          {
+            "id": "004",
+            "type": "photo",
+            "src": "media/photos/2024-08-sequence01-百日/004.jpg"
+          },
+          {
+            "id": "005",
+            "type": "photo",
+            "src": "media/photos/2024-08-sequence01-百日/005.jpg"
+          },
+          {
+            "id": "006",
+            "type": "photo",
+            "src": "media/photos/2024-08-sequence01-百日/006.jpg"
+          },
+          {
+            "id": "007",
+            "type": "photo",
+            "src": "media/photos/2024-08-sequence01-百日/007.jpg"
+          },
+          {
+            "id": "008",
+            "type": "photo",
+            "src": "media/photos/2024-08-sequence01-百日/008.jpg"
           }
         ]
       },
@@ -56,6 +116,36 @@
             "id": "002",
             "type": "photo",
             "src": "media/photos/2024-05-sequence00-破壳/002.jpg"
+          },
+          {
+            "id": "003",
+            "type": "photo",
+            "src": "media/photos/2024-05-sequence00-破壳/003.jpg"
+          },
+          {
+            "id": "004",
+            "type": "photo",
+            "src": "media/photos/2024-05-sequence00-破壳/004.jpg"
+          },
+          {
+            "id": "005",
+            "type": "photo",
+            "src": "media/photos/2024-05-sequence00-破壳/005.jpg"
+          },
+          {
+            "id": "006",
+            "type": "photo",
+            "src": "media/photos/2024-05-sequence00-破壳/006.jpg"
+          },
+          {
+            "id": "007",
+            "type": "photo",
+            "src": "media/photos/2024-05-sequence00-破壳/007.jpg"
+          },
+          {
+            "id": "008",
+            "type": "photo",
+            "src": "media/photos/2024-05-sequence00-破壳/008.jpg"
           }
         ]
       }

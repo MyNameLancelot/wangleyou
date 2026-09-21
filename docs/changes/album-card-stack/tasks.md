@@ -8,5 +8,7 @@
 - [x] 更新单元测试与 E2E 断言
 - [x] 留影页改为按年份列出相册卡（2024 破壳、百日；2025 周岁）
 - [x] 相册说明限制 16 个字符并在构建期校验，重写三个相册文案
+- [x] 封面与留影页缩略图改为 3:2，相册详情页保持 4:3
+- [x] 每个相册补足 8 张测试图并在 SOURCES.md 登记来源
 - [x] 运行 check、build、E2E 并记录结果
 - [x] 同步 README、requirements、architecture 与 content module.md
