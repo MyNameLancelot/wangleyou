@@ -1,0 +1,21 @@
+{
+  "mode": "full",
+  "summary": "音乐与主题按钮改为随页面滚动的内容层控件",
+  "reason": "用户认为固定在视口四角的音乐和主题按钮与页面视觉割裂，确认两个控件应归属页面内容层：首页随第一屏滑走，其他页面随页面顶部自然滚动离开。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "npm run check：通过（11 个测试文件、106 项单元测试）",
+    "npm run build：通过（内容校验、TypeScript 与 Vite 生产构建）",
+    "npm run test:e2e：通过（44 项通过、4 项按平台条件跳过）",
+    "定向 Playwright：桌面与移动端共 4 项通过，覆盖首页滚动归属、音乐状态保持、浏览页滚动和查看器主题入口",
+    "npm run check:sdd -- --worktree --base origin/main：归档前通过（51 个差异路径）"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "reason": "已把固定视口定位改为页面内容层滚动行为。", "paths": ["docs/requirements.md"]},
+    "architecture": {"status": "updated", "reason": "已明确控件布局归属页面而非视口固定层，状态归属不变。", "paths": ["docs/architecture.md"]},
+    "modules": {"status": "updated", "reason": "已同步 themes 控件的位置与生命周期契约。", "paths": ["src/themes/module.md"]},
+    "decisions": {"status": "none", "reason": "不产生新的架构取舍。", "paths": []},
+    "readme": {"status": "none", "reason": "不改变使用方式或开发命令。", "paths": []}
+  }
+}

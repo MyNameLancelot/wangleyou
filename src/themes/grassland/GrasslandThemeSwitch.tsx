@@ -12,7 +12,7 @@ export function GrasslandThemeSwitch({ onSwitch }: { onSwitch: () => void }) {
           backdropBlur={10}
           tintColor="rgba(236, 242, 213, 0.32)"
           displacementScale={62}
-          style={{boxShadow: 'none'}}
+          style={{boxShadow: '0 .5rem 1rem rgb(50 70 34 / .22)'}}
           data-theme-switch-surface
         >
           <RefreshCw className={styles.icon} strokeWidth={2.1} aria-hidden="true" data-theme-switch-icon="cycle" />

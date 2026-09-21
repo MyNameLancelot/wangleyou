@@ -28,7 +28,19 @@
 
 | 发布文件 | 来源 | 说明 |
 | --- | --- | --- |
-| theme/beach-home-hero-2k.webp | 用户提供的海滩图，经 AI 增强、重采样与 WebP 编码 | 2560×1440；非原始素材，用于首页海滩首屏 |
-| theme/grassland-hero.webp | 本项目设计资产 `docs/design-assets/grassland-environment-v1.png` | 同上（约 101 KB） |
+| themes/beach/home-hero.webp | 用户提供的海滩图，经局部图像修复去除沙地石粒后重采样与 WebP 编码 | 2560×1440；非原始素材，用于首页海滩首屏 |
+| themes/beach/home-memory.webp | 从用户提供原图的底部连续沙滩带截取参考，经 OpenAI 图像生成工具向下扩展并去除石粒；最终只保留扩展区域，并以等比例中心裁切重采样 | 2560×1440，海边主题首页第二屏背景；不属于相册内容 |
+| themes/grassland/home-hero.webp | 本项目设计资产 `docs/design-assets/grassland-environment-v1.png` | 同上（约 101 KB） |
 
-`grassland-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`beach-home-hero-2k.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。
+`themes/grassland/home-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`themes/beach/home-hero.webp` 与 `themes/beach/home-memory.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。
+
+主题私有资源按主题分目录存放，内容资产（照片、缩略图、视频）仍在 `public/media/` 顶层、`thumbs/` 与 `video/`。
+
+## 演示背景音乐
+
+| 发布文件 | 当前状态 |
+| --- | --- |
+| themes/beach/music.mp3 | 来源和许可未登记；当前仅作为非商业演示占位，正式发布或商用前必须替换或确认授权。 |
+| themes/grassland/music.mp3 | 同上。 |
+
+这两个音频已重编码为 96 kbps mono。替换为真实家庭音乐时同步更新本文件、许可说明与主题组件引用。

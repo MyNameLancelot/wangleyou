@@ -1,0 +1,25 @@
+.dock{position:relative;width:44px;height:calc(100dvh + 44px);pointer-events:none}
+.control{position:absolute;top:0;left:0;width:44px;height:44px;pointer-events:auto}
+.memoryControl{top:100dvh}
+.audio{display:none}
+.button{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;border-radius:50%;padding:6px;background:none;color:#2d482c;cursor:pointer;-webkit-touch-callout:none;user-select:none}
+.surface{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 32px;border-radius:50%;background:rgb(246 250 232/.54);box-shadow:0 .5rem 1rem rgb(50 70 34/.24);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%)}
+.button:hover .surface{background:rgb(246 250 232/.7)}
+.button:focus-visible{outline:var(--focus-ring-width) solid var(--color-focus-ring);outline-offset:var(--focus-ring-gap)}
+.glyph{position:relative;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;transition:transform 160ms ease}
+.button:hover .glyph,.button:focus-visible .glyph{transform:scale(1.1)}
+.icon{width:20px;height:20px}
+.dock[data-playing='false'] .surface{background:rgb(246 250 232/.46);color:rgb(45 72 44/.68)}
+.mutedMark{position:absolute;width:24px;height:2px;border-radius:999px;background:currentColor;transform:rotate(-45deg);pointer-events:none}
+/* 音量组件：默认隐藏，悬停或键盘聚焦音乐按钮时在图标下方展开，右边缘与可见圆形对齐。 */
+.volume{position:absolute;top:42px;right:6px;display:flex;align-items:center;justify-content:center;height:26px;padding:0 9px;border-radius:999px;background:linear-gradient(140deg,rgb(45 72 44/.44) 0%,rgb(45 72 44/.3) 55%,rgb(52 82 50/.38) 100%);color:rgb(246 250 232);box-shadow:0 .4rem 1.1rem rgb(43 62 33/.3);-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);opacity:0;pointer-events:none;transition:opacity 160ms ease}
+/* 音量只在播放状态可展开：悬浮、键盘聚焦与长按都要求 data-playing 为 true */
+.control[data-playing='true']:hover .volume,.control[data-playing='true']:focus-within .volume,.control[data-playing='true'][data-volume-pinned='true'] .volume{opacity:1;pointer-events:auto}
+.slider{width:104px;height:44px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
+.slider::-webkit-slider-runnable-track{height:2px;border-radius:999px;background:rgb(246 250 232/.7)}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:4px;height:18px;margin-top:-8px;border:0;border-radius:0;background:#fff}
+.slider::-moz-range-track{height:2px;border-radius:999px;background:rgb(246 250 232/.7)}
+.slider::-moz-range-thumb{width:4px;height:18px;border:0;border-radius:0;background:#fff}
+.slider:focus-visible{outline:var(--focus-ring-width) solid var(--color-focus-ring);outline-offset:var(--focus-ring-gap)}
+@supports not (backdrop-filter:blur(1px)){.surface{background:rgb(239 243 220/.95)}}
+@supports not (backdrop-filter:blur(1px)){.volume{background:rgb(45 72 44/.96)}}

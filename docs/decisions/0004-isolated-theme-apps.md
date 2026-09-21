@@ -5,7 +5,7 @@
 
 ## 决策
 
-海边与草原分别维护完整站点 UI、CSS、设计变量、装饰和资产引用。主题目录之间禁止导入，也不得消费共享 React UI；只共享 content、playback、albums 与路由的无 UI 类型、状态和纯交互契约。App 只持有路由、主题偏好和唯一播放会话，并按主题选择入口。
+海边与草原分别维护完整站点 UI、CSS、设计变量、装饰和资产引用。主题目录之间禁止导入，也不得消费共享 React UI；只共享 content、playback、albums 与 `shared` 路由契约的无 UI 类型、状态和纯交互契约。App 只持有路由、主题偏好、唯一播放会话和背景音乐状态，并按主题选择入口。
 
 海边首屏液态玻璃采用 `react-liquid-glass-svg@1.0.5`；海边与草原的悬浮主题开关也在各自目录导入该包。该包为 MIT、无运行时依赖，本地 ESM gzip 1731 字节；使用 SVG filter 和 `backdrop-filter`，Safari/iOS 走库的简化路径，主题 CSS 再提供不透明可读回退。
 
@@ -14,3 +14,5 @@
 独立 UI 会产生可见层代码重复，但允许两个主题独立演进并满足明确隔离要求。交互规则不复制到主题中：两屏切换、主回忆队列和 playback 状态继续由纯契约统一，避免行为漂移。
 
 不采用全局共享页面骨架或共享玻璃组件，因为它们会重新形成跨主题 UI 依赖；不采用 WebGL/Canvas 方案，因为本次只需要卡片折射，额外运行时和兼容成本不合算。
+
+`Route` 形状放在 `src/shared/routing.ts`，避免 themes → app → themes 的模块级循环；SDD 依赖检查禁止 themes 依赖 app。

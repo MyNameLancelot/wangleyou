@@ -1,4 +1,4 @@
-export type { ThemeApp, ThemeAppProps, ThemeViewerCommands } from './contracts';
+export type { ThemeApp, ThemeAppProps, ThemeMusicCommands, ThemeViewerCommands } from './contracts';
 export { BeachApp } from './beach';
 export { GrasslandApp } from './grassland';
 

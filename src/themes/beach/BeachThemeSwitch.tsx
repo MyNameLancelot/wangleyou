@@ -12,7 +12,7 @@ export function BeachThemeSwitch({ onSwitch }: { onSwitch: () => void }) {
           backdropBlur={10}
           tintColor="rgba(226, 249, 252, 0.30)"
           displacementScale={68}
-          style={{boxShadow: 'none'}}
+          style={{boxShadow: '0 .5rem 1rem rgb(0 55 75 / .2)'}}
           data-theme-switch-surface
         >
           <RefreshCw className={styles.icon} strokeWidth={2.1} aria-hidden="true" data-theme-switch-icon="cycle" />
