@@ -100,43 +100,24 @@
   ],
   "impacts": {
     "requirements": {
-      "status": "updated",
-      "reason": "主回忆的可见内容、控制方式与自动播放暂停条件发生变化。",
-      "paths": [
-        "docs/requirements.md"
-      ]
+      "status": "none",
+      "reason": "本补充 PR 只归档既有变更；产品需求已随 PR #8 同步，本次未修改该基线。"
     },
     "architecture": {
-      "status": "updated",
-      "reason": "补充程序性暂停、回前台待恢复、显式恢复覆盖、Route 共享契约和主题装配方向。",
-      "paths": [
-        "docs/architecture.md"
-      ]
+      "status": "none",
+      "reason": "本补充 PR 只归档既有变更；总架构已随 PR #8 同步，本次未修改该基线。"
     },
     "modules": {
-      "status": "updated",
-      "reason": "albums 新增播放意图、手势意图与回前台条件；playback 增加背景音乐状态、偏好与待恢复；themes/app/shared 同步装配、资源生命周期和路由契约。",
-      "paths": [
-        "src/albums/module.md",
-        "src/app/module.md",
-        "src/playback/module.md",
-        "src/shared/module.md",
-        "src/themes/module.md"
-      ]
+      "status": "none",
+      "reason": "本补充 PR 只归档既有变更；相关模块契约已随 PR #8 同步，本次未修改 module.md。"
     },
     "decisions": {
-      "status": "updated",
-      "reason": "ADR 0004 补充 shared 路由契约并禁止 themes 依赖 app。",
-      "paths": [
-        "docs/decisions/0004-isolated-theme-apps.md"
-      ]
+      "status": "none",
+      "reason": "本补充 PR 只归档既有变更；主题隔离决策已随 PR #8 同步，本次未修改决策记录。"
     },
     "readme": {
-      "status": "updated",
-      "reason": "同步视频/音乐实现状态、主题私有音乐维护方式和 shared 模块职责。",
-      "paths": [
-        "README.md"
-      ]
+      "status": "none",
+      "reason": "本补充 PR 只归档既有变更；README 已随 PR #8 同步，本次未修改使用说明。"
     }
   }
 }
