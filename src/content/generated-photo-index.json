@@ -27,11 +27,6 @@
             "src": "media/photos/2025-05-sequence00-周岁/003.jpg"
           },
           {
-            "id": "004",
-            "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/004.jpg"
-          },
-          {
             "id": "005",
             "type": "photo",
             "src": "media/photos/2025-05-sequence00-周岁/005.jpg"
@@ -50,6 +45,11 @@
             "id": "008",
             "type": "photo",
             "src": "media/photos/2025-05-sequence00-周岁/008.jpg"
+          },
+          {
+            "id": "009",
+            "type": "photo",
+            "src": "media/photos/2025-05-sequence00-周岁/009.jpg"
           }
         ]
       },
@@ -155,7 +155,7 @@
     {
       "id": "birthday-leaves",
       "type": "photo",
-      "src": "media/photos/2025-05-sequence00-周岁/top01.jpg",
+      "src": "media/photos/2025-05-sequence00-周岁/009.jpg",
       "date": "2025-05-23",
       "description": "收集一点绿色",
       "alt": "自然光线下的绿色植物",
