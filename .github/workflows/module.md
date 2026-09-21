@@ -28,4 +28,4 @@ check.yml 验证内容、SDD、类型、lint、单元测试、构建和浏览器
 
 ## 验证方法
 
-使用 actionlint 检查工作流语法、表达式及本地复用引用；人工核对 main/非 main、push/PR/手动触发和失败依赖。运行 npm run check、npm run build，以及 CI=1 下的 verify:fixtures、test:e2e。首次真实 artifact 上传、Pages 权限和 HTTPS 地址需在提交合并后另行核实，不能由本地测试代替。
+使用 actionlint 检查工作流语法、表达式及本地复用引用；人工核对 main/非 main、push/PR/手动触发和失败依赖。运行 npm run check、npm run build 与 test:e2e。首次真实 artifact 上传、Pages 权限和 HTTPS 地址需在提交合并后另行核实，不能由本地测试代替。
