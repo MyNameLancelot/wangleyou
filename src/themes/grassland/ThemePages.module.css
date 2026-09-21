@@ -121,25 +121,21 @@
 .filterPill { position: absolute; left: max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); bottom: 0; transform: translateY(50%); display: inline-flex; gap: var(--space-xs); padding: var(--space-xs); border-radius: var(--radius-pill); background: var(--color-background-surface); box-shadow: var(--shadow-sm); }
 .filterTab { min-height: var(--target-min); padding: 0 var(--space-lg); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-secondary); font-size: var(--font-size-small); }
 .filterTab[aria-pressed='true'] { background: var(--color-action-primary); color: var(--color-action-on-primary); }
-.browseBody { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: var(--space-2xl); padding-top: var(--space-2xl); }
+.browseBody { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: var(--space-2xl); padding: var(--space-2xl) max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); }
 .rail { position: relative; }
 .railCard { position: sticky; top: var(--space-lg); padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); background: var(--color-background-surface); }
 .railCard h2 { font-family: var(--font-title); font-size: var(--font-size-h3); font-weight: 600; }
-.railCard h3 { font-size: var(--font-size-small); color: var(--color-text-secondary); margin-top: var(--space-lg); }
 .railList { list-style: none; margin: var(--space-sm) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2xs); }
 .railYear { width: 100%; min-height: var(--target-min); padding: 0 var(--space-md); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-secondary); text-align: left; font-size: var(--font-size-small); }
 .railYear:hover { background: var(--color-background-subtle); color: var(--color-text-primary); }
-.railAlbum { display: inline-flex; align-items: center; min-height: var(--target-min); padding: 0 var(--space-md); border-radius: var(--radius-md); color: var(--color-text-primary); font-size: var(--font-size-small); }
-.railAlbum:hover { background: var(--color-background-subtle); }
 .browseMain { min-width: 0; }
 .yearNav { display: none; align-items: center; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-lg); }
 .yearNavLabel { font-family: var(--font-caption); font-size: 10px; color: var(--color-text-secondary); letter-spacing: 1px; }
 .yearChip { min-height: var(--target-min); min-width: var(--target-min); padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid transparent; background: var(--color-background-subtle); color: var(--color-text-primary); font-size: var(--font-size-small); }
 .yearGroup { padding-bottom: var(--space-xl); scroll-margin-top: var(--space-xl); }
-.yearHeader { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-md); }
+.yearHeader { display: flex; align-items: baseline; justify-content: flex-start; gap: var(--space-sm); margin-bottom: var(--space-md); }
 .yearHeader h2 { font-family: var(--font-title); font-size: var(--font-size-h2); font-weight: 600; }
 .browseGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
-.browseHint { color: var(--color-text-secondary); font-size: var(--font-size-small); margin-top: var(--space-sm); }
 .pageHeader { padding: var(--space-2xl) 0 var(--space-sm); }
 .pageHeader h1 { font-family: var(--font-title); font-size: clamp(30px, 3.4vw, 44px); font-weight: 600; }
 .pageHeader p { color: var(--color-text-secondary); font-size: 14px; }
@@ -184,7 +180,7 @@
   .recentGrid, .browseGrid, .photoGrid, .upNextGrid { grid-template-columns: minmax(0, 1fr); }
   .albumGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
   .browseHero { min-height: 0; padding-top: var(--space-lg); padding-bottom: var(--space-2xl); }
-  .filterPill { left: 21px; right: 21px; justify-content: space-between; }
+  .filterPill { left: var(--layout-gutter); right: var(--layout-gutter); justify-content: space-between; }
   .filterTab { flex: 1; padding: 0 var(--space-sm); }
   .browseBody { padding-top: var(--space-xl); }
   .detailHeader { flex-direction: column; }

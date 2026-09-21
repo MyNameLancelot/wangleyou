@@ -368,11 +368,6 @@ export function HomePage({ memory, heroImage = null, memoryBackgroundImage, copy
 export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteContent; onOpen: OpenMedia; heroImage?: string | null }) {
   const [filter, setFilter] = useState<Filter>('all');
   const items = useMemo(() => data.albums.flatMap(album => album.media.map(media => ({ album, media }))), [data]);
-  const counts: Record<Filter, number> = {
-    all: items.length,
-    photo: items.filter(item => item.media.type === 'photo').length,
-    video: items.filter(item => isVideo(item.media)).length,
-  };
   const visible = items.filter(item => filter === 'all' || item.media.type === filter);
   const years = [...new Set(visible.map(item => yearOf(item.media.date)))].sort((a, b) => b.localeCompare(a));
   const goToYear = (year: string) => document.getElementById(`year-${year}`)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
@@ -380,20 +375,18 @@ export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteConte
     <div className={styles.browseHero}>
       <div className={styles.browseHeroMedia} style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} aria-hidden="true" />
       <div className={styles.browseHeroCopy}>
-        <h1 id="browse-title">全部影像</h1>
+        <h1 id="browse-title">留影</h1>
         <p>沿着时间，慢慢翻看。</p>
       </div>
       <div className={styles.filterPill} role="group" aria-label="按类型筛选">
-        {([['all', '全部'], ['photo', '照片'], ['video', '视频']] as const).map(([key, label]) => <button key={key} type="button" className={styles.filterTab} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label} {counts[key]}</button>)}
+        {([['all', '全部'], ['photo', '照片'], ['video', '视频']] as const).map(([key, label]) => <button key={key} type="button" className={styles.filterTab} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}
       </div>
     </div>
     <div className={styles.browseBody}>
       <aside className={styles.rail} aria-label="按时间定位">
         <div className={styles.railCard}>
           <h2>按时间定位</h2>
-          <ul className={styles.railList}>{years.map(year => <li key={year}><button type="button" className={styles.railYear} onClick={() => goToYear(year)}>{year} · {visible.filter(item => yearOf(item.media.date) === year).length} 项</button></li>)}</ul>
-          <h3>相册</h3>
-          <ul className={styles.railList}>{data.albums.map(album => <li key={album.id}><a className={styles.railAlbum} href={`#/albums/${album.id}`}>{album.title}</a></li>)}</ul>
+          <ul className={styles.railList}>{years.map(year => <li key={year}><button type="button" className={styles.railYear} onClick={() => goToYear(year)}>{year}</button></li>)}</ul>
         </div>
       </aside>
       <div className={styles.browseMain}>
@@ -407,7 +400,6 @@ export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteConte
             <div className={styles.yearHeader}><h2 id={`year-title-${year}`}>{year} 年</h2><span className={styles.sectionNote}>最新优先</span></div>
             <div className={styles.browseGrid}>{visible.filter(item => yearOf(item.media.date) === year).map(({ album, media }, i) => <MediaTile key={`${album.id}-${media.id}`} album={album} media={media} onOpen={onOpen} eager={i < 3} />)}</div>
           </section>)}
-        <p className={styles.browseHint}>键盘可用方向键在网格中移动焦点；滚动时年份导航保持可见。</p>
       </div>
     </div>
   </section>;
