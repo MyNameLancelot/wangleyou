@@ -7,6 +7,8 @@ import type { Album, Photo, SiteContent } from '../src/content/model'
 const ALBUM_DIR = /^(\d{4})-(\d{2})-sequence(\d{2})-(.+)$/
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const TOP_FILE = /^top(\d+)(?=\.|-|_)/i
+/** 相册说明只出现在卡片的一行里，超过这个长度就会截断，因此在构建期就拦住。 */
+const DESCRIPTION_MAX_LENGTH = 16
 
 /** 目录级元信息：描述这一段日子本身，而不是某张照片。 */
 type AlbumMeta = { title?: string; description?: string; date?: string }
@@ -35,6 +37,9 @@ function readAlbumMeta(name: string, input: unknown): AlbumMeta {
   if (typeof album !== 'object' || album === null || Array.isArray(album)) throw new Error(`${name}/meta.json.album: must be an object`)
   for (const key of ['title', 'description', 'date'] as const) {
     if (album[key] !== undefined && typeof album[key] !== 'string') throw new Error(`${name}/meta.json.album.${key}: must be a string when provided`)
+  }
+  if (typeof album.description === 'string' && [...album.description].length > DESCRIPTION_MAX_LENGTH) {
+    throw new Error(`${name}/meta.json.album.description: 不能超过 ${DESCRIPTION_MAX_LENGTH} 个字符（当前 ${[...album.description].length} 个）`)
   }
   return album as AlbumMeta
 }

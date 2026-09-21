@@ -53,7 +53,7 @@ npm run dev
   "album": {
     "title": "周岁",
     "date": "2025-05-23",
-    "description": "会走路的第一个春天，收集了一整个周末的绿。"
+    "description": "会走路了，什么都想摸一摸。"
   }
 }
 ```
@@ -61,7 +61,7 @@ npm run dev
 ### 配置规则
 
 - 相册目录名必须是 `YYYY-MM-sequenceNN-相册名`（`sequence` 必须小写）；构建期按年月与序列识别相册，年份从新到旧、同一年内按目录的月份与序列排列。
-- `meta.json` 只放 `album` 段：`title`、`date`、`description` 均可选。`title` 缺省取目录名后缀；`date` 可写 `YYYY-MM` 或完整的 `YYYY-MM-DD`，缺省取目录名的年月；`description` 是留影页与相册卡片上的相册文案。
+- `meta.json` 只放 `album` 段：`title`、`date`、`description` 均可选。`title` 缺省取目录名后缀；`date` 可写 `YYYY-MM` 或完整的 `YYYY-MM-DD`，缺省取目录名的年月；`description` 是留影页与相册卡片上的相册文案，**最多 16 个字符**（含标点），超过会让构建失败——它只会显示在卡片的一行里。
 - `album` 以外的键会让构建失败并提示，照片不再写进 `meta.json`：照片 `id` 由文件名生成，顺序为 `topNN` 优先（按编号）、其余按文件名自然序，逐张文案不在本期范围内。
 - 同一相册内照片 ID 必须唯一（同名文件才会冲突）；相册卡片取展示顺序的前三张做向右上的层叠封面。
 - 首页主回忆由 `home-memory.json` 完整且显式定义，不从相册派生。

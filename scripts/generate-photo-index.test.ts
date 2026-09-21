@@ -44,6 +44,13 @@ it('rejects photo metadata because order and ids are generated at build time', a
   await expect(generatePhotoIndex(photos, join(photos, 'generated.json'))).rejects.toThrow('只支持 album 段')
 })
 
+it('rejects album descriptions longer than 16 characters', async () => {
+  const { photos, album, output } = await fixture({ album: { description: '一二三四五六七八九十一二三四五六' } })
+  expect((await generatePhotoIndex(photos, output)).content.albums[0].description).toHaveLength(16)
+  await writeFile(join(album, 'meta.json'), JSON.stringify({ album: { description: '一二三四五六七八九十一二三四五六七' } }))
+  await expect(generatePhotoIndex(photos, output)).rejects.toThrow('不能超过 16 个字符（当前 17 个）')
+})
+
 it('rejects uppercase Sequence album directories', async () => {
   const root = await mkdtemp(join(tmpdir(), 'photo-index-')); temporary.push(root)
   const photos = join(root, 'photos')
