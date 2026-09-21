@@ -474,6 +474,8 @@ test('two-screen music controls share one audio while theme stays on the first s
   await expect(heroMusic.getByRole('button')).toHaveAttribute('aria-pressed', 'false');
   await expect.poll(() => audio.evaluate(node => (node as HTMLAudioElement).paused)).toBe(true);
 
+  // 第二屏按钮仍聚焦时，移动端可能在下一帧把视口重新滚回焦点；先释放焦点再回顶。
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
   // 移动端 dvh + scroll-snap 在并行负载下可能残留 1–2px，这里只要求回到首屏顶部
   await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThanOrEqual(4);
