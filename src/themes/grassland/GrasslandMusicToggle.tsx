@@ -1,7 +1,7 @@
 import { Music } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { assetUrl } from '../../content';
+import { mediaUrl } from '../../content';
 import {
   isBackgroundMusicPlaying,
   shouldPlayBackgroundMusic,
@@ -46,7 +46,7 @@ export function GrasslandMusicToggle({ music, commands, blockedByVideo }: {
     const audio = audioRef.current;
     if (!audio) return;
     // StrictMode 会重放 effect：清理后的同一 DOM 必须重新获得资源地址。
-    audio.src = assetUrl('media/themes/grassland/music.mp3');
+    audio.src = mediaUrl('media/themes/grassland/music.mp3');
     return () => {
       playRequestRef.current += 1;
       audio.pause();
@@ -217,7 +217,7 @@ export function GrasslandMusicToggle({ music, commands, blockedByVideo }: {
     <audio
       ref={audioRef}
       className={styles.audio}
-      src={assetUrl('media/themes/grassland/music.mp3')}
+      src={mediaUrl('media/themes/grassland/music.mp3')}
       loop
       preload="none"
       data-testid="background-music"

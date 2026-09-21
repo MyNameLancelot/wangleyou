@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { validateContent, validateHomeMemory } from '../src/content/validate'
 import type { Album, Photo, SiteContent } from '../src/content/model'
 
-const ALBUM_DIR = /^(\d{4})-(\d{2})-Sequence(\d{2})-(.+)$/
+const ALBUM_DIR = /^(\d{4})-(\d{2})-sequence(\d{2})-(.+)$/
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const TOP_FILE = /^top(\d+)(?=\.|-|_)/i
 
@@ -34,7 +34,7 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
     const match = ALBUM_DIR.exec(entry.name)
-    if (!match) throw new Error(`${entry.name}: 相册目录必须命名为 YYYY-MM-SequenceNN-相册名`)
+    if (!match) throw new Error(`${entry.name}: 相册目录必须命名为 YYYY-MM-sequenceNN-相册名`)
     const directory = join(photosDir, entry.name)
     const meta = await readJson(join(directory, 'meta.json')) as Meta
     if (typeof meta !== 'object' || meta === null || Array.isArray(meta)) throw new Error(`${entry.name}/meta.json: must be an object`)

@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, TouchEvent as ReactTouchEvent } from 'react';
 import type { Album, HomeMemoryPhoto, Media, SiteContent, Video } from '../../content';
-import { assetUrl } from '../../content';
+import { mediaUrl } from '../../content';
 import { PhotoImage } from './PhotoImage';
 import {
   canChangeHomeSection,
@@ -43,7 +43,7 @@ function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: M
   const source = thumbnailOf(media);
   return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(media)}>
     <span className={styles.mediaThumb}>
-      {source ? <PhotoImage src={assetUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
+      {source ? <PhotoImage src={mediaUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
       <span className={styles.demoTag}>演示素材</span>
       {isVideo(media) && <span className={styles.videoBadge}><span aria-hidden="true">▶</span>{durationText(media.duration) && <small>{durationText(media.duration)}</small>}</span>}
       <span className={styles.mediaBar}>{media.description || '生活里的一个瞬间'}</span>
@@ -55,7 +55,7 @@ function AlbumCard({ album }: { album: Album }) {
   const cover = album.cover || album.media.map(thumbnailOf).find(Boolean);
   return <a className={styles.albumCard} href={`#/albums/${album.id}`} aria-label={`查看相册：${album.title}`}>
     <div className={styles.cover}>
-      {cover ? <PhotoImage src={assetUrl(cover)} alt={album.title} /> : <div className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></div>}
+      {cover ? <PhotoImage src={mediaUrl(cover)} alt={album.title} /> : <div className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></div>}
       <span className={styles.count}>{album.media.length ? `${album.media.length} 个瞬间` : '等待新故事'}</span>
     </div>
     <div className={styles.cardInfo}><span className={styles.date}>{dateText(album.date)}</span><h3>{album.title}<span aria-hidden="true">↗</span></h3><p>{album.description}</p></div>
@@ -342,7 +342,7 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
                 </button>
                 <div className={styles.memoryMat} data-memory-mat>
                   <button type="button" className={styles.homeMemoryPhoto} onClick={toggleMemoryPlayback} aria-label={`${homeMemory.playing ? '暂停主回忆自动播放' : '继续主回忆自动播放'}：${currentMemory.description || currentMemory.id}`}>
-                    <PhotoImage className={styles.memoryImage} src={assetUrl(currentMemory.src)} alt={currentMemory.alt || currentMemory.description || '主回忆照片'} eager draggable={false} />
+                    <PhotoImage className={styles.memoryImage} src={mediaUrl(currentMemory.src)} alt={currentMemory.alt || currentMemory.description || '主回忆照片'} eager draggable={false} />
                   </button>
                 </div>
                 <button type="button" className={`${styles.memoryArrow} ${styles.memoryArrowNext}`} onClick={nextMemory} aria-label="下一张照片">

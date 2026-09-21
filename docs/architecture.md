@@ -24,7 +24,7 @@
 | albums | 首页两段导航与主回忆的无 UI 纯交互契约 |
 | themes | 主题偏好与主题入口契约；每个主题目录拥有独立的首页、页面内容层主题/音乐控件、相册和查看器 UI |
 | playback | 播放领域唯一所有者：媒体队列、当前媒体、播放意图、实际状态、连续播放、进度与 ended 推进 |
-| content | 配置读取、校验、规范化、排序和内容模型 |
+| content | 配置读取、校验、规范化、排序、内容模型和构建期媒体 URL resolver |
 
 模块名称和实际路径在首次实施时确定，可合理调整，但职责与状态必须有唯一归属。
 
@@ -35,7 +35,7 @@
 - playback 不依赖 albums 或主题 UI，媒体事件由各主题查看器通过命令契约接入。
 - content 不依赖业务模块；themes 只依赖 app 路由类型及 content、albums、playback 的公开无 UI 契约。
 - 不允许循环依赖或引用其他模块内部文件。
-- 静态 JSON 在构建时校验实际文件，运行时经 content 校验和排序供页面展示；用户操作通过 App 调用 playback 纯函数，更新唯一 Session，再由查看器呈现。
+- 静态 JSON 在构建时校验实际文件，运行时经 content 校验和排序供页面展示；`content.mediaUrl()` 是所有媒体 URL 的唯一入口，构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 `BASE_URL`；用户操作通过 App 调用 playback 纯函数，更新唯一 Session，再由查看器呈现。
 
 ## 资源生命周期
 
@@ -51,7 +51,7 @@
 
 ## 内容与样式边界
 
-- 源素材由维护者保留在仓库外；发布照片位于 `public/media/photos/YYYY-MM-SequenceNN-相册名/`，构建期脚本扫描目录、`meta.json` 与 `home-memory.json` 后生成 `src/content/generated-photo-index.json`，浏览器不枚举目录。主题私有资源按主题分目录：public/media/themes/<主题>/ 存放该主题的首屏图、第二屏背景与背景音乐，只由对应主题代码引用，不进入内容配置，主题之间不互相引用。
+- 源素材由维护者保留在仓库外；发布照片位于 `public/media/photos/YYYY-MM-sequenceNN-相册名/`（`sequence` 小写），构建期脚本扫描目录、`meta.json` 与 `home-memory.json` 后生成 `src/content/generated-photo-index.json`，浏览器不枚举目录。主题私有资源按主题分目录：public/media/themes/<主题>/ 存放该主题的首屏图、第二屏背景与背景音乐，只由对应主题代码引用，不进入内容配置，主题之间不互相引用。
 - 构建校验和运行时容错分层，详情见需求文档。
 - 主题样式、资产和 React UI 限定在各主题目录；全局样式仅包含基础重置与可访问性通用规则。
 - 首页使用 `100dvh`、scroll snap 与 `color-mix()`；两屏交界由主题私有的装饰层用第二屏背景做跨屏淡入（`mask-image` 渐变，位于首屏之上、第二屏之下，不覆盖第二屏内容），不支持遮罩时该层保持隐藏并退回两屏直接相接；海边首屏与两套主题的页面控件分别在自己的主题目录导入 `react-liquid-glass-svg` 提供 SVG 折射和模糊增强，不支持时由主题 CSS 回退到不透明玻璃底色；`prefers-reduced-motion` 取消卡片与照片非必要动效。兼容性结论必须来自实际浏览器验证，不能由代码存在推断。

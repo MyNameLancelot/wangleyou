@@ -33,7 +33,7 @@
 
 音频 effect 每次建立时恢复主题私有 `media/themes/<主题>/music.mp3`，清理时暂停并移除 src；播放请求在清理或暂停时失效，防止 StrictMode 重放或旧 Promise 回写新状态。visibilitychange 暂停播放并标记回前台待恢复；回前台后只有音乐按钮显式点击才恢复，不自动播放。
 
-主题私有资产统一放在 `public/media/themes/<主题>/`：`home-hero.webp` 供首屏与浏览页头图使用，`home-memory.webp` 只作海边第二屏背景，`music.mp3` 由音乐组件引用。主题组件只写自己的路径字面量，不共享资源常量，也不引用其他主题目录。
+主题私有资产统一放在 `public/media/themes/<主题>/`：`home-hero.webp` 供首屏与浏览页头图使用，`home-memory.webp` 只作海边第二屏背景，`music.mp3` 由音乐组件引用。主题组件只写自己的相对路径字面量，并通过 content 的 `mediaUrl()` 获取 URL；不共享资源常量、不自行拼接 CDN，也不引用其他主题目录。
 
 第二屏的左右箭头、播放按钮与进度条轨道使用毛玻璃表面（半透明色染 + 背景模糊 + `box-shadow` 投影，无白色描边），进度条填充保持主题色实色；`@supports not (backdrop-filter: blur(1px))` 时回退为更不透明的底色。
 

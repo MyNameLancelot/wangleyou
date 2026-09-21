@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { assetUrl } from '../../content';
+import { mediaUrl } from '../../content';
 import type { Photo } from '../../content';
 import { isVideo } from '../../playback';
 import type { PlaybackStatus, Session } from '../../playback';
@@ -36,7 +36,7 @@ function FullPhoto({ photo, onRetry }: { photo: Photo; onRetry?: () => void }) {
       <p>这张照片暂时无法加载</p>
       <p className={styles.hint}>可以重试，也可以切换到下一项或关闭查看器</p>
       <button type="button" className={styles.retry} onClick={() => { onRetry?.(); setAttempt(n => n + 1); setStatus('loading'); }}>重新加载</button>
-    </div> : <img key={attempt} className={styles.media} src={assetUrl(photo.src)} alt={photo.alt || photo.description || '相册照片'} onLoad={() => setStatus('ready')} onError={() => setStatus('error')} style={{ visibility: status === 'ready' ? 'visible' : 'hidden' }} />}
+    </div> : <img key={attempt} className={styles.media} src={mediaUrl(photo.src)} alt={photo.alt || photo.description || '相册照片'} onLoad={() => setStatus('ready')} onError={() => setStatus('error')} style={{ visibility: status === 'ready' ? 'visible' : 'hidden' }} />}
   </div>;
 }
 
@@ -112,7 +112,7 @@ export function MediaViewer({ session, commands, themeLabel }: { session: Sessio
     if (!next) return;
     if (next.type !== 'photo') return;
     const image = new Image();
-    image.src = assetUrl(next.src);
+    image.src = mediaUrl(next.src);
     return () => { image.src = ''; };
   }, [session]);
 
@@ -204,8 +204,8 @@ export function MediaViewer({ session, commands, themeLabel }: { session: Sessio
               key={`${video.id}-${videoAttempt}`}
               ref={videoRef}
               className={styles.media}
-              src={assetUrl(video.src)}
-              poster={video.poster ? assetUrl(video.poster) : undefined}
+              src={mediaUrl(video.src)}
+              poster={video.poster ? mediaUrl(video.poster) : undefined}
               playsInline
               muted={muted}
               preload="metadata"
@@ -221,7 +221,7 @@ export function MediaViewer({ session, commands, themeLabel }: { session: Sessio
               onEnded={commands.reportEnded}
               onError={commands.reportError}
             >
-              {video.captions && <track kind="captions" src={assetUrl(video.captions)} srcLang="zh" label="中文说明" default />}
+              {video.captions && <track kind="captions" src={mediaUrl(video.captions)} srcLang="zh" label="中文说明" default />}
             </video>
             : photo && <FullPhoto key={`${photo.id}-${photo.src}`} photo={photo} onRetry={() => closeButton.current?.focus()} />
         }

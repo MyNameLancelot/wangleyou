@@ -41,7 +41,7 @@ npm run dev
 ## 添加照片或相册
 
 1. 相机源素材自行保存在仓库外，准备适合网页显示的 JPEG、PNG 或 WebP 大图。
-2. 新建 `public/media/photos/YYYY-MM-SequenceNN-相册名/`，将发布照片放入目录；`top01.jpg`、`top02.jpg` 会优先显示，其余按文件名自然排序。
+2. 新建 `public/media/photos/YYYY-MM-sequenceNN-相册名/`，将发布照片放入目录；`top01.jpg`、`top02.jpg` 会优先显示，其余按文件名自然排序。
 3. 在目录中编辑 `meta.json`，以照片文件名为键填写 `id`、日期、说明和替代文本；不维护照片列表或缩略图。
 4. 编辑 `public/media/photos/home-memory.json`，显式填写首页主回忆照片及播放顺序。
 5. 运行 `npm run check` 和 `npm run build`；命令会自动生成索引并校验目录、元信息和实际资源。
@@ -63,11 +63,11 @@ npm run dev
 
 ### 配置规则
 
-- 相册目录名必须是 `YYYY-MM-SequenceNN-相册名`；构建期按年月和序列发现相册，页面从新到旧显示。
+- 相册目录名必须是 `YYYY-MM-sequenceNN-相册名`（`sequence` 必须小写）；构建期按年月和序列发现相册，页面从新到旧显示。
 - `meta.json` 只记录照片元信息；每张图片均需 `id`，可选 `date`、`description`、`alt`、`width`、`height`。
 - 照片 ID 在同相册内唯一。照片顺序由文件名决定：`topNN` 最先，其他文件自然排序。
 - 首页主回忆由 `home-memory.json` 完整且显式定义，不从相册派生。
-- 路径相对 public，例如 `media/photo.jpg`。不写 `/wangleyou/` 或 `public/` 前缀，不写外部 URL、查询参数、反斜杠或 `../`。路径由应用统一加部署前缀。
+- 路径相对 public，例如 `media/photo.jpg`。不写 `/wangleyou/` 或 `public/` 前缀，不写外部 URL、查询参数、反斜杠或 `../`。路径由应用的统一媒体 resolver 加前缀。
 - 相册封面默认使用排序后的第一张照片；可选尺寸必须为正整数。
 - 显式引用文件不存在、配置格式错误、重复 ID 会使校验和构建失败，并指出字段位置。运行时网络失败可在大图查看器重试。
 - 背景音乐不进入相册内容配置；主题私有资产（首屏图、第二屏背景、背景音乐）统一放在 `public/media/themes/<主题>/`，由对应主题代码引用，来源未确认前仅用于非商业占位。替换真实音乐时同步主题组件、素材说明和许可确认。
@@ -105,6 +105,14 @@ SITE_BASE=/another-repo/ npm run preview
 ```
 
 用户主页或自定义域名根目录使用 `SITE_BASE=/`。构建与预览应使用相同 base。
+
+媒体前缀独立于页面 base。受版本控制的 `.env.production` 让生产构建使用 `https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/`，因此 `media/photos/a.jpg` 会请求 jsDelivr 中同一仓库 main 分支的 `public/media/photos/a.jpg`。不要在 JSON 或主题代码写完整 CDN URL；需要临时替换版本或镜像时，在构建命令覆盖：
+
+```bash
+VITE_MEDIA_BASE_URL=https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/ npm run build
+```
+
+本地 `npm run dev` 未设置该变量时继续从 Vite `BASE_URL` 加载仓库内媒体。该变量只影响图片、视频、海报、字幕、主题图和背景音乐，不影响 `/wangleyou/`、页面入口或 `#/...` 路由。
 
 ### 首次部署
 
