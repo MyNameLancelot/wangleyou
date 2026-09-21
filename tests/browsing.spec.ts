@@ -188,6 +188,9 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   await expect(page.locator('aside').getByRole('link')).toHaveCount(0);
   await expect(page.getByText('最新优先')).toHaveCount(0);
   await expect(page.getByText('键盘可用方向键')).toHaveCount(0);
+  // 缩略图不带演示角标，说明条为紧凑单行
+  await expect(page.getByText('演示素材')).toHaveCount(0);
+  expect(await page.locator('[class*="mediaBar"]').first().evaluate(node => node.getBoundingClientRect().height)).toBeLessThanOrEqual(40);
   // 定位栏标题与卡片上的相册名称
   await expect(page.getByRole('heading',{name:'光阴刻度'})).toBeVisible();
   await expect(page.locator('aside').getByRole('button',{name:'2025'})).toBeVisible();

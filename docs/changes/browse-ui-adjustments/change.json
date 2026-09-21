@@ -1,14 +1,14 @@
 {
   "mode": "full",
-  "summary": "留影页改为只保留类型筛选与年份定位，去掉统计数量、相册快捷区和底部提示，并让浏览主体与 hero 使用同一内容边距。",
-  "reason": "用户确认 #/browse 页标题改为“留影”，不需要数量统计、相册快捷列表与键盘提示，并要求整体内容右移、年份标题旁的“最新优先”回到标题左侧。",
+  "summary": "留影页改为只保留类型筛选与年份定位，去掉统计数量、相册快捷区、排序说明、演示角标与底部提示，缩略图说明条标出所属相册，并让浏览主体与 hero 使用同一内容边距。",
+  "reason": "用户确认 #/browse 页标题改为“留影”，不需要数量统计、相册快捷列表、键盘提示、“最新优先”与“演示素材”角标，要求整体内容右移、定位栏换成文艺说法、卡片上体现相册名称并压低说明条高度。",
   "behavior": true,
   "architecture": false,
   "verification": [
     "npm run check：SDD 结构检查、内容校验、类型检查与 ESLint 通过，Vitest 83 个用例全部通过",
-    "npm run build：静态构建成功（dist/index.html 0.60 kB、CSS 64.19 kB、JS 308.94 kB）",
+    "npm run build：静态构建成功（dist/index.html 0.60 kB、CSS 63.80 kB、JS 308.76 kB）",
     "npm run test:e2e：Playwright desktop-chrome（1440×1000）与 mobile-chrome（360×800）71 passed / 11 skipped，无失败",
-    "浏览器人工核对：无头 Chrome 以 1920×1080 打开两个主题的留影页，定位栏、hero 标题与筛选胶囊左边缘同为 360px，网格右边缘 1560px，缩略图说明条显示相册名称，页面无横向溢出"
+    "浏览器人工核对：无头 Chrome 以 1920×1080 打开两个主题的留影页，定位栏、hero 标题与筛选胶囊左边缘同为 360px，网格右边缘 1560px，缩略图说明条显示相册名称且高度 38px、无演示角标，页面无横向溢出"
   ],
   "impacts": {
     "requirements": {

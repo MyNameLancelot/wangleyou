@@ -38,13 +38,12 @@ const HOME_TRANSITION_LOCK_MS = 600;
 const isInteractiveTarget = (target: EventTarget | null) => target instanceof Element
   && Boolean(target.closest('a, button, input, select, textarea, summary, [role="button"], [role="link"], [contenteditable="true"]'));
 
-/** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识，演示内容统一标注。 */
+/** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识；留影页额外标出所属相册。 */
 function MediaTile({ media, onOpen, album, variant = 'wide', eager, showAlbum = false }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean; showAlbum?: boolean }) {
   const source = thumbnailOf(media);
   return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(media)}>
     <span className={styles.mediaThumb}>
       {source ? <PhotoImage src={mediaUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
-      <span className={styles.demoTag}>演示素材</span>
       {isVideo(media) && <span className={styles.videoBadge}><span aria-hidden="true">▶</span>{durationText(media.duration) && <small>{durationText(media.duration)}</small>}</span>}
       <span className={styles.mediaBar}>{showAlbum && <span className={styles.mediaAlbum}>{album.title}</span>}{media.description || '生活里的一个瞬间'}</span>
     </span>

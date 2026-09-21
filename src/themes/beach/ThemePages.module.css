@@ -93,9 +93,8 @@
 .mediaTileTall .mediaThumb { aspect-ratio: 4 / 3; }
 .mediaThumb img { transition: transform var(--motion-standard-duration) var(--motion-standard-easing); }
 .mediaTile:hover .mediaThumb img { transform: scale(1.02); }
-.mediaBar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; min-height: 56px; padding: var(--space-xs) var(--space-md); background: var(--color-media-control); color: var(--color-action-on-primary); font-size: var(--font-size-small); }
+.mediaBar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; min-height: 38px; padding: var(--space-2xs) var(--space-md); background: var(--color-media-control); color: var(--color-action-on-primary); font-size: var(--font-size-small); }
 .mediaAlbum { flex: none; max-width: 45%; margin-right: var(--space-xs); padding-right: var(--space-xs); border-right: 1px solid rgb(255 255 255 / 38%); opacity: 0.82; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.demoTag { position: absolute; left: 12px; top: 12px; background: var(--color-background-surface); color: var(--color-text-primary); font-size: 10px; padding: 4px 10px; border-radius: var(--radius-pill); }
 .videoBadge { position: absolute; right: 12px; top: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 36px; height: 36px; border-radius: 50%; background: var(--color-background-surface); color: var(--color-action-primary); font-size: 12px; }
 .videoBadge small { position: absolute; right: 44px; background: var(--color-media-control); color: var(--color-action-on-primary); padding: 2px 6px; border-radius: var(--radius-pill); font-family: var(--font-caption); font-size: 10px; }
 .emptyCover { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 120px; color: var(--color-action-primary); background: var(--color-background-subtle); border: 1px dashed var(--color-border-default); }
@@ -180,7 +179,7 @@
   .browseBody { padding-top: var(--space-xl); }
   .detailHeader { flex-direction: column; }
   .detailHeader .primary { width: 100%; }
-  .mediaBar { min-height: 48px; }
+  .mediaBar { min-height: 34px; }
 }
 
 @media (max-width: 390px) {
