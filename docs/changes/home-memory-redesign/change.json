@@ -83,6 +83,10 @@
     "已修复：既有用例 responsive layout and real image loading 仍断言 beach-home-hero-2k.webp（应用已改用 -v4 文件）导致桌面与移动各失败 1 次；第十四轮同步为 media/themes/beach/home-hero.webp 后通过，E2E 无失败",
     "如实记录：本机默认 Node 为 v26.8.2（仓库要求 24.x），最终 check、build、E2E 均改用 Node v24.18.0 复跑通过",
     "如实记录：未被任何主题引用的旧首屏图保留为 public/media/themes/beach/home-hero-2k.webp 并在素材说明中标注来源，本次未删除，等待用户确认"
+    ,
+    "已修复：既有用例 theme switch and background music controls coexist without overlap 在 PR 的 CI 两次把程序性回顶的结果改写为 66px / 81px 并稳定数秒以上；临时诊断用例记录每次 scroll 事件的调用栈，只来自测试自身的 scrollTo，应用侧没有任何滚动写入（本机完整套件与 20 次重复均通过）。回顶断言改为在同一语义下重发回顶并要求页面能停在顶部，首屏与两个控件回到视口的断言继续把关",
+    "已修复：既有用例 review: <主题> explicit memory resume overrides the current hover 依赖 page.clock，实测本版 Playwright 假时钟不冻结时间（真实 5 秒内主回忆前进 2 张，runFor 再叠加一次），同一用例 20 次里失败 5–17 次；该用例另有一处错误假设——点击照片会把焦点留在播放器内，指针移开后按已确认规格（焦点在第二屏内即暂停）本应保持暂停。改用真实节奏与 expect.poll 断言后，该用例连续 16 次通过，完整套件 82 通过、16 跳过、0 失败",
+    "如实记录：为定位 CI 问题临时创建并推送了 debug/scroll-residue 诊断分支与临时用例，定位完成后已删除，未合并进 PR"
   ],
   "impacts": {
     "requirements": {
