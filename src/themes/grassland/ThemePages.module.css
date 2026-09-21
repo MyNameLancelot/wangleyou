@@ -81,9 +81,17 @@
 .albumGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
 .albumGridSpaced { margin-top: var(--space-xl); }
 .albumCard { min-width: 0; border-radius: var(--radius-lg); }
-.cover { position: relative; height: 212px; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-background-subtle); }
-.cover img { transition: transform var(--motion-slow-duration) var(--motion-standard-easing); }
-.albumCard:hover .cover img { transform: scale(1.02); }
+/* 相册封面：最多三张照片向右上错位层叠，第一张压在最上面且完整可见。 */
+.cover { position: relative; height: 212px; --stack-gap: 12px; --stack-reach: calc(var(--stack-gap) * 2); }
+.cover[data-stack='1'] { --stack-reach: 0px; }
+.cover[data-stack='2'] { --stack-reach: var(--stack-gap); }
+.coverLayer { position: absolute; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-background-subtle); transition: inset var(--motion-slow-duration) var(--motion-standard-easing); }
+.coverLayer img { transition: transform var(--motion-slow-duration) var(--motion-standard-easing); }
+.coverLayerBack { inset: 0 0 var(--stack-reach) var(--stack-reach); z-index: 0; }
+.coverLayerMid { inset: calc(var(--stack-reach) - var(--stack-gap)) calc(var(--stack-reach) - var(--stack-gap)) var(--stack-gap) var(--stack-gap); z-index: 1; }
+.coverLayerFront { inset: var(--stack-reach) var(--stack-reach) 0 0; z-index: 2; box-shadow: var(--shadow-sm); }
+.albumCard:hover .cover { --stack-gap: 16px; }
+.albumCard:hover .coverLayerFront img { transform: scale(1.02); }
 .count { position: absolute; left: 12px; bottom: 12px; background: var(--color-background-surface); color: var(--color-text-primary); font-size: 10px; padding: 4px 10px; border-radius: var(--radius-pill); }
 .cardInfo { padding: var(--space-sm) 2px 0; }
 .date { color: var(--color-text-secondary); font: 10px var(--font-caption); letter-spacing: 1px; }
@@ -177,6 +185,7 @@
   .recent { padding-top: var(--space-lg); }
   .recentGrid, .browseGrid, .photoGrid, .upNextGrid { grid-template-columns: minmax(0, 1fr); }
   .albumGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
+  .cover { --stack-gap: 8px; }
   .browseHero { min-height: 0; padding-top: var(--space-lg); padding-bottom: var(--space-2xl); }
   .filterPill { left: var(--layout-gutter); right: var(--layout-gutter); justify-content: space-between; }
   .filterTab { flex: 1; padding: 0 var(--space-sm); }

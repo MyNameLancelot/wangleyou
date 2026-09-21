@@ -223,6 +223,29 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   expect(mobile.overflow).toBe(true);
 });
 
+test('album cards stack up to three photos and show album level metadata', async ({page}) => {
+  await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto('./#/albums');
+  // 相册级元信息来自 meta.json 的 album 段，不再出现“待续”
+  await expect(page.getByText('待续')).toHaveCount(0);
+  const card = page.getByRole('link',{name:`查看相册：${albumTitle}`});
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('2024.05.01');
+  await expect(card).toContainText('第一次看见海，也第一次走进树林。');
+  await expect(card.getByText('2 个瞬间')).toBeVisible();
+  const layers = await card.evaluate(node => Array.from(node.querySelectorAll<HTMLElement>('[class*="coverLayer"]')).map(layer => {
+    const box = layer.getBoundingClientRect();
+    return { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) };
+  }));
+  // 两张照片层叠：后排照片向右上探出，尺寸与前排一致
+  expect(layers).toHaveLength(2);
+  expect(layers[0].x).toBeGreaterThan(layers[1].x);
+  expect(layers[0].y).toBeLessThan(layers[1].y);
+  expect(layers[0].w).toBe(layers[1].w);
+  expect(await card.locator('img').count()).toBe(2);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
 test('interactive targets are at least 44px and pages never scroll horizontally', async ({page}) => {
   for (const route of ['#/','#/browse','#/albums',`#/albums/${albumId}`]) {
     await page.goto(`./${route}`);

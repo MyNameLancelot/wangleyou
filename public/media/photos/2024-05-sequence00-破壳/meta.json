@@ -1,4 +1,9 @@
 {
-  "top01.jpg": {"id": "first-sea", "date": "2024-05-01", "description": "第一次看见海", "alt": "阳光下碧蓝海水与沙滩", "width": 1600, "height": 1067},
-  "002.jpg": {"id": "first-forest", "date": "2024-05-02", "description": "第一次走进树林", "alt": "葱郁森林中的阳光与树木", "width": 1600, "height": 2400}
+  "album": {
+    "description": "第一次看见海，也第一次走进树林。"
+  },
+  "photos": [
+    {"file": "top01.jpg", "id": "first-sea", "date": "2024-05-01", "description": "第一次看见海", "alt": "阳光下碧蓝海水与沙滩", "width": 1600, "height": 1067},
+    {"file": "002.jpg", "id": "first-forest", "date": "2024-05-02", "description": "第一次走进树林", "alt": "葱郁森林中的阳光与树木", "width": 1600, "height": 2400}
+  ]
 }

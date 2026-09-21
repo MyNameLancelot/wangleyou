@@ -51,14 +51,24 @@ function MediaTile({ media, onOpen, album, variant = 'wide', eager, showAlbum = 
   </button>;
 }
 
+/** 相册封面最多三张：排序后的第一张完整显示，其余两张向右上错位只露出边缘。 */
+const albumStack = (album: Album): string[] => [...new Set([album.cover, ...album.media.map(thumbnailOf)].filter((src): src is string => Boolean(src)))].slice(0, 3);
+
 function AlbumCard({ album }: { album: Album }) {
-  const cover = album.cover || album.media.map(thumbnailOf).find(Boolean);
+  const stack = albumStack(album);
+  const front = stack[0];
+  const behind = stack.slice(1);
   return <a className={styles.albumCard} href={`#/albums/${album.id}`} aria-label={`查看相册：${album.title}`}>
-    <div className={styles.cover}>
-      {cover ? <PhotoImage src={mediaUrl(cover)} alt={album.title} /> : <div className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></div>}
+    <div className={styles.cover} data-stack={stack.length}>
+      {front
+        ? <>
+          {behind.map((src, index) => <span key={src} className={`${styles.coverLayer} ${index === 0 ? styles.coverLayerMid : styles.coverLayerBack}`}><PhotoImage src={mediaUrl(src)} alt="" /></span>)}
+          <span className={`${styles.coverLayer} ${styles.coverLayerFront}`}><PhotoImage src={mediaUrl(front)} alt="" /></span>
+        </>
+        : <div className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></div>}
       <span className={styles.count}>{album.media.length ? `${album.media.length} 个瞬间` : '等待新故事'}</span>
     </div>
-    <div className={styles.cardInfo}><span className={styles.date}>{dateText(album.date)}</span><h3>{album.title}<span aria-hidden="true">↗</span></h3><p>{album.description}</p></div>
+    <div className={styles.cardInfo}><span className={styles.date}>{dateText(album.date)}</span><h3>{album.title}<span aria-hidden="true">↗</span></h3>{album.description && <p>{album.description}</p>}</div>
   </a>;
 }
 

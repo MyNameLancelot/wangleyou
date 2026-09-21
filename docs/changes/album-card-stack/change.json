@@ -1,0 +1,40 @@
+{
+  "mode": "full",
+  "summary": "相册 meta.json 改为“相册级元信息 + 照片数组”，相册卡片改为最多三张照片向右上错位层叠，并显示真实的相册日期与说明。",
+  "reason": "用户确认相册卡片不应只显示单张封面，且卡片日期“待续”、说明为空说明相册级数据缺失；按用户指定的右上错位层叠样式与新的 meta.json 结构实施。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "npm test：生成器与内容校订单测通过（含旧结构报错、topNN 排序、相册级回退）",
+    "npm run check：SDD 结构检查、内容校验、类型检查、ESLint 与 Vitest 全部通过",
+    "npm run build：静态构建成功，三个相册的日期与说明进入构建产物",
+    "npm run test:e2e：desktop-chrome 1440×1000 与 mobile-chrome 360×800 通过",
+    "浏览器人工核对：相册页三张照片向右上错位层叠，日期显示 2025.05.23 / 2024.08.09 / 2024.05.01，360px 单列无横向溢出"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "paths": ["docs/requirements.md"],
+      "reason": "更新相册配置字段说明与相册卡片层叠封面的验收行为"
+    },
+    "architecture": {
+      "status": "updated",
+      "paths": ["docs/architecture.md"],
+      "reason": "内容与媒体小节需要说明 meta.json 的新结构"
+    },
+    "modules": {
+      "status": "updated",
+      "paths": ["src/content/module.md"],
+      "reason": "content 模块的输入约定由文件名索引改为相册级元信息加照片数组"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "沿用既有静态内容流水线，没有新的架构取舍或依赖"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": ["README.md"],
+      "reason": "维护者按 README 添加相册，示例与规则必须同步新结构"
+    }
+  }
+}
