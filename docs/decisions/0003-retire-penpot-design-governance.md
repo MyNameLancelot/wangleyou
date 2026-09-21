@@ -5,7 +5,7 @@
 
 ## 背景
 
-此前 [0002](0002-design-system-governance.md) 将 Penpot 和 `designImpact` 分级纳入开发流程。用户现明确要求全面废弃该外部设计稿流程，页面与交互设计改由用户口述确认。
+此前的设计治理曾将 Penpot 和 `designImpact` 分级纳入开发流程。用户现明确要求全面废弃该外部设计稿流程，页面与交互设计改由用户口述确认。
 
 ## 决定
 
@@ -19,10 +19,8 @@
 
 - 更新 AGENTS、需求、架构、README、SDD 指南和活动变更规范，移除 Penpot 责任与设计影响分级。
 - 简化 SDD 检查脚本和测试，保留 full/light、行为/架构影响、验证证据、影响文档与模块依赖校验。
-- 历史归档和历史设计资产只作为当时事实或视觉回顾保留，不再约束后续实现。
 
 ## 关联变更
 
-- [废弃 Penpot 设计治理](../archive/2026-09-19-retire-penpot-design-governance/spec.md)
 - [产品需求](../requirements.md)
 - [总架构](../architecture.md)

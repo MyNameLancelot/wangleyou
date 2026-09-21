@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 const base = process.env.SITE_BASE || '/wangleyou/';
 export default defineConfig({
   testDir: './tests',
-  testMatch: process.env.CONTENT_FIXTURE ? 'fixture.spec.ts' : 'browsing.spec.ts',
+  testMatch: 'browsing.spec.ts',
   fullyParallel: true,
   retries: 0,
   workers: 2,

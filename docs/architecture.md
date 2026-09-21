@@ -1,100 +1,52 @@
 # 总架构
 
-## 状态与阅读方式
+## 当前状态
 
-截至 2026-09-20，工程基础、两段整屏首页与本地主回忆、照片与视频浏览、连续播放、首页背景音乐、两套隔离主题应用与设计系统基线已实现。技术栈为 React + TypeScript + Vite，npm 管理依赖。查看器自动幻灯片与原生桥接尚未实现；主题隔离与首页交互的浏览器验收以活动变更验证记录为准。
+网站是部署在 GitHub Pages 的 React + TypeScript + Vite 静态应用。它提供两段首页、相册与全部影像浏览、媒体查看器、背景音乐，以及海边和草原两套隔离主题。媒体和内容配置均由仓库维护；没有后端、数据库、登录或运行时内容管理服务。
 
-本文维护当前有效架构；拟议方案写入变更 spec，重大选择写入 decisions。每次实施完成后同步实际结构和实施状态，历史设计保留在归档中。
+产品行为见 [requirements.md](requirements.md)，开发与检查约定见 [AGENTS.md](../AGENTS.md) 和 [SDD 指南](sdd.md)。本文只描述当前模块边界和运行时归属。
 
-产品行为以 [requirements.md](requirements.md) 为准，开发流程以 [AGENTS.md](../AGENTS.md) 为准。
+## 模块
 
-## 系统边界
-
-- 维护者更新仓库内资源和配置，构建阶段校验并生成静态站点。
-- 浏览器加载静态内容，完成相册浏览和播放，无业务服务端或数据库。
-- 本地存储仅保存偏好，不成为相册数据来源。
-- 部署目标为 GitHub Pages；运行时不得依赖开发服务器的路由回退能力。
-- 原生桥接不在本期实现范围，未来经适配层接入。
-
-## 模块职责
-
-| 模块 | 职责与状态归属 |
+| 模块 | 职责 |
 | --- | --- |
-| app | 入口、路由、模块装配和全局生命周期 |
-| albums | 首页两段导航与主回忆的无 UI 纯交互契约 |
-| themes | 主题偏好与主题入口契约；每个主题目录拥有独立的首页、页面内容层主题/音乐控件、相册和查看器 UI |
-| playback | 播放领域唯一所有者：媒体队列、当前媒体、播放意图、实际状态、连续播放、进度与 ended 推进 |
-| content | 配置读取、校验、规范化、排序、内容模型和构建期媒体 URL resolver |
+| app | 应用入口、Hash 路由、模块装配和全局生命周期。 |
+| albums | 首页两段切换与主回忆的无 UI 交互契约。 |
+| content | 内容模型、排序、校验、生成索引及媒体 URL 解析。 |
+| playback | 查看器会话和背景音乐的唯一业务状态所有者。 |
+| themes | 主题偏好与两个相互隔离的主题应用。 |
+| shared | 跨模块复用的无 UI 类型契约。 |
 
-模块名称和实际路径在首次实施时确定，可合理调整，但职责与状态必须有唯一归属。
+`app` 可以装配其他模块；业务模块不得反向依赖 `app`。主题只能使用其他模块的公开无 UI 入口，两个主题之间不得导入 JSX、CSS 或主题资产。模块内部文件不作为跨模块接口。
 
-## 依赖与数据流
+## 内容与媒体
 
-- app 负责装配，可依赖各模块公开入口；其他模块不反向依赖 app。
-- themes 的各主题 UI 只能依赖 content、playback、albums 与 shared 路由契约的无 UI 公开入口及 themes 契约；主题间不得导入，也不得依赖 app 或共享 React UI。
-- playback 不依赖 albums 或主题 UI，媒体事件由各主题查看器通过命令契约接入。
-- content 不依赖业务模块；themes 只依赖 app 路由类型及 content、albums、playback 的公开无 UI 契约。
-- 不允许循环依赖或引用其他模块内部文件。
-- 静态 JSON 在构建时校验实际文件，运行时经 content 校验和排序供页面展示；`content.mediaUrl()` 是所有媒体 URL 的唯一入口，构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 `BASE_URL`；用户操作通过 App 调用 playback 纯函数，更新唯一 Session，再由查看器呈现。
+- 相册照片位于 `public/media/photos/YYYY-MM-sequenceNN-相册名/`；`meta.json` 和 `home-memory.json` 在构建期生成 `src/content/generated-photo-index.json`。
+- 主题私有的首屏图、第二屏背景和音乐位于 `public/media/themes/<主题>/`，只由所属主题使用。
+- 内容配置只保存 `media/...` 相对路径。`content.mediaUrl()` 是图片、视频、海报、字幕和音乐的唯一 URL 入口：构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 Vite `BASE_URL`。它拒绝协议、绝对路径、反斜杠、查询、片段和目录穿越，并对每段路径编码。
+- 页面 base 保持 `/wangleyou/`，路由继续使用 Hash；媒体 CDN 不改变二者。
 
-## 资源生命周期
+构建前的 `scripts/generate-photo-index.ts` 和 `scripts/validate-content.ts` 分别生成索引、校验配置及本地发布资源。运行时网络错误由页面内反馈处理，不让应用白屏。
 
-查看器拥有图片与视频 DOM、dialog、焦点、滚动锁、控制栏显隐与字幕轨；内部 div 为全屏目标。playback 提供 openSession/stepSession/setIntent/setStatus/setContinuous/setProgress/handleEnded 等纯函数，App 唯一持有 Session 并把查看器命令转成状态更新。
+## 状态与资源生命周期
 
-图片按媒体 ID/src 创建独立加载状态，旧图片回调不会污染当前照片；只预加载相邻下一张。关闭或路由变化时卸载查看器、取消预加载、恢复滚动与焦点并释放自身全屏。
+`App` 唯一持有 playback 会话。查看器负责其 DOM、dialog、焦点恢复、滚动锁、全屏和媒体元素；关闭、路由变化或卸载时释放这些资源。`playback` 负责当前媒体、用户播放意图、实际状态、连续播放和视频结束后的推进，旧媒体的异步事件不得回写新会话。
 
-视频播放下调度与播放意图仍归 playback：真实暂停、缓冲、自动播放被拒或解码失败都不改写用户意图；`ended` 按意图推进队列。
+首页主回忆是主题页面的短生命周期状态：只在第二屏活动、页面可见、照片数足够且未被用户或交互状态暂停时计时；离开页面、打开查看器或卸载时清理计时器。它不改变查看器会话。
 
-首页背景音乐的播放意图、实际状态、音量与回前台待恢复标记由 App 持有的 playback 状态唯一决定；每套主题音乐组件各自只拥有一个音频 DOM 和一组播放副作用，通过命令契约报告播放、暂停、可见性或浏览器阻止，同时渲染共享状态的第一屏/第二屏两个按钮入口。主题 App 根节点作为页面定位上下文：两屏音乐入口分别绝对定位在各段右上角，主题包装层只位于第一屏右下角，其他路由的主题包装层位于页面顶部右侧；控件不使用 fixed/sticky，因而随所属内容自然滚动。音乐和主题使用相同右侧安全区基准和 44px 命中区，音乐可见表面与主题收起表面均为 32px；普通/斜杠音符只投影现有 playback 状态，不创建第二套 UI 业务状态，滚动也不改变播放状态，hover/focus 仅变换图标包装层且不改变表面和命中几何；音量滑块同样只投影该状态，两个入口共享同一音量，值由 playback 归一化。音乐控件、音量面板和主题开关的阴影只用 `box-shadow` 表达，包装层不使用 `filter`，避免隔离 `backdrop-filter` 的背景取景而让磨砂玻璃失效。播放意图与音量的用户偏好经 playback 注入式契约存入 `localStorage`（只写显式切换与音量调整，blocked 与程序性暂停不写），App 初始化时读回；刷新后被浏览器拒绝时 playback 保留播放意图并把状态标为 blocked，主题组件监听一次性首手势直接重试 `play()`，不翻转意图。页面隐藏时主题暂停并设置回前台待恢复，回到前台不自动播放，音乐按钮显式点击才恢复；主题组件卸载时清理唯一音频资源。
+背景音乐的意图、实际状态、音量和“回前台待恢复”状态属于 playback；每个主题仅持有一个 audio DOM。页面隐藏会暂停，回到前台不自动恢复；两个首页入口只投影同一份状态。主题和查看器卸载时清理音频、视频、监听器与计时器。
 
-首页的段、照片索引、暂停意图、指针停留、焦点、可见性、回前台待恢复、输入累积、切屏锁和手势起点均是当前主题 HomePage 的短生命周期本地状态，状态推进规则来自 albums 的无 UI 纯契约：纵向手势交给两段切换，第二屏内的横向手势由 `getHomeMemorySwipeIntent`（触屏 touch、桌面鼠标按住拖动）与 `reduceHomeMemoryWheel`（触控板横向滚动）判定为换图，纵向与横向互不抢占；位移达到 56px 换图阈值后主题才捕获指针并换图，普通点击（含触摸板点按时的轻微位移）仍按点击处理，拖动结束的补发点击由指针捕获拦截，触屏滑动用短时点击守卫避免换图后被当作暂停；照片点击只在本地写入播放意图（`setHomeMemoryPlaying`），不改动查看器会话。它使用独立的 interval 控制器：只在主回忆段活动、照片数超过 1、页面可见、没有回前台待恢复、未因点击暂停或被指针停留/焦点进入而停顿且查看器关闭时调度；显式恢复可覆盖当时仍在播放器内的指针或焦点，直到指针移出或焦点离开；依赖失效和组件卸载均清理 interval，切屏锁的 timeout 同样由主题 HomePage 清理。该计时器不属于 playback，也不会恢复或改写查看器会话。
+## 主题与样式
 
-## 内容与样式边界
+海边和草原是完整、互不依赖的主题应用，各自维护页面、查看器、样式、装饰和资源引用。主题只共享路由、内容和播放等无 UI 契约。装饰必须 `aria-hidden`、不拦截操作，并在不支持增强效果或减少动态时可读可用。
 
-- 源素材由维护者保留在仓库外；发布照片位于 `public/media/photos/YYYY-MM-sequenceNN-相册名/`（`sequence` 小写），构建期脚本扫描目录、`meta.json` 与 `home-memory.json` 后生成 `src/content/generated-photo-index.json`，浏览器不枚举目录。主题私有资源按主题分目录：public/media/themes/<主题>/ 存放该主题的首屏图、第二屏背景与背景音乐，只由对应主题代码引用，不进入内容配置，主题之间不互相引用。
-- 构建校验和运行时容错分层，详情见需求文档。
-- 主题样式、资产和 React UI 限定在各主题目录；全局样式仅包含基础重置与可访问性通用规则。
-- 首页使用 `100dvh`、scroll snap 与 `color-mix()`；两屏交界由主题私有的装饰层用第二屏背景做跨屏淡入（`mask-image` 渐变，位于首屏之上、第二屏之下，不覆盖第二屏内容），不支持遮罩时该层保持隐藏并退回两屏直接相接；海边首屏与两套主题的页面控件分别在自己的主题目录导入 `react-liquid-glass-svg` 提供 SVG 折射和模糊增强，不支持时由主题 CSS 回退到不透明玻璃底色；`prefers-reduced-motion` 取消卡片与照片非必要动效。兼容性结论必须来自实际浏览器验证，不能由代码存在推断。
+主题开关和音乐入口属于各自页面，不使用 `fixed` 或 `sticky`；可点击区域至少为 44px。主题偏好和背景音乐偏好可保存到 `localStorage`，存储不可用时静默降级。
 
-## 设计系统边界
+## 工具与部署
 
-产品行为、视觉与交互要求由 requirements、用户最新口述和活动 spec 定义；模块职责与运行时状态由 architecture 和 module.md 定义。不维护外部设计稿作为事实来源。
+- [前端基础决策](decisions/0001-frontend-foundation.md)：技术栈和静态路径策略。
+- `src/main.tsx` → `src/app/index.ts`：应用入口；各模块 `index.ts` 是公开入口。
+- `npm run check`、`npm run build`、`npm run test:e2e`：本地验证入口。
+- `.github/workflows/check.yml`：push 和 PR 的检查；`.github/workflows/deploy.yml`：main 的 Pages 发布，详见 [工作流模块](../.github/workflows/module.md)。
 
-主题是互不依赖的独立 UI 应用，而不是共享组件树的换肤模式。允许共享纯类型和交互算法，以保证操作含义、路由和 playback 状态归属一致；禁止共享 JSX、CSS、主题资产和主题间导入。装饰资产必须允许隐藏、裁切或降级，且不阻断内容和控制。
-
-用户可见特效首先选择维护活跃的轻量第三方依赖；变更规格记录体积、依赖、许可、兼容回退和无障碍影响。海边玻璃和两套主题开关使用 `react-liquid-glass-svg`（不使用其白色高光边），其 SVG 折射在不支持时降级为可读玻璃；两套主题的循环图标使用按需引入的 `lucide-react`（ISC，内联 SVG，无字体或网络依赖）。
-
-SDD 根据实际行为与架构影响选择 full 或 light。新增或改变用户可见交互时，实施前在规格中记录用户确认的要求，并在指定视口和流程中以运行时浏览器验证。
-
-## 工具与入口
-
-- [技术决策](decisions/0001-frontend-foundation.md)：版本、方案取舍和路径策略。
-- `src/main.tsx` → `src/app/index.ts`：应用入口；各模块 index.ts 为公开入口。
-- `src/app/router.ts`：Hash 导航；静态网站默认 `/wangleyou/`，SITE_BASE 可覆盖。
-- `scripts/validate-content.ts`：配置与本地资源校验，构建前必须通过。
-- `scripts/generate-photo-index.ts`：扫描照片目录、校验 `meta.json`，生成应用读取的相册索引。
-- `npm run check`、`npm run build`、`npm run test:e2e`：验证入口，使用说明见 README。
-- `.github/workflows/check.yml`：独立 push/PR 检查，也提供 workflow_call 供部署复用；自身不发布。
-- `.github/workflows/deploy.yml`：main push/手动运行，依次复用检查、构建 dist/、发布 Pages；权限和接口见 [工作流模块](../.github/workflows/module.md)。
-
-## 后续决策关口
-
-尚未实现：查看器自动幻灯片与原生桥接。背景音乐音量已由首页音乐入口的滑块实现，静音以音量降到 0 表达，不另设独立静音按钮；音频当前为主题私有演示资产，不是相册配置数据。未完成的产品要求继续保留在需求基线，不作为已实现能力。
-
-## 实施后维护
-
-文档中的真实目录、公开接口和版本需随实现同步；架构决策被替代时保留历史理由并链接新记录。归档记录描述当时变更，不代替本文的当前架构。
-
-最近完成：[相册浏览闭环验证](archive/2026-09-15-foundation-album-browsing/verification.md)。
-
-## SDD 工程保障
-
-`scripts/sdd/` 独立承担 Git 快照读取、变更声明和文档引用校验、src 模块依赖约束；职责见 [工具模块](../scripts/sdd/module.md)，维护流程见 [SDD 指南](sdd.md)。PR CI 提供 SDD policy，既有 check 保留业务验证。远端保护未核实，自动检查不判断需求语义。
-
-## Pages 发布链路
-
-部署工作流已配置为 validate → build → deploy：main 的同一运行提交先经完整应用验证，随后在独立 runner 重新构建原始内容并上传 dist/，最后通过 github-pages environment 发布。build 仅有源码和 Pages 读取权限；deploy 才有 Pages 写入与身份令牌权限。不依赖 Node 服务，不提交构建产物，不增加 gh-pages 分支。
-
-手动运行也限制 main；验证失败或任务跳过时不发布。pages 并发组避免同时部署且不中断正在运行的流程。保留独立检查工作流以维持原有 PR 状态检查名称，因此 main push 有重复验证开销，命令定义仍唯一。
-
-用户截图已显示 Pages Source=GitHub Actions。远端 artifact、环境权限和线上访问尚待提交合并后验证；本地配置验收不代表已经上线。首次操作、路径变更和回退见 [README](../README.md#首次部署)。
+查看器自动照片幻灯片和原生桥接不在当前交付范围；若实现，先更新需求、模块契约和相应验证。

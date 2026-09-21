@@ -7,6 +7,5 @@
 已采纳：
 
 - [0001：纯静态相册的工程基础](0001-frontend-foundation.md)
-- [0002：分层设计变量与共享组件治理](0002-design-system-governance.md)
 
 后续涉及音视频格式及播放状态机的决策另行记录。
