@@ -846,13 +846,16 @@ test('trackpad horizontal swipe switches memory photos and keeps vertical switch
   await expect.poll(()=>photo.getAttribute('aria-label')).toBe(paused);
   await expect(memory).toBeInViewport();
 
-  // 慢速滑动（事件间隔 260ms）同样累积到阈值后只换一张
-  await page.waitForTimeout(400);
-  await page.mouse.wheel(25,0);
-  await page.waitForTimeout(260);
-  await page.mouse.wheel(25,0);
-  await page.waitForTimeout(260);
-  await page.mouse.wheel(25,0);
+  // 慢速滑动同样累积到阈值后只换一张：事件间隔约 120ms，远小于 400ms 手势间隔。
+  // 派发放在页面内完成：CI 负载下 Playwright 的 waitForTimeout 会漂移到 400ms 以外，
+  // 三次 25px 会被拆成三个独立手势，换不了图（实测 CI 失败，期望 2 得到 1）。
+  await page.waitForTimeout(450);
+  await page.evaluate(async () => {
+    for (let index = 0; index < 3; index += 1) {
+      document.body.dispatchEvent(new WheelEvent('wheel', {deltaX:25, deltaY:0, bubbles:true, cancelable:true}));
+      if (index < 2) await new Promise(resolve => setTimeout(resolve, 120));
+    }
+  });
   await expect.poll(async () => (await progressState()).value).toBe((before.value % before.max) + 1);
 
   // 纵向滚动仍然切回首屏
