@@ -26,7 +26,8 @@
 - `validateContent(input: unknown): SiteContent`：接收未受信任的配置值；成功时返回同一份已校验数据，失败时抛出包含字段位置的 `Error`。
 - `homeMemory`：经校验的显式首页主回忆照片，数组顺序即播放顺序。
 - `assertAssetPath(path: unknown, location: string): asserts path is string`：验证发布目录内的相对资源路径，并用 `location` 定位错误。
-- `assetUrl(path: string, base?: string): string`：由公开入口关联的资源 URL 模块提供，解析静态站点基础路径。
+- `assetUrl(path: string, base?: string): string`：兼容非媒体静态资源的既有站点基础路径 resolver。
+- `mediaUrl(path: string, base?: string): string`：唯一媒体 resolver；默认使用构建期 `VITE_MEDIA_BASE_URL`，未设置时使用 Vite `BASE_URL`。它复用相对路径校验、逐段编码和前缀末尾斜杠规范化；主题、相册、查看器与音乐组件不得自行拼接 CDN。
 - `content`：由公开入口导出的已校验静态 JSON 配置。
 - `contentErrorMessage`：校验失败时的可读原因；此时 `content` 是安全的空内容，界面展示配置异常而不是白屏。构建期 `npm run validate:content` 仍然直接失败，不允许带病发布。
 

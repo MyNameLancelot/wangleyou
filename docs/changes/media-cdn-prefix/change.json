@@ -1,0 +1,40 @@
+{
+  "mode": "full",
+  "summary": "构建期媒体 CDN 前缀与统一解析入口",
+  "reason": "媒体地址从仅依赖站点 BASE_URL 扩展为可由构建期 VITE_MEDIA_BASE_URL 指向包含 GitHub 用户名、仓库名、版本和 public 目录的 jsDelivr 前缀；同时将相册目录规则统一为小写 sequence，避免 CDN 大小写敏感路径失配；不改变页面路由。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "2026-09-21：npx vitest run src/content/asset-url.test.ts 通过（4 项）。",
+    "2026-09-21：npm run check 通过（SDD structure、内容校验、类型、lint、83 项单测；包含大写 Sequence 目录拒绝回归）。",
+    "2026-09-21：VITE_MEDIA_BASE_URL= npm run build 通过，产物不含 jsDelivr 并保留 /wangleyou/ 页面路径。",
+    "2026-09-21：npm run build 使用 .env.production 通过，产物包含 https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public。",
+    "2026-09-21：npm run test:e2e 的无 CDN 回退产物仅受用户已有的 data-home-seam 断言影响；真实 CDN 资源加载未完成环境验证，本机无法连接 cdn.jsdelivr.net:443。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "reason": "补充媒体路径的构建期 CDN 前缀和无配置回退规则。",
+      "paths": ["docs/requirements.md"]
+    },
+    "architecture": {
+      "status": "updated",
+      "reason": "content 模块将拥有媒体 URL resolver，主题与相册消费者经其获取媒体地址。",
+      "paths": ["docs/architecture.md"]
+    },
+    "modules": {
+      "status": "updated",
+      "reason": "content 新增媒体 resolver，themes 改为通过该入口加载主题私有媒体；albums 和 playback 的公开接口与职责未变。",
+      "paths": ["src/content/module.md", "src/themes/module.md"]
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "复用现有路径校验和 Vite 构建环境变量，不引入依赖或新的长期架构决策。"
+    },
+    "readme": {
+      "status": "updated",
+      "reason": "维护者需要知道 VITE_MEDIA_BASE_URL 的 jsDelivr 配置方式和本地回退行为。",
+      "paths": ["README.md"]
+    }
+  }
+}

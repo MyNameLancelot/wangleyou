@@ -23,7 +23,20 @@ export const content = loaded.data;
 export const homeMemory = loaded.homeMemory;
 export const contentErrorMessage = loaded.error;
 
-export function assetUrl(path: string, base = import.meta.env.BASE_URL): string {
+function resolveAssetUrl(path: string, base: string): string {
   assertAssetPath(path, 'resource');
-  return `${base.replace(/\/$/, '')}/${path.split('/').map(encodeURIComponent).join('/')}`;
+  return `${base.replace(/\/+$/, '')}/${path.split('/').map(encodeURIComponent).join('/')}`;
+}
+
+/** 兼容非媒体静态资源的既有站点路径 resolver。 */
+export function assetUrl(path: string, base = import.meta.env.BASE_URL): string {
+  return resolveAssetUrl(path, base);
+}
+
+/**
+ * 所有 public/media 资源的统一入口。VITE_MEDIA_BASE_URL 由 Vite 在构建期注入，
+ * 未配置时保留 GitHub Pages 或本地开发的页面 BASE_URL 行为。
+ */
+export function mediaUrl(path: string, base = import.meta.env.VITE_MEDIA_BASE_URL || import.meta.env.BASE_URL): string {
+  return resolveAssetUrl(path, base);
 }
