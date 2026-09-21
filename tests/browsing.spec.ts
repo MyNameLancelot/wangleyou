@@ -646,6 +646,25 @@ test('home screens meet without a divider and memory controls stay frosted', asy
     expect(junction.memory).toBe('0px/0px');
     expect(Math.abs(junction.gap)).toBeLessThanOrEqual(1);
 
+    // 交界带用第二屏背景做跨屏淡入；层位在首屏之上、第二屏之下，不覆盖第二屏底板与照片
+    const seam = await page.evaluate(() => {
+      const layer = document.querySelector('[data-home-seam]') as HTMLElement;
+      const style = getComputedStyle(layer);
+      const memory = document.querySelector('[data-home-section="memory"]') as HTMLElement;
+      return {
+        ariaHidden: layer.getAttribute('aria-hidden'),
+        pointerEvents: style.pointerEvents,
+        mask: style.maskImage || style.webkitMaskImage,
+        layerZ: Number(style.zIndex),
+        memoryZ: Number(getComputedStyle(memory).zIndex),
+      };
+    });
+    expect(seam.ariaHidden).toBe('true');
+    expect(seam.pointerEvents).toBe('none');
+    expect(seam.mask).toContain('linear-gradient');
+    expect(seam.layerZ).toBeGreaterThan(0);
+    expect(seam.memoryZ).toBeGreaterThan(seam.layerZ);
+
     await page.keyboard.press('ArrowDown');
     const memory = page.locator('[data-home-section="memory"]');
     await expect(memory).toBeInViewport();

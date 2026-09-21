@@ -293,6 +293,8 @@ export function HomePage({ data, heroImage = null, copy, viewerOpen = false }: {
   const onMemoryPointerUp = () => { memoryDragRef.current = null; };
 
   return <div ref={homeRef} className={styles.home} tabIndex={-1}>
+    {/* 跨屏淡入层：在交界带内让第二屏背景渐显，接住首屏草地图的下边缘。 */}
+    <div className={styles.homeSeam} data-home-seam aria-hidden="true" />
     <section ref={heroRef} className={styles.homeSection} data-home-section="hero" aria-labelledby="home-title">
       <HomeHero
         heroImage={heroImage}

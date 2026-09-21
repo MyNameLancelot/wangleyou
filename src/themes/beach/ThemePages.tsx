@@ -296,6 +296,8 @@ export function HomePage({ data, heroImage = null, memoryBackgroundImage, copy, 
   const onMemoryPointerUp = () => { memoryDragRef.current = null; };
 
   return <div ref={homeRef} className={styles.home} tabIndex={-1}>
+    {/* 跨屏淡入层：在交界带内让第二屏背景渐显，消除两张沙地图之间的色调与纹理硬接缝。 */}
+    {memoryBackgroundImage && <div className={styles.homeSeam} data-home-seam aria-hidden="true" style={{ backgroundImage: `url(${memoryBackgroundImage})` }} />}
     <section ref={heroRef} className={styles.homeSection} data-home-section="hero" aria-labelledby="home-title">
       <HomeHero
         heroImage={heroImage}

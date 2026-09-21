@@ -11,9 +11,17 @@
 .eyebrow { font-family: var(--font-caption); color: var(--color-action-primary); font-size: var(--font-size-caption); letter-spacing: 2px; display: block; }
 
 /* 首页：两个完整视口，JS 负责意图阈值，scroll-snap 负责桌面端的原生兜底。 */
-.home { margin: 0 calc(50% - 50vw); }
+.home { position: relative; margin: 0 calc(50% - 50vw); --home-seam-fade: clamp(56px, 9dvh, 150px); }
 .homeSection { position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always; }
-.homeSection[data-home-section='memory'] { display: flex; align-items: center; background: linear-gradient(145deg, color-mix(in srgb, var(--color-background-subtle) 72%, var(--color-background-canvas)) 0%, var(--color-background-canvas) 46%, color-mix(in srgb, var(--color-background-subtle) 42%, var(--color-background-surface)) 100%); }
+.homeSection[data-home-section='memory'] { position: relative; z-index: 3; display: flex; align-items: center; background: linear-gradient(145deg, color-mix(in srgb, var(--color-background-subtle) 72%, var(--color-background-canvas)) 0%, var(--color-background-canvas) 46%, color-mix(in srgb, var(--color-background-subtle) 42%, var(--color-background-surface)) 100%); }
+
+/* 跨屏淡入：第二屏渐变在交界带内从透明渐显，接住首屏草地图的下边缘。
+   层位在首屏之上、第二屏之下（第二屏 z-index: 3），因此只影响交界带，不覆盖第二屏内容。
+   不支持遮罩时保持隐藏，退化回原来的直接相接。 */
+.homeSeam { display: none; }
+@supports ((-webkit-mask-image: linear-gradient(#000, transparent)) or (mask-image: linear-gradient(#000, transparent))) {
+  .homeSeam { position: absolute; z-index: 2; left: 0; right: 0; top: calc(100dvh - var(--home-seam-fade)); height: calc(100dvh + var(--home-seam-fade)); display: block; background-image: linear-gradient(145deg, color-mix(in srgb, var(--color-background-subtle) 72%, var(--color-background-canvas)) 0%, var(--color-background-canvas) 46%, color-mix(in srgb, var(--color-background-subtle) 42%, var(--color-background-surface)) 100%); pointer-events: none; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--home-seam-fade)); mask-image: linear-gradient(180deg, transparent 0, #000 var(--home-seam-fade)); }
+}
 
 /* 首页 hero：整幅主题图 + 左侧可读、带纹理的立体玻璃卡。 */
 .home .hero { position: relative; width: 100%; min-height: inherit; padding: var(--space-3xl) max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); display: flex; align-items: center; overflow: hidden; }
