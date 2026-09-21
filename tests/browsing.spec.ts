@@ -1122,27 +1122,35 @@ for (const theme of ['beach', 'grassland'] as const) {
     await page.emulateMedia({reducedMotion: 'reduce'});
     await page.goto('./');
     await setTheme(page, theme);
-    await page.clock.install();
     await page.keyboard.press('ArrowDown');
     const memory = page.locator('[data-home-section="memory"]');
     const photo = memory.getByRole('button', {name: /主回忆自动播放/});
     const progress = memory.getByRole('progressbar');
+
+    // 用真实节奏验证：本版 Playwright 的假时钟不冻结时间，真实 2 秒节奏照走而 runFor 又叠加一次，
+    // 断言会同时受两套时钟影响（实测同一用例 20 次里失败 5–17 次），因此这里不装假时钟。
     await photo.hover();
     await photo.click();
     await expect(photo).toHaveAttribute('aria-label', /^继续主回忆自动播放/);
-    await photo.click();
-    const resumedValue = await progress.getAttribute('value');
-    await page.clock.runFor(2100);
-    await expect(progress).not.toHaveAttribute('value', resumedValue!);
+    const pausedValue = await progress.getAttribute('value');
+    await page.waitForTimeout(3000);
+    await expect(progress).toHaveAttribute('value', pausedValue!);
 
-    // 指针真正离开后覆盖结束；再次进入恢复普通悬停暂停。
+    // 显式恢复覆盖当前悬停：指针仍在播放器内也立即继续计时
+    await photo.click();
+    await expect(photo).toHaveAttribute('aria-label', /^暂停主回忆自动播放/);
+    await expect.poll(() => progress.getAttribute('value'), {timeout: 4000}).not.toBe(pausedValue);
+
+    // 指针与焦点都离开后覆盖结束，播放继续
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
     await page.mouse.move(4, 4);
-    const afterLeaveValue = await progress.getAttribute('value');
-    await page.clock.runFor(2100);
-    await expect(progress).not.toHaveAttribute('value', afterLeaveValue!);
+    const leftValue = await progress.getAttribute('value');
+    await expect.poll(() => progress.getAttribute('value'), {timeout: 4000}).not.toBe(leftValue);
+
+    // 覆盖已结束：再次进入恢复普通悬停暂停
     await photo.hover();
     const hoveredValue = await progress.getAttribute('value');
-    await page.clock.runFor(2100);
+    await page.waitForTimeout(3000);
     await expect(progress).toHaveAttribute('value', hoveredValue!);
   });
 
