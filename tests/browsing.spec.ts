@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 const albumId = '2024-05-sequence00';
 const albumTitle = '破壳';
-const firstPhoto = '查看照片：第一次看见海';
+const firstPhoto = '查看照片：破壳 第 1 张';
 const cdnMediaPrefix = 'https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/';
 
 /**
@@ -195,6 +195,15 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   await expect(page.getByRole('heading',{name:'光阴刻度'})).toBeVisible();
   await expect(page.locator('aside').getByRole('button',{name:'2025'})).toBeVisible();
   await expect(page.getByText(albumTitle,{exact:true}).first()).toBeVisible();
+  // 留影页按相册聚合：2025 只有周岁，2024 是破壳、百日，且同一年内按 YYYY-MM 与 sequenceNN 排列
+  const groups = await page.evaluate(() => Array.from(document.querySelectorAll('section[id^="year-"]')).map(section => ({
+    year: section.querySelector('h2')?.textContent?.trim(),
+    albums: Array.from(section.querySelectorAll('[class*="mediaTile"]')).map(tile => (tile.getAttribute('aria-label') || '').replace('查看相册：', '')),
+  })));
+  expect(groups).toEqual([
+    { year: '2025 年', albums: ['周岁'] },
+    { year: '2024 年', albums: ['破壳', '百日'] },
+  ]);
   // 定位栏与 hero 文案同边，网格不贴窗口右边缘
   const layout = await page.evaluate(() => {
     const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect() ?? null;
@@ -230,7 +239,8 @@ test('album cards stack up to three photos and show album level metadata', async
   await expect(page.getByText('待续')).toHaveCount(0);
   const card = page.getByRole('link',{name:`查看相册：${albumTitle}`});
   await expect(card).toBeVisible();
-  await expect(card).toContainText('2024.05.01');
+  // 相册日期缺省取目录名的年月
+  await expect(card).toContainText('2024.05');
   await expect(card).toContainText('第一次看见海，也第一次走进树林。');
   await expect(card.getByText('2 个瞬间')).toBeVisible();
   const layers = await card.evaluate(node => Array.from(node.querySelectorAll<HTMLElement>('[class*="coverLayer"]')).map(layer => {
@@ -546,6 +556,9 @@ test('page theme control scrolls with browse content while viewer keeps its own 
 
   await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
   await expect(pageTheme).toBeInViewport();
+  // 留影页现在是相册列表：先进入相册，再从缩略图打开查看器
+  await page.getByRole('link', {name: `查看相册：${albumTitle}`}).click();
+  await expect(page.getByRole('heading', {name: albumTitle, level: 1})).toBeVisible();
   await page.getByRole('button', {name: firstPhoto}).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();

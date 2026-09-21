@@ -10,33 +10,33 @@ const TOP_FILE = /^top(\d+)(?=\.|-|_)/i
 
 /** 目录级元信息：描述这一段日子本身，而不是某张照片。 */
 type AlbumMeta = { title?: string; description?: string; date?: string }
-type PhotoEntry = Omit<Photo, 'type' | 'src'> & { file: string }
-type Meta = { album?: AlbumMeta; photos: PhotoEntry[] }
 
 const natural = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
-/** topNN 文件优先（N 升序），其余按 meta.json 的 photos 数组顺序。 */
-function orderPhotos(files: string[], entries: PhotoEntry[]): string[] {
+/** 照片顺序由构建期决定：topNN 文件优先（N 升序），其余按文件名自然序。 */
+function orderPhotos(files: string[]): string[] {
   const tops = files.filter(file => TOP_FILE.test(file)).sort((a, b) => Number(TOP_FILE.exec(a)![1]) - Number(TOP_FILE.exec(b)![1]) || natural.compare(a, b))
-  return [...tops, ...entries.map(entry => entry.file).filter(file => !tops.includes(file))]
+  const rest = files.filter(file => !TOP_FILE.test(file)).sort(natural.compare)
+  return [...tops, ...rest]
 }
 
-function readAlbumMeta(name: string, input: unknown): { album: AlbumMeta; photos: PhotoEntry[] } {
+/** 照片 ID 由文件名生成：小写、非字母数字转连字符。 */
+function photoId(file: string): string {
+  const base = file.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return base || 'photo'
+}
+
+function readAlbumMeta(name: string, input: unknown): AlbumMeta {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) throw new Error(`${name}/meta.json: must be an object`)
-  const meta = input as Partial<Meta>
-  if (!('photos' in meta)) throw new Error(`${name}/meta.json: 需要 { "album": {...}, "photos": [...] } 结构；以照片文件名为键的旧格式已废弃，请迁移`)
-  if (!Array.isArray(meta.photos)) throw new Error(`${name}/meta.json.photos: must be an array`)
-  const album = meta.album ?? {}
+  const meta = input as Record<string, unknown>
+  const unknown = Object.keys(meta).filter(key => key !== 'album')
+  if (unknown.length) throw new Error(`${name}/meta.json.${unknown[0]}: 只支持 album 段；照片顺序与元信息由构建期脚本按文件名生成`)
+  const album = (meta.album ?? {}) as Record<string, unknown>
   if (typeof album !== 'object' || album === null || Array.isArray(album)) throw new Error(`${name}/meta.json.album: must be an object`)
   for (const key of ['title', 'description', 'date'] as const) {
     if (album[key] !== undefined && typeof album[key] !== 'string') throw new Error(`${name}/meta.json.album.${key}: must be a string when provided`)
   }
-  meta.photos.forEach((entry, index) => {
-    const location = `${name}/meta.json.photos[${index}]`
-    if (typeof entry !== 'object' || entry === null) throw new Error(`${location}: must be an object`)
-    if (typeof entry.file !== 'string' || !entry.file) throw new Error(`${location}.file: 必须填写目录内的照片文件名`)
-  })
-  return { album, photos: meta.photos }
+  return album as AlbumMeta
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -54,32 +54,20 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
     const match = ALBUM_DIR.exec(entry.name)
     if (!match) throw new Error(`${entry.name}: 相册目录必须命名为 YYYY-MM-sequenceNN-相册名`)
     const directory = join(photosDir, entry.name)
-    const { album: details, photos: declared } = readAlbumMeta(entry.name, await readJson(join(directory, 'meta.json')))
+    const details = readAlbumMeta(entry.name, await readJson(join(directory, 'meta.json')))
     const files = (await readdir(directory, { withFileTypes: true }))
       .filter(file => file.isFile() && IMAGE_EXTENSIONS.has(extname(file.name).toLowerCase()))
       .map(file => file.name)
       .sort(natural.compare)
-    declared.forEach((item, index) => {
-      if (!files.includes(item.file)) throw new Error(`${entry.name}/meta.json.photos[${index}].file: 目录中没有照片 ${item.file}`)
-      if (declared.findIndex(other => other.file === item.file) !== index) throw new Error(`${entry.name}/meta.json.photos[${index}].file: 重复引用照片 ${item.file}`)
-    })
-    const missing = files.find(file => !declared.some(item => item.file === file))
-    if (missing) throw new Error(`${entry.name}/meta.json.photos: 缺少 ${missing} 的照片元信息`)
-    const media: Photo[] = orderPhotos(files, declared).map(file => {
-      const item = declared.find(candidate => candidate.file === file)!
-      const photo: Omit<Photo, 'type' | 'src'> = {
-        id: item.id, date: item.date, description: item.description,
-        alt: item.alt, width: item.width, height: item.height,
-      }
-      return { ...photo, type: 'photo', src: `media/photos/${entry.name}/${file}` }
-    })
-    const dates = media.map(photo => photo.date).filter((date): date is string => Boolean(date)).sort()
+    const media: Photo[] = orderPhotos(files).map(file => ({
+      id: photoId(file), type: 'photo', src: `media/photos/${entry.name}/${file}`,
+    }))
     albums.push({
       album: {
         id: `${match[1]}-${match[2]}-sequence${match[3]}`,
         title: details.title?.trim() || match[4],
         description: details.description,
-        date: details.date || dates[0],
+        date: details.date || `${match[1]}-${match[2]}`,
         media,
       },
       order: `${match[1]}-${match[2]}-${match[3]}`,

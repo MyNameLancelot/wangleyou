@@ -41,8 +41,8 @@ npm run dev
 ## 添加照片或相册
 
 1. 相机源素材自行保存在仓库外，准备适合网页显示的 JPEG、PNG 或 WebP 大图。
-2. 新建 `public/media/photos/YYYY-MM-sequenceNN-相册名/`，将发布照片放入目录；`top01.jpg`、`top02.jpg` 会排在最前面，相册卡片最多用前三张做层叠封面。
-3. 在目录中编辑 `meta.json`：`album` 段写相册本身的标题、日期和说明，`photos` 数组按展示顺序列出每张照片的文件名与元信息。
+2. 新建 `public/media/photos/YYYY-MM-sequenceNN-相册名/`，把发布照片放进目录；照片顺序由构建脚本按文件名生成：`top01.jpg`、`top02.jpg` 按编号排在最前面，其余按文件名自然序。
+3. 在目录中编辑 `meta.json`，只写 `album` 段：这一段日子的标题、日期和说明。照片不需要逐张登记。
 4. 编辑 `public/media/photos/home-memory.json`，显式填写首页主回忆照片及播放顺序。
 5. 运行 `npm run check` 和 `npm run build`；命令会自动生成索引并校验目录、元信息和实际资源。
 
@@ -52,29 +52,18 @@ npm run dev
 {
   "album": {
     "title": "周岁",
+    "date": "2025-05-23",
     "description": "会走路的第一个春天，收集了一整个周末的绿。"
-  },
-  "photos": [
-    {
-      "file": "top01.jpg",
-      "id": "leaves-on-path",
-      "date": "2026-10-01",
-      "description": "收集一片秋天",
-      "alt": "铺着金黄色落叶的小路",
-      "width": 1600,
-      "height": 1067
-    }
-  ]
+  }
 }
 ```
 
 ### 配置规则
 
-- 相册目录名必须是 `YYYY-MM-sequenceNN-相册名`（`sequence` 必须小写）；构建期按年月和序列发现相册，页面从新到旧显示。
-- `meta.json` 分两段：`album` 描述相册本身，`title`、`date`、`description` 均可选；`photos` 是照片数组，每项用 `file` 指向目录内的文件名，并填写 `id` 及可选的 `date`、`description`、`alt`、`width`、`height`。
-- `photos` 必须恰好覆盖目录内所有图片：漏写照片、重复引用同一文件、引用不存在的文件都会让构建失败并指出字段位置；以照片文件名为键的旧格式已不再支持。
-- 照片 ID 在同相册内唯一。展示顺序：`topNN` 文件名最先（按 N 升序），其余按 `photos` 数组顺序。
-- 相册卡片用最多三张照片向右上错位层叠：日期取 `album.date`（缺省为最早照片日期），说明取 `album.description`，`title` 缺省取目录名后缀。
+- 相册目录名必须是 `YYYY-MM-sequenceNN-相册名`（`sequence` 必须小写）；构建期按年月与序列识别相册，年份从新到旧、同一年内按目录的月份与序列排列。
+- `meta.json` 只放 `album` 段：`title`、`date`、`description` 均可选。`title` 缺省取目录名后缀；`date` 可写 `YYYY-MM` 或完整的 `YYYY-MM-DD`，缺省取目录名的年月；`description` 是留影页与相册卡片上的相册文案。
+- `album` 以外的键会让构建失败并提示，照片不再写进 `meta.json`：照片 `id` 由文件名生成，顺序为 `topNN` 优先（按编号）、其余按文件名自然序，逐张文案不在本期范围内。
+- 同一相册内照片 ID 必须唯一（同名文件才会冲突）；相册卡片取展示顺序的前三张做向右上的层叠封面。
 - 首页主回忆由 `home-memory.json` 完整且显式定义，不从相册派生。
 - 路径相对 public，例如 `media/photo.jpg`。不写 `/wangleyou/` 或 `public/` 前缀，不写外部 URL、查询参数、反斜杠或 `../`。路径由应用的统一媒体 resolver 加前缀。
 - 相册封面取展示顺序的前三张照片；可选尺寸必须为正整数。

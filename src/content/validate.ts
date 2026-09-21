@@ -2,6 +2,7 @@ import type { Album, Media, Photo, SiteContent, Video } from './model'
 
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
+const PERIOD_PATTERN = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/
 const URL_SCHEME_PATTERN = /^[a-z][a-z\d+.-]*:/i
 
 type UnknownRecord = Record<string, unknown>
@@ -53,6 +54,23 @@ function assertDate(value: unknown, location: string): asserts value is string |
     candidate.getUTCMonth() !== month - 1 ||
     candidate.getUTCDate() !== day
   ) {
+    fail(location, 'must be a real calendar date')
+  }
+}
+
+/** 相册表示一段日子，允许只写到月：`YYYY-MM` 或 `YYYY-MM-DD`。 */
+function assertPeriod(value: unknown, location: string): asserts value is string | undefined {
+  if (value === undefined) return
+  assertString(value, location)
+  const match = PERIOD_PATTERN.exec(value)
+  if (!match) fail(location, 'must use YYYY-MM or YYYY-MM-DD')
+  const year = Number(match[1])
+  const month = Number(match[2])
+  if (month < 1 || month > 12) fail(location, 'must be a real calendar month')
+  if (match[3] === undefined) return
+  const day = Number(match[3])
+  const candidate = new Date(Date.UTC(year, month - 1, day))
+  if (candidate.getUTCFullYear() !== year || candidate.getUTCMonth() !== month - 1 || candidate.getUTCDate() !== day) {
     fail(location, 'must be a real calendar date')
   }
 }
@@ -135,7 +153,7 @@ function validateAlbum(input: unknown, location: string): Album {
   assertId(input.id, `${location}.id`)
   assertString(input.title, `${location}.title`, true)
   assertOptionalString(input.description, `${location}.description`)
-  assertDate(input.date, `${location}.date`)
+  assertPeriod(input.date, `${location}.date`)
   assertOptionalAssetPath(input.cover, `${location}.cover`)
   if (!Array.isArray(input.media)) fail(`${location}.media`, 'must be an array')
 

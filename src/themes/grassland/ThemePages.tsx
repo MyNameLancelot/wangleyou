@@ -27,27 +27,46 @@ type Filter = 'all' | 'photo' | 'video';
 type TileVariant = 'wide' | 'tall';
 
 const dateText = (date?: string) => (date ? date.replaceAll('-', '.') : '待续');
-const yearOf = (date?: string) => (date && /^\d{4}/.test(date) ? date.slice(0, 4) : '未标注日期');
 const isVideo = (media: Media): media is Video => media.type === 'video';
 const durationText = (seconds?: number) => (seconds && seconds > 0 ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : '');
 const thumbnailOf = (media: Media) => (isVideo(media) ? media.poster : undefined) || (media.type === 'photo' ? media.src : undefined);
-const mediaLabel = (media: Media) => (isVideo(media) ? `播放视频：${media.description || media.id}` : `查看照片：${media.description || media.id}`);
+/** 照片没有单独文案时，用相册名与序号兜底，保证每个缩略图都有可读的可访问名称。 */
+const mediaLabel = (album: Album, media: Media) => {
+  const index = album.media.findIndex(item => item.id === media.id) + 1;
+  const name = media.description || `${album.title} 第 ${index} ${isVideo(media) ? '段' : '张'}`;
+  return isVideo(media) ? `播放视频：${name}` : `查看照片：${name}`;
+};
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HOME_TRANSITION_LOCK_MS = 600;
 
 const isInteractiveTarget = (target: EventTarget | null) => target instanceof Element
   && Boolean(target.closest('a, button, input, select, textarea, summary, [role="button"], [role="link"], [contenteditable="true"]'));
 
-/** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识；留影页额外标出所属相册。 */
-function MediaTile({ media, onOpen, album, variant = 'wide', eager, showAlbum = false }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean; showAlbum?: boolean }) {
+/** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识。 */
+function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean }) {
   const source = thumbnailOf(media);
-  return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(media)}>
+  return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(album, media)}>
     <span className={styles.mediaThumb}>
       {source ? <PhotoImage src={mediaUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
       {isVideo(media) && <span className={styles.videoBadge}><span aria-hidden="true">▶</span>{durationText(media.duration) && <small>{durationText(media.duration)}</small>}</span>}
-      <span className={styles.mediaBar}>{showAlbum && <span className={styles.mediaAlbum}>{album.title}</span>}{media.description || '生活里的一个瞬间'}</span>
+      <span className={styles.mediaBar}>{media.description || '生活里的一个瞬间'}</span>
     </span>
   </button>;
+}
+
+/** 留影页按相册聚合：同一年内先看 YYYY-MM 的月份，再看 sequenceNN（00、01 …）。 */
+const albumOrdinal = (album: Album) => Number(`${album.id.slice(5, 7)}${album.id.slice(-2)}`) || 0;
+const albumYear = (album: Album) => album.id.slice(0, 4) || album.date?.slice(0, 4) || '未标注日期';
+
+/** 相册卡片沿用影像卡样式，说明条写相册名与相册说明。 */
+function AlbumTile({ album }: { album: Album }) {
+  const cover = album.cover || album.media.map(thumbnailOf).find(Boolean);
+  return <a className={styles.mediaTile} href={`#/albums/${album.id}`} aria-label={`查看相册：${album.title}`}>
+    <span className={styles.mediaThumb}>
+      {cover ? <PhotoImage src={mediaUrl(cover)} alt={album.title} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></span>}
+      <span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span>
+    </span>
+  </a>;
 }
 
 /** 相册封面最多三张：排序后的第一张完整显示，其余两张向右上错位只露出边缘。 */
@@ -370,11 +389,12 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
   </div>;
 }
 
-export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteContent; onOpen: OpenMedia; heroImage?: string | null }) {
+export function BrowsePage({ data, heroImage = null }: { data: SiteContent; heroImage?: string | null }) {
   const [filter, setFilter] = useState<Filter>('all');
-  const items = useMemo(() => data.albums.flatMap(album => album.media.map(media => ({ album, media }))), [data]);
-  const visible = items.filter(item => filter === 'all' || item.media.type === filter);
-  const years = [...new Set(visible.map(item => yearOf(item.media.date)))].sort((a, b) => b.localeCompare(a));
+  const albums = useMemo(() => [...data.albums].sort((a, b) => albumOrdinal(a) - albumOrdinal(b)).filter(album => filter === 'all'
+    || (filter === 'photo' ? album.media.some(media => !isVideo(media)) : album.media.some(isVideo))), [data, filter]);
+  const years = [...new Set(albums.map(albumYear))].sort((a, b) => b.localeCompare(a));
+  const albumsOf = (year: string) => albums.filter(album => albumYear(album) === year);
   const goToYear = (year: string) => document.getElementById(`year-${year}`)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
   return <section className={styles.browse} aria-labelledby="browse-title">
     <div className={styles.browseHero}>
@@ -399,11 +419,11 @@ export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteConte
           <span className={styles.yearNavLabel}>年份</span>
           {years.map(year => <button key={year} type="button" className={styles.yearChip} onClick={() => goToYear(year)}>{year}</button>)}
         </nav>
-        {visible.length === 0
+        {albums.length === 0
           ? <div className={styles.empty}><span aria-hidden="true">☀</span><h2>这里还没有影像</h2><p>换一个筛选条件，或回到首页看看相册。</p><a className={styles.primary} href="#/">返回首页 <span aria-hidden="true">↗</span></a></div>
           : years.map(year => <section key={year} id={`year-${year}`} className={styles.yearGroup} aria-labelledby={`year-title-${year}`}>
-            <h2 className={styles.yearTitle} id={`year-title-${year}`}>{year} 年</h2>
-            <div className={styles.browseGrid}>{visible.filter(item => yearOf(item.media.date) === year).map(({ album, media }, i) => <MediaTile key={`${album.id}-${media.id}`} album={album} media={media} onOpen={onOpen} eager={i < 3} showAlbum />)}</div>
+            <h2 className={styles.yearTitle} id={`year-title-${year}`}>{/^\d{4}$/.test(year) ? `${year} 年` : year}</h2>
+            <div className={styles.browseGrid}>{albumsOf(year).map(album => <AlbumTile key={album.id} album={album} />)}</div>
           </section>)}
       </div>
     </div>
