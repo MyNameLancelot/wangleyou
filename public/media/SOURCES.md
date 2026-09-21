@@ -31,7 +31,6 @@
 | themes/beach/home-hero.webp | 用户提供的海滩图，经局部图像修复去除沙地石粒后重采样与 WebP 编码 | 2560×1440；非原始素材，用于首页海滩首屏 |
 | themes/beach/home-memory.webp | 从用户提供原图的底部连续沙滩带截取参考，经 OpenAI 图像生成工具向下扩展并去除石粒；最终只保留扩展区域，并以等比例中心裁切重采样 | 2560×1440，海边主题首页第二屏背景；不属于相册内容 |
 | themes/grassland/home-hero.webp | 本项目设计资产 `docs/design-assets/grassland-environment-v1.png` | 同上（约 101 KB） |
-| themes/beach/home-hero-2k.webp | 用户提供的早期海滩首屏图（`home-hero.webp` 的前一版） | 2560×1440；当前没有被任何主题引用，保留待用户确认是否删除 |
 
 `themes/grassland/home-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`themes/beach/home-hero.webp` 与 `themes/beach/home-memory.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。
 
