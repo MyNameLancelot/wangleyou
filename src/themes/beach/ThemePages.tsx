@@ -50,7 +50,7 @@ function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: M
     <span className={styles.mediaThumb}>
       {source ? <PhotoImage src={mediaUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
       {isVideo(media) && <span className={styles.videoBadge}><span aria-hidden="true">▶</span>{durationText(media.duration) && <small>{durationText(media.duration)}</small>}</span>}
-      <span className={styles.mediaBar}>{media.description || '生活里的一个瞬间'}</span>
+      {media.description && <span className={styles.mediaBar}>{media.description}</span>}
     </span>
   </button>;
 }

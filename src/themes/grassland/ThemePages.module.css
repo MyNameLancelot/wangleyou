@@ -87,6 +87,7 @@
 .cover[data-stack='2'] { --stack-reach: var(--stack-gap); }
 .coverLayer { position: absolute; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-background-subtle); transition: inset var(--motion-slow-duration) var(--motion-standard-easing); }
 .coverLayer img { transition: transform var(--motion-slow-duration) var(--motion-standard-easing); }
+.cover .coverLayer img { object-fit: contain; }
 .coverLayerBack { inset: 0 0 var(--stack-reach) var(--stack-reach); z-index: 0; }
 .coverLayerMid { inset: calc(var(--stack-reach) - var(--stack-gap)) calc(var(--stack-reach) - var(--stack-gap)) var(--stack-gap) var(--stack-gap); z-index: 1; }
 .coverLayerFront { inset: var(--stack-reach) var(--stack-reach) 0 0; z-index: 2; box-shadow: var(--shadow-sm); }
@@ -104,6 +105,7 @@
 .mediaThumb { position: relative; display: block; aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--radius-md); background: var(--color-background-subtle); }
 .mediaTileTall .mediaThumb { aspect-ratio: 4 / 3; }
 .mediaThumb img { transition: transform var(--motion-standard-duration) var(--motion-standard-easing); }
+.mediaTile .mediaThumb img { object-fit: contain; }
 .mediaTile:hover .mediaThumb img { transform: scale(1.02); }
 .mediaBar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; min-height: 38px; padding: var(--space-2xs) var(--space-md); background: var(--color-media-control); color: var(--color-action-on-primary); font-size: var(--font-size-small); overflow: hidden; white-space: nowrap; }
 .mediaAlbum { flex: none; max-width: 45%; margin-right: var(--space-xs); padding-right: var(--space-xs); border-right: 1px solid rgb(255 255 255 / 38%); opacity: 0.82; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

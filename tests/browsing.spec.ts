@@ -263,6 +263,8 @@ test('album cards stack up to three photos and show album level metadata', async
   // 封面保持普通相机横拍的 3:2 比例
   const cover = await card.locator('[data-stack]').evaluate(node => { const box = node.getBoundingClientRect(); return box.width / box.height; });
   expect(Math.abs(cover - 1.5)).toBeLessThan(0.02);
+  // 封面按原比例完整显示，不裁切
+  await expect(card.locator('[class*="coverLayerFront"] img')).toHaveCSS('object-fit', 'contain');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 

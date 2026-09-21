@@ -10,5 +10,6 @@
 - [x] 相册说明限制 16 个字符并在构建期校验，重写三个相册文案
 - [x] 封面与留影页缩略图改为 3:2，相册详情页保持 4:3
 - [x] 每个相册补足 8 张测试图并在 SOURCES.md 登记来源
+- [x] 封面与缩略图改为按原比例完整显示（contain），去掉无文案时的占位说明条
 - [x] 运行 check、build、E2E 并记录结果
 - [x] 同步 README、requirements、architecture 与 content module.md
