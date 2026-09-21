@@ -1017,11 +1017,10 @@ test('wheel input over the music toggle stays in the two-screen flow', async ({p
   test.skip(testInfo.project.name === 'mobile-chrome', '移动模拟不提供真实触控板 wheel 输入');
   await page.goto('./');
   const dock = page.getByTestId('music-toggle');
-  const box = await dock.boundingBox();
-  await page.mouse.move((box?.x ?? 0) + (box?.width ?? 1) / 2, (box?.y ?? 0) + (box?.height ?? 1) / 2);
-  await page.mouse.wheel(0, 120);
+  // 在页面内派发可控的冒泡事件，避免 CI 负载下 Playwright 原生 wheel 偶发未送达页面监听器。
+  await dock.evaluate(node => node.dispatchEvent(new WheelEvent('wheel', {deltaY: 120, bubbles: true, cancelable: true})));
   await expect(page.locator('[data-home-section="memory"]')).toBeInViewport();
-  await page.mouse.wheel(0, -120);
+  await dock.evaluate(node => node.dispatchEvent(new WheelEvent('wheel', {deltaY: -120, bubbles: true, cancelable: true})));
   await expect(page.locator('[data-home-section="hero"]')).toBeInViewport();
 });
 
