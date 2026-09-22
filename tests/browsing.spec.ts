@@ -67,7 +67,9 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
-  await page.getByRole('navigation',{name:'面包屑'}).getByRole('link',{name:'首页'}).click();
+  await page.getByRole('link',{name:'← 返回留影'}).click();
+  await expect(page.getByRole('heading',{name:'留影',level:1})).toBeVisible();
+  await page.goto('./#/');
   await expect(page.getByRole('heading',{name:'把有海风的日子，留在这里。'})).toBeVisible();
   await expect(page.locator('[data-home-section="hero"]').getByRole('button',{name:'继续播放'})).toHaveCount(0);
   expect(await page.evaluate(()=>localStorage.getItem('wangleyou.lastPlayed'))).toBe('legacy-value');
