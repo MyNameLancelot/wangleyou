@@ -4,7 +4,9 @@ import { join } from 'node:path';
 
 const albumId = '2024-05-sequence00';
 const albumTitle = '破壳';
-const firstPhoto = '查看照片：第一次看见海';
+const firstPhoto = '查看照片：破壳 第 1 张';
+/** 破壳相册的公开照片数量：卡片数量角标、查看器位置提示都据此断言。 */
+const albumPhotoCount = 8;
 const cdnMediaPrefix = 'https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/';
 
 /**
@@ -57,9 +59,11 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   const trigger=page.getByRole('button',{name:firstPhoto}); await trigger.click();
   const dialog=page.getByRole('dialog'); await expect(dialog.getByRole('img')).toBeVisible();
   await expect(dialog.getByRole('button',{name:'上一项'})).toBeDisabled();
-  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText('2 / 2');
+  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
+  for (let index = 3; index <= albumPhotoCount; index += 1) await page.keyboard.press('ArrowRight');
+  await expect(dialog).toContainText(`${albumPhotoCount} / ${albumPhotoCount}`);
   await expect(dialog.getByRole('button',{name:'下一项'})).toBeDisabled();
-  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText('2 / 2');
+  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText(`${albumPhotoCount} / ${albumPhotoCount}`);
   await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
@@ -87,18 +91,18 @@ test('image failure can be retried without leaving the viewer',async({page})=>{
   await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
   await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
 });
 test('rapid switching isolates slow image errors, close/reopen resets session',async({page})=>{
   await page.route('**/media/photos/**/002.jpg',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.abort();});
   await openFirst(page);
   await page.keyboard.press('ArrowRight');
-  const dialog=page.getByRole('dialog'); await expect(dialog).toContainText('2 / 2');
+  const dialog=page.getByRole('dialog'); await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
   await page.keyboard.press('ArrowLeft');
   await expect(dialog.getByRole('img')).toBeVisible();
   await page.waitForTimeout(400); await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
   await page.getByRole('button',{name:'关闭查看器'}).click();
-  await page.getByRole('button',{name:firstPhoto}).click(); await expect(page.getByRole('dialog')).toContainText('1 / 2');
+  await page.getByRole('button',{name:firstPhoto}).click(); await expect(page.getByRole('dialog')).toContainText(`1 / ${albumPhotoCount}`);
 });
 test('dialog focus stays modal and route navigation disposes it',async({page})=>{
   await openFirst(page);
@@ -131,11 +135,11 @@ test('horizontal swipe navigates, vertical swipe does not',async({page,isMobile}
   const image=page.getByRole('dialog').getByRole('img');
   await image.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:250,clientY:250}]});
   await image.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:80,clientY:260}]});
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
   const next=page.getByRole('dialog').getByRole('img');
   await next.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:170,clientY:250}]});
   await next.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:165,clientY:500}]});
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
 });
 
 test('fullscreen enters and is released on close',async({page,isMobile})=>{
@@ -154,7 +158,7 @@ test('fullscreen rejection leaves normal viewing usable', async ({page,isMobile}
   await page.getByRole('button',{name:'全屏查看'}).click();
   await expect(page.getByText('全屏暂不可用，仍可在此查看')).toBeVisible();
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('dialog')).toContainText('2 / 2');
+  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
 });
 
 test('theme switch keeps page, media and playback context', async ({page}) => {
@@ -162,12 +166,12 @@ test('theme switch keeps page, media and playback context', async ({page}) => {
   await page.getByRole('button',{name:firstPhoto}).click();
   const dialog=page.getByRole('dialog');
   await page.keyboard.press('ArrowRight');
-  await expect(dialog).toContainText('2 / 2');
+  await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
 
   const before=await page.evaluate(()=>document.documentElement.dataset.theme);
   await dialog.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).not.toBe(before);
-  await expect(dialog).toContainText('2 / 2');
+  await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(await page.evaluate(()=>location.hash)).toBe(`#/albums/${albumId}`);
 
@@ -177,11 +181,133 @@ test('theme switch keeps page, media and playback context', async ({page}) => {
 });
 
 test('year navigation and type filter work on the browse page', async ({page}) => {
+  await page.setViewportSize({width: 1920, height: 1080});
   await page.goto('./#/browse');
-  await expect(page.getByRole('heading',{name:'全部影像',level:1})).toBeVisible();
-  await expect(page.getByText('全部 6')).toBeVisible();
-  await page.getByRole('button',{name:'照片 6'}).click();
+  await expect(page.getByRole('heading',{name:'留影',level:1})).toBeVisible();
+  await expect(page.getByRole('button',{name:'全部',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'照片',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'视频',exact:true})).toBeVisible();
+  // 浏览页不展示任何统计数量、相册快捷入口、排序说明或键盘提示
+  await expect(page.getByText(/\d+\s*项/)).toHaveCount(0);
+  await expect(page.locator('aside').getByRole('link')).toHaveCount(0);
+  await expect(page.getByText('最新优先')).toHaveCount(0);
+  await expect(page.getByText('键盘可用方向键')).toHaveCount(0);
+  // 缩略图不带演示角标，说明条为紧凑单行
+  await expect(page.getByText('演示素材')).toHaveCount(0);
+  expect(await page.locator('[class*="mediaBar"]').first().evaluate(node => node.getBoundingClientRect().height)).toBeLessThanOrEqual(40);
+  // 定位栏标题与卡片上的相册名称
+  await expect(page.getByRole('heading',{name:'光阴刻度'})).toBeVisible();
+  await expect(page.locator('aside').getByRole('button',{name:'2025'})).toBeVisible();
+  await expect(page.getByText(albumTitle,{exact:true}).first()).toBeVisible();
+  // 留影页按相册聚合：2025 只有周岁，2024 是破壳、百日，且同一年内按 YYYY-MM 与 sequenceNN 排列
+  const groups = await page.evaluate(() => Array.from(document.querySelectorAll('section[id^="year-"]')).map(section => ({
+    year: section.querySelector('h2')?.textContent?.trim(),
+    albums: Array.from(section.querySelectorAll('[class*="mediaTile"]')).map(tile => (tile.getAttribute('aria-label') || '').replace('查看相册：', '')),
+  })));
+  expect(groups).toEqual([
+    { year: '2025 年', albums: ['周岁'] },
+    { year: '2024 年', albums: ['破壳', '百日'] },
+  ]);
+  // 定位栏与 hero 文案同边，网格不贴窗口右边缘
+  const layout = await page.evaluate(() => {
+    const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect() ?? null;
+    const rail = box('[class*="railCard"]');
+    const title = box('#browse-title');
+    const grid = box('[class*="browseGrid"]');
+    return {
+      railLeft: rail?.left ?? 0, titleLeft: title?.left ?? 0, gridRight: grid?.right ?? 0,
+      innerWidth: window.innerWidth,
+    };
+  });
+  expect(Math.abs(layout.railLeft - layout.titleLeft)).toBeLessThanOrEqual(1);
+  expect(layout.gridRight).toBeLessThan(layout.innerWidth - 100);
+  await page.getByRole('button',{name:'照片',exact:true}).click();
   await expect(page.getByRole('button',{name:/播放视频/})).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+
+  await page.setViewportSize({width: 360, height: 800});
+  await page.reload();
+  const mobile = await page.evaluate(() => {
+    const pill = document.querySelector('[class*="filterPill"]')!.getBoundingClientRect();
+    const title = document.querySelector('#browse-title')!.getBoundingClientRect();
+    return { pillLeft: pill.left, titleLeft: title.left, overflow: document.documentElement.scrollWidth <= window.innerWidth };
+  });
+  expect(Math.abs(mobile.pillLeft - mobile.titleLeft)).toBeLessThanOrEqual(1);
+  expect(mobile.overflow).toBe(true);
+});
+
+test('browse album cards stack top covers with depth in both themes', async ({page}) => {
+  await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto('./#/browse');
+
+  for (const theme of ['beach', 'grassland'] as const) {
+    await setTheme(page, theme);
+    const card = page.getByRole('link', {name: `查看相册：${albumTitle}`});
+    const stack = card.locator('[data-browse-album-stack]');
+    await expect(stack).toHaveAttribute('data-stack', '3');
+    await expect(stack.locator('[data-browse-cover]').count()).resolves.toBe(3);
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveAttribute('src', /top01\.jpg$/);
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveCSS('object-fit', 'cover');
+    await card.hover();
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveCSS('transform', 'none');
+
+    const layerBox = (layer: string) => stack.locator(`[data-browse-cover="${layer}"]`).evaluate(node => {
+      const box = node.getBoundingClientRect();
+      return {x: Math.round(box.x), y: Math.round(box.y), border: getComputedStyle(node).borderWidth, shadow: getComputedStyle(node).boxShadow};
+    });
+    const [front, middle, back] = await Promise.all([layerBox('front'), layerBox('middle'), layerBox('back')]);
+    expect(back.x).toBeGreaterThan(middle.x);
+    expect(middle.x).toBeGreaterThan(front.x);
+    expect(back.y).toBeLessThan(middle.y);
+    expect(middle.y).toBeLessThan(front.y);
+    expect(front.border).toBe('0px');
+    expect(middle.border).toBe('0px');
+    expect(back.border).toBe('0px');
+    expect(front.shadow).toBe('none');
+    expect(middle.shadow).toBe('none');
+    expect(back.shadow).toBe('none');
+
+    const selectedFilter = page.getByRole('button', {name: '全部', exact: true});
+    const railYear = page.locator('aside').getByRole('button', {name: '2025'});
+    await railYear.hover();
+    const [filterColors, yearColors] = await Promise.all([selectedFilter.evaluate(node => ({ background: getComputedStyle(node).backgroundColor, color: getComputedStyle(node).color })), railYear.evaluate(node => ({ background: getComputedStyle(node).backgroundColor, color: getComputedStyle(node).color }))]);
+    expect(yearColors).toEqual(filterColors);
+  }
+
+  await page.setViewportSize({width: 360, height: 800});
+  await page.reload();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test('album cards stack up to three photos and show album level metadata', async ({page}) => {
+  await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto('./#/albums');
+  // 相册级元信息来自 meta.json 的 album 段，不再出现“待续”
+  await expect(page.getByText('待续')).toHaveCount(0);
+  const card = page.getByRole('link',{name:`查看相册：${albumTitle}`});
+  await expect(card).toBeVisible();
+  // 相册日期缺省取目录名的年月
+  await expect(card).toContainText('2024.05');
+  await expect(card).toContainText('小小的你，第一次和我们见面。');
+  await expect(card.getByText(`${albumPhotoCount} 个瞬间`)).toBeVisible();
+  const layerBox = (kind: string) => card.locator(`[class*="coverLayer${kind}"]`).evaluate(node => {
+    const box = node.getBoundingClientRect();
+    return { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) };
+  });
+  const [front, mid, back] = await Promise.all([layerBox('Front'), layerBox('Mid'), layerBox('Back')]);
+  // 三张照片层叠：后排向右上探出，尺寸一致
+  expect(await card.locator('[class*="coverLayer"]').count()).toBe(3);
+  expect(back.x).toBeGreaterThan(mid.x);
+  expect(mid.x).toBeGreaterThan(front.x);
+  expect(back.y).toBeLessThan(mid.y);
+  expect(mid.y).toBeLessThan(front.y);
+  expect(back.w).toBe(front.w);
+  expect(await card.locator('img').count()).toBe(3);
+  // 封面保持普通相机横拍的 3:2 比例
+  const cover = await card.locator('[data-stack]').evaluate(node => { const box = node.getBoundingClientRect(); return box.width / box.height; });
+  expect(Math.abs(cover - 1.5)).toBeLessThan(0.02);
+  // 封面按原比例完整显示，不裁切
+  await expect(card.locator('[class*="coverLayerFront"] img')).toHaveCSS('object-fit', 'contain');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
@@ -241,13 +367,16 @@ test('media skeletons resolve into real images', async ({page}) => {
 
 test('theme decoration stays decorative and switchable', async ({page}) => {
   await page.goto('./');
-  const decor = page.getByTestId('theme-decor');
-  await expect(decor).toHaveCount(1);
-  expect(await decor.evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none');
+  // 海边主题不再渲染背景装饰层
+  await expect(page.getByTestId('theme-decor')).toHaveCount(0);
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
   await page.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('grassland');
   await expect(page.getByRole('heading',{level:1})).toContainText('把辽阔的日子');
+  // 草原主题保留装饰层，且仍然不拦截指针
+  const decor = page.getByTestId('theme-decor');
+  await expect(decor).toHaveCount(1);
+  expect(await decor.evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).toBe('beach');
@@ -482,6 +611,9 @@ test('page theme control scrolls with browse content while viewer keeps its own 
 
   await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
   await expect(pageTheme).toBeInViewport();
+  // 留影页现在是相册列表：先进入相册，再从缩略图打开查看器
+  await page.getByRole('link', {name: `查看相册：${albumTitle}`}).click();
+  await expect(page.getByRole('heading', {name: albumTitle, level: 1})).toBeVisible();
   await page.getByRole('button', {name: firstPhoto}).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
@@ -524,7 +656,7 @@ test('grassland independently renders every route and its viewer', async ({page}
   await expect(page.getByRole('heading',{level:1})).toContainText('把辽阔的日子');
   await expect(page.getByTestId('background-music')).toHaveAttribute('src', /media\/themes\/grassland\/music\.mp3$/);
   await page.goto('./#/browse');
-  await expect(page.getByRole('heading',{name:'全部影像',level:1})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'留影',level:1})).toBeVisible();
   await page.goto('./#/albums');
   await expect(page.getByRole('heading',{name:'相册',level:1})).toBeVisible();
   await page.goto(`./#/albums/${albumId}`);

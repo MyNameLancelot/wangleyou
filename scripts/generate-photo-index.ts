@@ -7,18 +7,41 @@ import type { Album, Photo, SiteContent } from '../src/content/model'
 const ALBUM_DIR = /^(\d{4})-(\d{2})-sequence(\d{2})-(.+)$/
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const TOP_FILE = /^top(\d+)(?=\.|-|_)/i
+/** 相册说明只出现在卡片的一行里，超过这个长度就会截断，因此在构建期就拦住。 */
+const DESCRIPTION_MAX_LENGTH = 16
 
-type Meta = Record<string, Omit<Photo, 'type' | 'src'>>
+/** 目录级元信息：描述这一段日子本身，而不是某张照片。 */
+type AlbumMeta = { title?: string; description?: string; date?: string }
 
 const natural = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
-function photoOrder(a: string, b: string): number {
-  const aTop = TOP_FILE.exec(a)
-  const bTop = TOP_FILE.exec(b)
-  if (aTop && bTop) return Number(aTop[1]) - Number(bTop[1]) || natural.compare(a, b)
-  if (aTop) return -1
-  if (bTop) return 1
-  return natural.compare(a, b)
+/** 照片顺序由构建期决定：topNN 文件优先（N 升序），其余按文件名自然序。 */
+function orderPhotos(files: string[]): string[] {
+  const tops = files.filter(file => TOP_FILE.test(file)).sort((a, b) => Number(TOP_FILE.exec(a)![1]) - Number(TOP_FILE.exec(b)![1]) || natural.compare(a, b))
+  const rest = files.filter(file => !TOP_FILE.test(file)).sort(natural.compare)
+  return [...tops, ...rest]
+}
+
+/** 照片 ID 由文件名生成：小写、非字母数字转连字符。 */
+function photoId(file: string): string {
+  const base = file.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return base || 'photo'
+}
+
+function readAlbumMeta(name: string, input: unknown): AlbumMeta {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) throw new Error(`${name}/meta.json: must be an object`)
+  const meta = input as Record<string, unknown>
+  const unknown = Object.keys(meta).filter(key => key !== 'album')
+  if (unknown.length) throw new Error(`${name}/meta.json.${unknown[0]}: 只支持 album 段；照片顺序与元信息由构建期脚本按文件名生成`)
+  const album = (meta.album ?? {}) as Record<string, unknown>
+  if (typeof album !== 'object' || album === null || Array.isArray(album)) throw new Error(`${name}/meta.json.album: must be an object`)
+  for (const key of ['title', 'description', 'date'] as const) {
+    if (album[key] !== undefined && typeof album[key] !== 'string') throw new Error(`${name}/meta.json.album.${key}: must be a string when provided`)
+  }
+  if (typeof album.description === 'string' && [...album.description].length > DESCRIPTION_MAX_LENGTH) {
+    throw new Error(`${name}/meta.json.album.description: 不能超过 ${DESCRIPTION_MAX_LENGTH} 个字符（当前 ${[...album.description].length} 个）`)
+  }
+  return album as AlbumMeta
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -36,19 +59,24 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
     const match = ALBUM_DIR.exec(entry.name)
     if (!match) throw new Error(`${entry.name}: 相册目录必须命名为 YYYY-MM-sequenceNN-相册名`)
     const directory = join(photosDir, entry.name)
-    const meta = await readJson(join(directory, 'meta.json')) as Meta
-    if (typeof meta !== 'object' || meta === null || Array.isArray(meta)) throw new Error(`${entry.name}/meta.json: must be an object`)
-    const photos = (await readdir(directory, { withFileTypes: true }))
+    const details = readAlbumMeta(entry.name, await readJson(join(directory, 'meta.json')))
+    const files = (await readdir(directory, { withFileTypes: true }))
       .filter(file => file.isFile() && IMAGE_EXTENSIONS.has(extname(file.name).toLowerCase()))
       .map(file => file.name)
-      .sort(photoOrder)
-    for (const key of Object.keys(meta)) if (!photos.includes(key)) throw new Error(`${entry.name}/meta.json.${key}: 未找到对应照片文件`)
-    const media: Photo[] = photos.map(file => {
-      const details = meta[file]
-      if (!details || typeof details !== 'object') throw new Error(`${entry.name}/meta.json.${file}: 缺少照片元信息`)
-      return { ...details, type: 'photo', src: `media/photos/${entry.name}/${file}` }
+      .sort(natural.compare)
+    const media: Photo[] = orderPhotos(files).map(file => ({
+      id: photoId(file), type: 'photo', src: `media/photos/${entry.name}/${file}`,
+    }))
+    albums.push({
+      album: {
+        id: `${match[1]}-${match[2]}-sequence${match[3]}`,
+        title: details.title?.trim() || match[4],
+        description: details.description,
+        date: details.date || `${match[1]}-${match[2]}`,
+        media,
+      },
+      order: `${match[1]}-${match[2]}-${match[3]}`,
     })
-    albums.push({ album: { id: `${match[1]}-${match[2]}-sequence${match[3]}`, title: match[4], media }, order: `${match[1]}-${match[2]}-${match[3]}` })
   }
 
   const content = validateContent({ site: { title: '王乐悠', subtitle: '把一起长大的日子，好好收藏。' }, albums: albums.sort((a, b) => b.order.localeCompare(a.order)).map(item => item.album) })

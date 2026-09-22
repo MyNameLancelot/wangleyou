@@ -27,38 +27,75 @@ type Filter = 'all' | 'photo' | 'video';
 type TileVariant = 'wide' | 'tall';
 
 const dateText = (date?: string) => (date ? date.replaceAll('-', '.') : '待续');
-const yearOf = (date?: string) => (date && /^\d{4}/.test(date) ? date.slice(0, 4) : '未标注日期');
 const isVideo = (media: Media): media is Video => media.type === 'video';
 const durationText = (seconds?: number) => (seconds && seconds > 0 ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : '');
 const thumbnailOf = (media: Media) => (isVideo(media) ? media.poster : undefined) || (media.type === 'photo' ? media.src : undefined);
-const mediaLabel = (media: Media) => (isVideo(media) ? `播放视频：${media.description || media.id}` : `查看照片：${media.description || media.id}`);
+/** 照片没有单独文案时，用相册名与序号兜底，保证每个缩略图都有可读的可访问名称。 */
+const mediaLabel = (album: Album, media: Media) => {
+  const index = album.media.findIndex(item => item.id === media.id) + 1;
+  const name = media.description || `${album.title} 第 ${index} ${isVideo(media) ? '段' : '张'}`;
+  return isVideo(media) ? `播放视频：${name}` : `查看照片：${name}`;
+};
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HOME_TRANSITION_LOCK_MS = 600;
 
 const isInteractiveTarget = (target: EventTarget | null) => target instanceof Element
   && Boolean(target.closest('a, button, input, select, textarea, summary, [role="button"], [role="link"], [contenteditable="true"]'));
 
-/** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识，演示内容统一标注。 */
+/** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识。 */
 function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean }) {
   const source = thumbnailOf(media);
-  return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(media)}>
+  return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(album, media)}>
     <span className={styles.mediaThumb}>
       {source ? <PhotoImage src={mediaUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
-      <span className={styles.demoTag}>演示素材</span>
       {isVideo(media) && <span className={styles.videoBadge}><span aria-hidden="true">▶</span>{durationText(media.duration) && <small>{durationText(media.duration)}</small>}</span>}
-      <span className={styles.mediaBar}>{media.description || '生活里的一个瞬间'}</span>
+      {media.description && <span className={styles.mediaBar}>{media.description}</span>}
     </span>
   </button>;
 }
 
+/** 留影页按相册聚合：同一年内先看 YYYY-MM 的月份，再看 sequenceNN（00、01 …）。 */
+const albumOrdinal = (album: Album) => Number(`${album.id.slice(5, 7)}${album.id.slice(-2)}`) || 0;
+const albumYear = (album: Album) => album.id.slice(0, 4) || album.date?.slice(0, 4) || '未标注日期';
+
+/** 留影页直接采用构建期确定的媒体顺序：topNN 已在前，其余按自然序排列。 */
+const browseAlbumStack = (album: Album): string[] => [...new Set(album.media.map(thumbnailOf).filter((source): source is string => Boolean(source)))].slice(0, 3);
+
+/** 相册卡片沿用影像卡样式，说明条写相册名与相册说明。 */
+function AlbumTile({ album }: { album: Album }) {
+  const stack = browseAlbumStack(album);
+  const front = stack[0];
+  const behind = stack.slice(1);
+  return <a className={styles.mediaTile} href={`#/albums/${album.id}`} aria-label={`查看相册：${album.title}`}>
+    <span className={`${styles.mediaThumb} ${styles.browseAlbumThumb}`} data-browse-album-stack data-stack={stack.length}>
+      {front
+        ? <>
+          {behind.map((source, index) => <span key={source} data-browse-cover={index === 0 ? 'middle' : 'back'} className={`${styles.browseAlbumLayer} ${index === 0 ? styles.browseAlbumLayerMiddle : styles.browseAlbumLayerBack}`}><PhotoImage src={mediaUrl(source)} alt="" /></span>)}
+          <span data-browse-cover="front" className={`${styles.browseAlbumLayer} ${styles.browseAlbumLayerFront}`}><PhotoImage src={mediaUrl(front)} alt={album.title} /><span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span></span>
+        </>
+        : <><span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></span><span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span></>}
+    </span>
+  </a>;
+}
+
+/** 相册封面最多三张：排序后的第一张完整显示，其余两张向右上错位只露出边缘。 */
+const albumStack = (album: Album): string[] => [...new Set([album.cover, ...album.media.map(thumbnailOf)].filter((src): src is string => Boolean(src)))].slice(0, 3);
+
 function AlbumCard({ album }: { album: Album }) {
-  const cover = album.cover || album.media.map(thumbnailOf).find(Boolean);
+  const stack = albumStack(album);
+  const front = stack[0];
+  const behind = stack.slice(1);
   return <a className={styles.albumCard} href={`#/albums/${album.id}`} aria-label={`查看相册：${album.title}`}>
-    <div className={styles.cover}>
-      {cover ? <PhotoImage src={mediaUrl(cover)} alt={album.title} /> : <div className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></div>}
+    <div className={styles.cover} data-stack={stack.length}>
+      {front
+        ? <>
+          {behind.map((src, index) => <span key={src} className={`${styles.coverLayer} ${index === 0 ? styles.coverLayerMid : styles.coverLayerBack}`}><PhotoImage src={mediaUrl(src)} alt="" /></span>)}
+          <span className={`${styles.coverLayer} ${styles.coverLayerFront}`}><PhotoImage src={mediaUrl(front)} alt="" /></span>
+        </>
+        : <div className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></div>}
       <span className={styles.count}>{album.media.length ? `${album.media.length} 个瞬间` : '等待新故事'}</span>
     </div>
-    <div className={styles.cardInfo}><span className={styles.date}>{dateText(album.date)}</span><h3>{album.title}<span aria-hidden="true">↗</span></h3><p>{album.description}</p></div>
+    <div className={styles.cardInfo}><span className={styles.date}>{dateText(album.date)}</span><h3>{album.title}<span aria-hidden="true">↗</span></h3>{album.description && <p>{album.description}</p>}</div>
   </a>;
 }
 
@@ -361,35 +398,29 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
   </div>;
 }
 
-export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteContent; onOpen: OpenMedia; heroImage?: string | null }) {
+export function BrowsePage({ data, heroImage = null }: { data: SiteContent; heroImage?: string | null }) {
   const [filter, setFilter] = useState<Filter>('all');
-  const items = useMemo(() => data.albums.flatMap(album => album.media.map(media => ({ album, media }))), [data]);
-  const counts: Record<Filter, number> = {
-    all: items.length,
-    photo: items.filter(item => item.media.type === 'photo').length,
-    video: items.filter(item => isVideo(item.media)).length,
-  };
-  const visible = items.filter(item => filter === 'all' || item.media.type === filter);
-  const years = [...new Set(visible.map(item => yearOf(item.media.date)))].sort((a, b) => b.localeCompare(a));
+  const albums = useMemo(() => [...data.albums].sort((a, b) => albumOrdinal(a) - albumOrdinal(b)).filter(album => filter === 'all'
+    || (filter === 'photo' ? album.media.some(media => !isVideo(media)) : album.media.some(isVideo))), [data, filter]);
+  const years = [...new Set(albums.map(albumYear))].sort((a, b) => b.localeCompare(a));
+  const albumsOf = (year: string) => albums.filter(album => albumYear(album) === year);
   const goToYear = (year: string) => document.getElementById(`year-${year}`)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
   return <section className={styles.browse} aria-labelledby="browse-title">
     <div className={styles.browseHero}>
       <div className={styles.browseHeroMedia} style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} aria-hidden="true" />
       <div className={styles.browseHeroCopy}>
-        <h1 id="browse-title">全部影像</h1>
+        <h1 id="browse-title">留影</h1>
         <p>沿着时间，慢慢翻看。</p>
       </div>
       <div className={styles.filterPill} role="group" aria-label="按类型筛选">
-        {([['all', '全部'], ['photo', '照片'], ['video', '视频']] as const).map(([key, label]) => <button key={key} type="button" className={styles.filterTab} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label} {counts[key]}</button>)}
+        {([['all', '全部'], ['photo', '照片'], ['video', '视频']] as const).map(([key, label]) => <button key={key} type="button" className={styles.filterTab} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}
       </div>
     </div>
     <div className={styles.browseBody}>
-      <aside className={styles.rail} aria-label="按时间定位">
+      <aside className={styles.rail} aria-labelledby="rail-title">
         <div className={styles.railCard}>
-          <h2>按时间定位</h2>
-          <ul className={styles.railList}>{years.map(year => <li key={year}><button type="button" className={styles.railYear} onClick={() => goToYear(year)}>{year} · {visible.filter(item => yearOf(item.media.date) === year).length} 项</button></li>)}</ul>
-          <h3>相册</h3>
-          <ul className={styles.railList}>{data.albums.map(album => <li key={album.id}><a className={styles.railAlbum} href={`#/albums/${album.id}`}>{album.title}</a></li>)}</ul>
+          <h2 id="rail-title">光阴刻度</h2>
+          <ul className={styles.railList}>{years.map(year => <li key={year}><button type="button" className={styles.railYear} onClick={() => goToYear(year)}>{year}</button></li>)}</ul>
         </div>
       </aside>
       <div className={styles.browseMain}>
@@ -397,13 +428,12 @@ export function BrowsePage({ data, onOpen, heroImage = null }: { data: SiteConte
           <span className={styles.yearNavLabel}>年份</span>
           {years.map(year => <button key={year} type="button" className={styles.yearChip} onClick={() => goToYear(year)}>{year}</button>)}
         </nav>
-        {visible.length === 0
+        {albums.length === 0
           ? <div className={styles.empty}><span aria-hidden="true">☀</span><h2>这里还没有影像</h2><p>换一个筛选条件，或回到首页看看相册。</p><a className={styles.primary} href="#/">返回首页 <span aria-hidden="true">↗</span></a></div>
           : years.map(year => <section key={year} id={`year-${year}`} className={styles.yearGroup} aria-labelledby={`year-title-${year}`}>
-            <div className={styles.yearHeader}><h2 id={`year-title-${year}`}>{year} 年</h2><span className={styles.sectionNote}>最新优先</span></div>
-            <div className={styles.browseGrid}>{visible.filter(item => yearOf(item.media.date) === year).map(({ album, media }, i) => <MediaTile key={`${album.id}-${media.id}`} album={album} media={media} onOpen={onOpen} eager={i < 3} />)}</div>
+            <h2 className={styles.yearTitle} id={`year-title-${year}`}>{/^\d{4}$/.test(year) ? `${year} 年` : year}</h2>
+            <div className={styles.browseGrid}>{albumsOf(year).map(album => <AlbumTile key={album.id} album={album} />)}</div>
           </section>)}
-        <p className={styles.browseHint}>键盘可用方向键在网格中移动焦点；滚动时年份导航保持可见。</p>
       </div>
     </div>
   </section>;

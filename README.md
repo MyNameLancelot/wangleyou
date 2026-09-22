@@ -41,8 +41,8 @@ npm run dev
 ## 添加照片或相册
 
 1. 相机源素材自行保存在仓库外，准备适合网页显示的 JPEG、PNG 或 WebP 大图。
-2. 新建 `public/media/photos/YYYY-MM-sequenceNN-相册名/`，将发布照片放入目录；`top01.jpg`、`top02.jpg` 会优先显示，其余按文件名自然排序。
-3. 在目录中编辑 `meta.json`，以照片文件名为键填写 `id`、日期、说明和替代文本；不维护照片列表或缩略图。
+2. 新建 `public/media/photos/YYYY-MM-sequenceNN-相册名/`，把发布照片放进目录；照片顺序由构建脚本按文件名生成：`top01.jpg`、`top02.jpg` 按编号排在最前面，其余按文件名自然序。
+3. 在目录中编辑 `meta.json`，只写 `album` 段：这一段日子的标题、日期和说明。照片不需要逐张登记。
 4. 编辑 `public/media/photos/home-memory.json`，显式填写首页主回忆照片及播放顺序。
 5. 运行 `npm run check` 和 `npm run build`；命令会自动生成索引并校验目录、元信息和实际资源。
 
@@ -50,25 +50,23 @@ npm run dev
 
 ```json
 {
-  "top01.jpg": {
-      "id": "leaves-on-path",
-      "date": "2026-10-01",
-      "description": "收集一片秋天",
-      "alt": "铺着金黄色落叶的小路",
-      "width": 1600,
-      "height": 1067
+  "album": {
+    "title": "周岁",
+    "date": "2025-05-23",
+    "description": "会走路了，什么都想摸一摸。"
   }
 }
 ```
 
 ### 配置规则
 
-- 相册目录名必须是 `YYYY-MM-sequenceNN-相册名`（`sequence` 必须小写）；构建期按年月和序列发现相册，页面从新到旧显示。
-- `meta.json` 只记录照片元信息；每张图片均需 `id`，可选 `date`、`description`、`alt`、`width`、`height`。
-- 照片 ID 在同相册内唯一。照片顺序由文件名决定：`topNN` 最先，其他文件自然排序。
+- 相册目录名必须是 `YYYY-MM-sequenceNN-相册名`（`sequence` 必须小写）；构建期按年月与序列识别相册，年份从新到旧、同一年内按目录的月份与序列排列。
+- `meta.json` 只放 `album` 段：`title`、`date`、`description` 均可选。`title` 缺省取目录名后缀；`date` 可写 `YYYY-MM` 或完整的 `YYYY-MM-DD`，缺省取目录名的年月；`description` 是留影页与相册卡片上的相册文案，**最多 16 个字符**（含标点），超过会让构建失败——它只会显示在卡片的一行里。
+- `album` 以外的键会让构建失败并提示，照片不再写进 `meta.json`：照片 `id` 由文件名生成，顺序为 `topNN` 优先（按编号）、其余按文件名自然序，逐张文案不在本期范围内。
+- 同一相册内照片 ID 必须唯一（同名文件才会冲突）；相册卡片取展示顺序的前三张做向右上的层叠封面。
 - 首页主回忆由 `home-memory.json` 完整且显式定义，不从相册派生。
 - 路径相对 public，例如 `media/photo.jpg`。不写 `/wangleyou/` 或 `public/` 前缀，不写外部 URL、查询参数、反斜杠或 `../`。路径由应用的统一媒体 resolver 加前缀。
-- 相册封面默认使用排序后的第一张照片；可选尺寸必须为正整数。
+- 相册封面取展示顺序的前三张照片；可选尺寸必须为正整数。
 - 显式引用文件不存在、配置格式错误、重复 ID 会使校验和构建失败，并指出字段位置。运行时网络失败可在大图查看器重试。
 - 背景音乐不进入相册内容配置；主题私有资产（首屏图、第二屏背景、背景音乐）统一放在 `public/media/themes/<主题>/`，由对应主题代码引用，来源未确认前仅用于非商业占位。替换真实音乐时同步主题组件、素材说明和许可确认。
 

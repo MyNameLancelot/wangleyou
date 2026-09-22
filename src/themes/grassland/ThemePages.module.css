@@ -2,7 +2,6 @@
 .sectionHeader { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); margin-bottom: var(--space-lg); }
 .sectionHeader h2 { font-family: var(--font-title); font-size: var(--font-size-h3); font-weight: 600; }
 .sectionLink { color: var(--color-action-primary); font-size: var(--font-size-small); min-height: var(--target-min); display: inline-flex; align-items: center; gap: var(--space-2xs); }
-.sectionNote { color: var(--color-text-secondary); font-size: var(--font-size-small); }
 .primary { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--target-min); padding: 12px 22px; background: var(--color-action-primary); color: var(--color-action-on-primary); border: 0; border-radius: var(--radius-sm); font-size: 13px; transition: background var(--motion-fast-duration) var(--motion-standard-easing); }
 .primary:hover { background: var(--color-action-primary-hover); }
 .primary:active { background: var(--color-action-primary-pressed); }
@@ -82,9 +81,18 @@
 .albumGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
 .albumGridSpaced { margin-top: var(--space-xl); }
 .albumCard { min-width: 0; border-radius: var(--radius-lg); }
-.cover { position: relative; height: 212px; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-background-subtle); }
-.cover img { transition: transform var(--motion-slow-duration) var(--motion-standard-easing); }
-.albumCard:hover .cover img { transform: scale(1.02); }
+/* 相册封面：最多三张照片向右上错位层叠，第一张压在最上面且完整可见。 */
+.cover { position: relative; aspect-ratio: 3 / 2; --stack-gap: 12px; --stack-reach: calc(var(--stack-gap) * 2); }
+.cover[data-stack='1'] { --stack-reach: 0px; }
+.cover[data-stack='2'] { --stack-reach: var(--stack-gap); }
+.coverLayer { position: absolute; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-background-subtle); transition: inset var(--motion-slow-duration) var(--motion-standard-easing); }
+.coverLayer img { transition: transform var(--motion-slow-duration) var(--motion-standard-easing); }
+.cover .coverLayer img { object-fit: contain; }
+.coverLayerBack { inset: 0 0 var(--stack-reach) var(--stack-reach); z-index: 0; }
+.coverLayerMid { inset: calc(var(--stack-reach) - var(--stack-gap)) calc(var(--stack-reach) - var(--stack-gap)) var(--stack-gap) var(--stack-gap); z-index: 1; }
+.coverLayerFront { inset: var(--stack-reach) var(--stack-reach) 0 0; z-index: 2; box-shadow: var(--shadow-sm); }
+.albumCard:hover .cover { --stack-gap: 16px; }
+.albumCard:hover .coverLayerFront img { transform: scale(1.02); }
 .count { position: absolute; left: 12px; bottom: 12px; background: var(--color-background-surface); color: var(--color-text-primary); font-size: 10px; padding: 4px 10px; border-radius: var(--radius-pill); }
 .cardInfo { padding: var(--space-sm) 2px 0; }
 .date { color: var(--color-text-secondary); font: 10px var(--font-caption); letter-spacing: 1px; }
@@ -94,12 +102,25 @@
 
 /* 影像卡片：说明条压在卡片底部，与设计稿一致 */
 .mediaTile { display: block; width: 100%; border: 0; background: transparent; padding: 0; text-align: left; min-width: 0; }
-.mediaThumb { position: relative; display: block; aspect-ratio: 16 / 7; overflow: hidden; border-radius: var(--radius-md); background: var(--color-background-subtle); }
+.mediaThumb { position: relative; display: block; aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--radius-md); background: var(--color-background-subtle); }
 .mediaTileTall .mediaThumb { aspect-ratio: 4 / 3; }
 .mediaThumb img { transition: transform var(--motion-standard-duration) var(--motion-standard-easing); }
+.mediaTile .mediaThumb img { object-fit: contain; }
 .mediaTile:hover .mediaThumb img { transform: scale(1.02); }
-.mediaBar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; min-height: 56px; padding: var(--space-xs) var(--space-md); background: var(--color-media-control); color: var(--color-action-on-primary); font-size: var(--font-size-small); }
-.demoTag { position: absolute; left: 12px; top: 12px; background: var(--color-background-surface); color: var(--color-text-primary); font-size: 10px; padding: 4px 10px; border-radius: var(--radius-pill); }
+.mediaBar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; min-height: 38px; padding: var(--space-2xs) var(--space-md); background: var(--color-media-control); color: var(--color-action-on-primary); font-size: var(--font-size-small); overflow: hidden; white-space: nowrap; }
+.mediaAlbum { flex: none; max-width: 45%; margin-right: var(--space-xs); padding-right: var(--space-xs); border-right: 1px solid rgb(255 255 255 / 38%); opacity: 0.82; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mediaText { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 留影页以三层错位封面明确相册语义；后层只露出右上边缘，阴影保持克制。 */
+.browseAlbumThumb { --browse-stack-gap: 10px; --browse-stack-reach: calc(var(--browse-stack-gap) * 2); background: transparent; }
+.browseAlbumThumb[data-stack='1'] { --browse-stack-reach: 0px; }
+.browseAlbumThumb[data-stack='2'] { --browse-stack-reach: var(--browse-stack-gap); }
+.browseAlbumLayer { position: absolute; display: block; overflow: hidden; border: 0; border-radius: var(--radius-md); background: var(--color-background-subtle); box-shadow: none; }
+.browseAlbumLayerBack { inset: 0 0 var(--browse-stack-reach) var(--browse-stack-reach); z-index: 0; }
+.browseAlbumLayerMiddle { inset: calc(var(--browse-stack-reach) - var(--browse-stack-gap)) calc(var(--browse-stack-reach) - var(--browse-stack-gap)) var(--browse-stack-gap) var(--browse-stack-gap); z-index: 1; }
+.browseAlbumLayerFront { inset: var(--browse-stack-reach) var(--browse-stack-reach) 0 0; z-index: 2; }
+.mediaTile .browseAlbumLayer img { object-fit: cover; }
+.mediaTile:hover .browseAlbumThumb img { transform: none; }
+.browseAlbumLayer .mediaBar { z-index: 1; }
 .videoBadge { position: absolute; right: 12px; top: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 36px; height: 36px; border-radius: 50%; background: var(--color-background-surface); color: var(--color-action-primary); font-size: 12px; }
 .videoBadge small { position: absolute; right: 44px; background: var(--color-media-control); color: var(--color-action-on-primary); padding: 2px 6px; border-radius: var(--radius-pill); font-family: var(--font-caption); font-size: 10px; }
 .emptyCover { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 120px; color: var(--color-action-primary); background: var(--color-background-subtle); border: 1px dashed var(--color-border-default); }
@@ -121,25 +142,20 @@
 .filterPill { position: absolute; left: max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); bottom: 0; transform: translateY(50%); display: inline-flex; gap: var(--space-xs); padding: var(--space-xs); border-radius: var(--radius-pill); background: var(--color-background-surface); box-shadow: var(--shadow-sm); }
 .filterTab { min-height: var(--target-min); padding: 0 var(--space-lg); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-secondary); font-size: var(--font-size-small); }
 .filterTab[aria-pressed='true'] { background: var(--color-action-primary); color: var(--color-action-on-primary); }
-.browseBody { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: var(--space-2xl); padding-top: var(--space-2xl); }
+.browseBody { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: var(--space-2xl); padding: var(--space-2xl) max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); }
 .rail { position: relative; }
 .railCard { position: sticky; top: var(--space-lg); padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); background: var(--color-background-surface); }
 .railCard h2 { font-family: var(--font-title); font-size: var(--font-size-h3); font-weight: 600; }
-.railCard h3 { font-size: var(--font-size-small); color: var(--color-text-secondary); margin-top: var(--space-lg); }
 .railList { list-style: none; margin: var(--space-sm) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2xs); }
 .railYear { width: 100%; min-height: var(--target-min); padding: 0 var(--space-md); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-secondary); text-align: left; font-size: var(--font-size-small); }
-.railYear:hover { background: var(--color-background-subtle); color: var(--color-text-primary); }
-.railAlbum { display: inline-flex; align-items: center; min-height: var(--target-min); padding: 0 var(--space-md); border-radius: var(--radius-md); color: var(--color-text-primary); font-size: var(--font-size-small); }
-.railAlbum:hover { background: var(--color-background-subtle); }
+.railYear:hover { background: var(--color-action-primary); color: var(--color-action-on-primary); }
 .browseMain { min-width: 0; }
 .yearNav { display: none; align-items: center; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-lg); }
 .yearNavLabel { font-family: var(--font-caption); font-size: 10px; color: var(--color-text-secondary); letter-spacing: 1px; }
 .yearChip { min-height: var(--target-min); min-width: var(--target-min); padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid transparent; background: var(--color-background-subtle); color: var(--color-text-primary); font-size: var(--font-size-small); }
 .yearGroup { padding-bottom: var(--space-xl); scroll-margin-top: var(--space-xl); }
-.yearHeader { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-md); }
-.yearHeader h2 { font-family: var(--font-title); font-size: var(--font-size-h2); font-weight: 600; }
+.yearTitle { font-family: var(--font-title); font-size: var(--font-size-h2); font-weight: 600; margin-bottom: var(--space-md); }
 .browseGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
-.browseHint { color: var(--color-text-secondary); font-size: var(--font-size-small); margin-top: var(--space-sm); }
 .pageHeader { padding: var(--space-2xl) 0 var(--space-sm); }
 .pageHeader h1 { font-family: var(--font-title); font-size: clamp(30px, 3.4vw, 44px); font-weight: 600; }
 .pageHeader p { color: var(--color-text-secondary); font-size: 14px; }
@@ -158,7 +174,6 @@
 .upNext { padding-top: var(--space-2xl); }
 .upNextGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); }
 
-@media (min-width: 1400px) { .cover { height: 240px; } }
 @media (max-width: 900px) {
   .browseBody { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); padding-top: var(--space-2xl); }
   .rail { display: none; }
@@ -183,13 +198,15 @@
   .recent { padding-top: var(--space-lg); }
   .recentGrid, .browseGrid, .photoGrid, .upNextGrid { grid-template-columns: minmax(0, 1fr); }
   .albumGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
+  .cover { --stack-gap: 8px; }
+  .browseAlbumThumb { --browse-stack-gap: 7px; }
   .browseHero { min-height: 0; padding-top: var(--space-lg); padding-bottom: var(--space-2xl); }
-  .filterPill { left: 21px; right: 21px; justify-content: space-between; }
+  .filterPill { left: var(--layout-gutter); right: var(--layout-gutter); justify-content: space-between; }
   .filterTab { flex: 1; padding: 0 var(--space-sm); }
   .browseBody { padding-top: var(--space-xl); }
   .detailHeader { flex-direction: column; }
   .detailHeader .primary { width: 100%; }
-  .mediaBar { min-height: 48px; }
+  .mediaBar { min-height: 34px; }
 }
 
 @media (max-width: 390px) {
