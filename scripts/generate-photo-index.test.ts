@@ -51,6 +51,15 @@ it('rejects album descriptions longer than 16 characters', async () => {
   await expect(generatePhotoIndex(photos, output)).rejects.toThrow('不能超过 16 个字符（当前 17 个）')
 })
 
+it('accepts optional opening and rejects blank or overlong opening', async () => {
+  const { photos, album, output } = await fixture({ album: { opening: '一岁，是好奇心开始有了方向。' } })
+  expect((await generatePhotoIndex(photos, output)).content.albums[0].opening).toBe('一岁，是好奇心开始有了方向。')
+  await writeFile(join(album, 'meta.json'), JSON.stringify({ album: { opening: '   ' } }))
+  await expect(generatePhotoIndex(photos, output)).rejects.toThrow('opening')
+  await writeFile(join(album, 'meta.json'), JSON.stringify({ album: { opening: '一二三四五六七八九十一二三四五六七八九十一' } }))
+  await expect(generatePhotoIndex(photos, output)).rejects.toThrow('20')
+})
+
 it('rejects uppercase Sequence album directories', async () => {
   const root = await mkdtemp(join(tmpdir(), 'photo-index-')); temporary.push(root)
   const photos = join(root, 'photos')

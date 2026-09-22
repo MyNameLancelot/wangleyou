@@ -9,9 +9,10 @@ const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const TOP_FILE = /^top(\d+)(?=\.|-|_)/i
 /** 相册说明只出现在卡片的一行里，超过这个长度就会截断，因此在构建期就拦住。 */
 const DESCRIPTION_MAX_LENGTH = 16
+const OPENING_MAX_LENGTH = 20
 
 /** 目录级元信息：描述这一段日子本身，而不是某张照片。 */
-type AlbumMeta = { title?: string; description?: string; date?: string }
+type AlbumMeta = { title?: string; description?: string; opening?: string; date?: string }
 
 const natural = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
@@ -35,11 +36,14 @@ function readAlbumMeta(name: string, input: unknown): AlbumMeta {
   if (unknown.length) throw new Error(`${name}/meta.json.${unknown[0]}: 只支持 album 段；照片顺序与元信息由构建期脚本按文件名生成`)
   const album = (meta.album ?? {}) as Record<string, unknown>
   if (typeof album !== 'object' || album === null || Array.isArray(album)) throw new Error(`${name}/meta.json.album: must be an object`)
-  for (const key of ['title', 'description', 'date'] as const) {
+  for (const key of ['title', 'description', 'opening', 'date'] as const) {
     if (album[key] !== undefined && typeof album[key] !== 'string') throw new Error(`${name}/meta.json.album.${key}: must be a string when provided`)
   }
   if (typeof album.description === 'string' && [...album.description].length > DESCRIPTION_MAX_LENGTH) {
     throw new Error(`${name}/meta.json.album.description: 不能超过 ${DESCRIPTION_MAX_LENGTH} 个字符（当前 ${[...album.description].length} 个）`)
+  }
+  if (typeof album.opening === 'string' && (album.opening.trim().length === 0 || [...album.opening.trim()].length > OPENING_MAX_LENGTH)) {
+    throw new Error(`${name}/meta.json.album.opening: 必须为 1 至 ${OPENING_MAX_LENGTH} 个非空白字符`)
   }
   return album as AlbumMeta
 }
@@ -72,6 +76,7 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
         id: `${match[1]}-${match[2]}-sequence${match[3]}`,
         title: details.title?.trim() || match[4],
         description: details.description,
+        opening: details.opening,
         date: details.date || `${match[1]}-${match[2]}`,
         media,
       },

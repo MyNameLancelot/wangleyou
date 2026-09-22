@@ -153,6 +153,10 @@ function validateAlbum(input: unknown, location: string): Album {
   assertId(input.id, `${location}.id`)
   assertString(input.title, `${location}.title`, true)
   assertOptionalString(input.description, `${location}.description`)
+  assertOptionalString(input.opening, `${location}.opening`)
+  if (typeof input.opening === 'string' && (input.opening.trim().length === 0 || [...input.opening.trim()].length > 20)) {
+    fail(`${location}.opening`, 'must contain 1 to 20 non-whitespace characters')
+  }
   assertPeriod(input.date, `${location}.date`)
   assertOptionalAssetPath(input.cover, `${location}.cover`)
   if (!Array.isArray(input.media)) fail(`${location}.media`, 'must be an array')

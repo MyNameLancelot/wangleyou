@@ -25,7 +25,7 @@ import styles from './ThemePages.module.css';
 
 export type OpenMedia = (album: Album, id: string) => void;
 type Filter = 'all' | 'photo' | 'video';
-type TileVariant = 'wide' | 'tall';
+type TileVariant = 'wide' | 'tall' | 'masonry';
 
 const dateText = (date?: string) => (date ? date.replaceAll('-', '.') : '待续');
 const isVideo = (media: Media): media is Video => media.type === 'video';
@@ -46,7 +46,7 @@ const isInteractiveTarget = (target: EventTarget | null) => target instanceof El
 /** 图片与视频共用的缩略图：说明条压在卡片底部，视频带类型标识。 */
 function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: Media; album: Album; onOpen: OpenMedia; variant?: TileVariant; eager?: boolean }) {
   const source = thumbnailOf(media);
-  return <button type="button" className={`${styles.mediaTile} ${variant === 'tall' ? styles.mediaTileTall : ''}`} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(album, media)}>
+  return <button type="button" className={[styles.mediaTile, variant === 'tall' ? styles.mediaTileTall : '', variant === 'masonry' ? styles.masonryTile : ''].filter(Boolean).join(' ')} onClick={() => onOpen(album, media.id)} aria-label={mediaLabel(album, media)}>
     <span className={styles.mediaThumb}>
       {source ? <PhotoImage src={mediaUrl(source)} alt={media.alt || media.description || '相册影像'} eager={eager} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>等待新的影像</p></span>}
       {isVideo(media) && <span className={styles.videoBadge}><span aria-hidden="true">▶</span>{durationText(media.duration) && <small>{durationText(media.duration)}</small>}</span>}
@@ -455,31 +455,12 @@ export function AlbumsPage({ data }: { data: SiteContent }) {
   </section>;
 }
 
-export function AlbumPage({ album, albums, onOpen }: { album: Album; albums: Album[]; onOpen: OpenMedia }) {
-  const index = albums.findIndex(item => item.id === album.id);
-  const next = index >= 0 && index < albums.length - 1 ? albums[index + 1] : undefined;
+export function AlbumPage({ album, onOpen }: { album: Album; onOpen: OpenMedia }) {
   const first = album.media[0];
-  const dates = album.media.map(item => item.date).filter((value): value is string => Boolean(value)).sort();
-  const range = dates.length > 1 && dates[0] !== dates[dates.length - 1] ? `${dateText(dates[0])} — ${dateText(dates[dates.length - 1])}` : dateText(dates[0] ?? album.date);
+  const heroSource = first ? thumbnailOf(first) : undefined;
+  const opening = album.opening || album.description;
   return <section className={styles.detail} aria-labelledby="album-title">
-    <nav className={styles.breadcrumb} aria-label="面包屑"><a href="#/">首页</a><span aria-hidden="true">/</span><a href="#/browse">全部影像</a><span aria-hidden="true">/</span><span aria-current="page">{album.title}</span></nav>
-    <header className={styles.detailHeader}>
-      <div>
-        <h1 id="album-title">{album.title}</h1>
-        <p className={styles.detailMeta}>{range} · {album.media.length} 项影像 · 演示相册</p>
-        {album.description && <p className={styles.detailDescription}>{album.description}</p>}
-      </div>
-      {first && <button type="button" className={styles.primary} onClick={() => onOpen(album, first.id)}><span aria-hidden="true">▶</span> 从这里播放</button>}
-    </header>
-    {album.media.length
-      ? <div className={styles.photoGrid} data-testid="album-media-grid">{album.media.map((media, i) => <MediaTile key={media.id} album={album} media={media} onOpen={onOpen} variant="tall" eager={i < 3} />)}</div>
-      : <div className={styles.empty}><span aria-hidden="true">☀</span><h2>下一段故事，还在路上</h2><p>这个相册暂时没有影像，先去看看其他回忆吧。</p><a className={styles.primary} href="#/">返回首页 <span aria-hidden="true">↗</span></a></div>}
-    {next && next.media.length > 0 && <section className={styles.upNext} aria-labelledby="upnext-title">
-      <div className={styles.sectionHeader}>
-        <h2 id="upnext-title">接下来的影像</h2>
-        <a className={styles.sectionLink} href={`#/albums/${next.id}`} aria-label={`下一本相册：${next.title}`}>下一本相册 <span aria-hidden="true">→</span></a>
-      </div>
-      <div className={styles.upNextGrid}>{next.media.slice(0, 4).map(media => <MediaTile key={`${next.id}-${media.id}`} album={next} media={media} onOpen={onOpen} />)}</div>
-    </section>}
+    <header className={styles.detailHero} style={heroSource ? { backgroundImage: 'linear-gradient(110deg, rgb(15 59 67 / 76%), rgb(16 81 91 / 24%)), url("' + mediaUrl(heroSource) + '")', backgroundPosition: 'center', backgroundSize: 'cover' } : undefined}><a className={styles.detailBack} href="#/browse">← 返回留影</a><div className={styles.detailHeroCopy}><h1 id="album-title">{album.title}</h1>{album.description && <p>{album.description}</p>}{opening && <blockquote>{opening}</blockquote>}</div></header>
+    {album.media.length ? <section className={styles.detailGallery} aria-label="相册影像"><div className={styles.masonryGrid} data-testid="album-media-grid">{album.media.map((media, i) => <MediaTile key={media.id} album={album} media={media} onOpen={onOpen} variant="masonry" eager={i < 3} />)}</div></section> : <div className={styles.empty}><span aria-hidden="true">☀</span><h2>这本相册正在整理</h2><p>新的影像会在这里出现。</p><a className={styles.primary} href="#/browse">返回留影</a></div>}
   </section>;
 }
