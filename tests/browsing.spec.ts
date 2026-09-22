@@ -247,19 +247,31 @@ test('browse album cards stack top covers with depth in both themes', async ({pa
     await expect(stack).toHaveAttribute('data-stack', '3');
     await expect(stack.locator('[data-browse-cover]').count()).resolves.toBe(3);
     await expect(stack.locator('[data-browse-cover="front"] img')).toHaveAttribute('src', /top01\.jpg$/);
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveCSS('object-fit', 'cover');
+    await card.hover();
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveCSS('transform', 'none');
 
     const layerBox = (layer: string) => stack.locator(`[data-browse-cover="${layer}"]`).evaluate(node => {
       const box = node.getBoundingClientRect();
-      return {x: Math.round(box.x), y: Math.round(box.y), shadow: getComputedStyle(node).boxShadow};
+      return {x: Math.round(box.x), y: Math.round(box.y), border: getComputedStyle(node).borderWidth, shadow: getComputedStyle(node).boxShadow};
     });
     const [front, middle, back] = await Promise.all([layerBox('front'), layerBox('middle'), layerBox('back')]);
     expect(back.x).toBeGreaterThan(middle.x);
     expect(middle.x).toBeGreaterThan(front.x);
     expect(back.y).toBeLessThan(middle.y);
     expect(middle.y).toBeLessThan(front.y);
-    expect(front.shadow).not.toBe('none');
-    expect(middle.shadow).not.toBe('none');
-    expect(back.shadow).not.toBe('none');
+    expect(front.border).toBe('0px');
+    expect(middle.border).toBe('0px');
+    expect(back.border).toBe('0px');
+    expect(front.shadow).toBe('none');
+    expect(middle.shadow).toBe('none');
+    expect(back.shadow).toBe('none');
+
+    const selectedFilter = page.getByRole('button', {name: '全部', exact: true});
+    const railYear = page.locator('aside').getByRole('button', {name: '2025'});
+    await railYear.hover();
+    const [filterColors, yearColors] = await Promise.all([selectedFilter.evaluate(node => ({ background: getComputedStyle(node).backgroundColor, color: getComputedStyle(node).color })), railYear.evaluate(node => ({ background: getComputedStyle(node).backgroundColor, color: getComputedStyle(node).color }))]);
+    expect(yearColors).toEqual(filterColors);
   }
 
   await page.setViewportSize({width: 360, height: 800});
