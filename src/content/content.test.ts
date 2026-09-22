@@ -14,6 +14,14 @@ describe('content validation', () => {
     expect(() => validateContent({ ...base, albums: [{ ...base.albums[0], opening: ' ' }] })).toThrow('opening')
     expect(() => validateContent({ ...base, albums: [{ ...base.albums[0], opening: '一二三四五六七八九十一二三四五六七八九十一' }] })).toThrow('opening')
   })
+  it('accepts optional photo captions up to 60 characters and rejects blank or overlong ones', () => {
+    const photo = { id: 'top', type: 'photo', src: 'media/photos/a/top01.jpg' }
+    const content = (media: unknown) => ({ site: { title: '王乐悠', subtitle: '' }, albums: [{ id: '2024-05-sequence00', title: '破壳', media: [media] }] })
+    expect(validateContent(content({ ...photo, caption: '第一次见面。' })).albums[0].media[0].caption).toBe('第一次见面。')
+    expect(validateContent(content(photo)).albums[0].media[0].caption).toBeUndefined()
+    expect(() => validateContent(content({ ...photo, caption: '  ' }))).toThrow('caption')
+    expect(() => validateContent(content({ ...photo, caption: '一'.repeat(61) }))).toThrow('caption')
+  })
   it.each(['/media/photo.jpg', 'https://example.com/photo.jpg', 'media\\photo.jpg', '../photo.jpg', 'media/../photo.jpg', 'media/photo.jpg?size=large'])('rejects unsafe asset path %s', path => {
     expect(() => assertAssetPath(path, 'asset')).toThrow('asset')
   })

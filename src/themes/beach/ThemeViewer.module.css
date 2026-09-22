@@ -1,127 +1,236 @@
+/* 海边：纯色毛玻璃底 + 影像静默舞台；不使用任何照片作为背景。 */
 .dialog {
   position: fixed;
   inset: 0;
   width: 100%;
-  height: 100%;
   height: 100dvh;
   max-width: none;
   max-height: none;
-  border: 0;
   margin: 0;
   padding: 0;
-  background: var(--color-media-overlay);
+  border: 0;
   color: var(--color-action-on-primary);
+  background: transparent;
 }
-.dialog[open] { display: flex; flex-direction: column; }
-.dialog::backdrop { background: var(--color-media-overlay); }
+.dialog[open] { display: block; }
+.dialog::backdrop {
+  background-color: #000000;
+}
 .viewport {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding: max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
-  background: var(--color-media-overlay);
+  padding: max(14px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  background-color: #000000;
+  overflow: hidden;
+  user-select: none;
 }
-.viewport:fullscreen { padding: max(12px, env(safe-area-inset-top)) 18px max(12px, env(safe-area-inset-bottom)); }
+.viewport:fullscreen { padding: 14px 18px; background-color: #000000; }
+.videoViewport { background-color: #000000; color: #f4fbfc; }
 
-.header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); min-height: 56px; flex-shrink: 0; }
-.counter { font: var(--font-size-small) var(--font-caption); color: var(--media-viewer-text-muted); }
-.iconButton {
-  display: inline-flex;
+.header {
+  position: relative;
+  z-index: 3;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-width: var(--target-min);
-  min-height: var(--target-min);
-  border: 1px solid rgb(255 255 255 / 28%);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: inherit;
-  font-size: 16px;
-  transition: background var(--motion-fast-duration) var(--motion-standard-easing);
+  min-height: 48px;
+  flex-shrink: 0;
 }
-.iconButton:hover { background: rgb(255 255 255 / 12%); }
-.iconButton:disabled { opacity: 0.35; }
-.themeButton {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  min-height: var(--target-min);
-  padding: 0 14px;
-  border: 1px solid rgb(255 255 255 / 28%);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: inherit;
-  font-size: var(--font-size-small);
-}
-.themeButton span { color: var(--media-viewer-text-muted); }
-
-.stage { position: relative; display: flex; flex: 1; min-height: 0; align-items: center; justify-content: center; padding: var(--space-md) var(--media-viewer-next-target); touch-action: pan-y pinch-zoom; }
-.mediaArea { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; }
-.media { width: 100%; height: 100%; max-height: 100%; object-fit: contain; background: transparent; }
-.arrow {
+.counter { font: var(--font-size-small) var(--font-caption); letter-spacing: 0.14em; color: #d5eef1; }
+.srOnly {
   position: absolute;
-  z-index: 1;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.closeButton {
+  position: absolute;
+  right: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--target-min);
   height: var(--target-min);
+  padding: 0;
+  border: 1px solid rgb(219 249 251 / 38%);
   border-radius: 50%;
-  border: 1px solid rgb(255 255 255 / 32%);
-  background: var(--color-media-control);
-  color: var(--color-action-on-primary);
-  font-size: 22px;
-  transition: opacity var(--motion-fast-duration) var(--motion-standard-easing);
+  background: rgb(6 34 48 / 62%);
+  color: inherit;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
 }
-.arrow:disabled { opacity: 0.28; }
-.previous { left: var(--space-xs); }
-.next { right: var(--space-xs); }
+.closeButton svg { width: 20px; height: 20px; }
 
-.caption { font-size: 13px; color: var(--media-viewer-text-muted); }
-.hint { font-size: var(--font-size-caption); color: var(--media-viewer-text-muted); }
-.statePanel { position: absolute; display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); text-align: center; padding: var(--space-lg); background: var(--color-media-control); border-radius: var(--radius-lg); }
-.stateActions { display: flex; gap: var(--space-xs); flex-wrap: wrap; justify-content: center; }
-.retry { min-height: var(--target-min); padding: 0 18px; border: 1px solid rgb(255 255 255 / 45%); border-radius: var(--radius-sm); background: transparent; color: inherit; font-size: 13px; }
-.retry:disabled { opacity: 0.4; }
-
-.controls {
-  flex-shrink: 0;
+.stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  /* 下方留出比上方更多的空间：媒体整体上提，寄语与影像之间不贴边。 */
+  padding: 10px 60px 42px;
+  touch-action: pan-y pinch-zoom;
+}
+.photoStage {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xs);
-  margin-top: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  min-height: var(--media-viewer-control-height);
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+  background: transparent;
+}
+.photo {
+  /* 照片按自身比例占位，寄语才能紧贴画面下缘。 */
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.videoStage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 5% 6% 15%;
+  border: 1px solid rgb(120 205 216 / 24%);
   border-radius: var(--radius-lg);
-  background: var(--color-media-control);
-  opacity: var(--media-viewer-control-opacity);
-  transition: opacity var(--motion-standard-duration) var(--motion-standard-easing), transform var(--motion-standard-duration) var(--motion-standard-easing);
+  background-color: #000000;
+  box-shadow: 0 30px 60px rgb(0 0 0 / 34%);
 }
-.controlsHidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
-.controlsRow { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
-.time { font: var(--font-size-small) var(--font-caption); color: var(--media-viewer-text-muted); min-width: 96px; }
-.progress { flex: 1; min-width: 140px; height: var(--target-min); accent-color: var(--color-action-primary); background: transparent; }
-.textButton { min-height: var(--target-min); padding: 0 14px; border: 1px solid rgb(255 255 255 / 28%); border-radius: var(--radius-pill); background: transparent; color: inherit; font-size: var(--font-size-small); }
-.textButton[aria-pressed='true'] { border-color: var(--color-action-primary); background: var(--color-action-primary); color: var(--color-action-on-primary); }
+.video { width: 100%; height: 100%; object-fit: contain; background-color: #02121a; }
+.noPoster { position: absolute; top: 16px; left: 16px; margin: 0; padding: 6px 10px; border-radius: var(--radius-sm); background-color: rgb(2 14 20 / 78%); font: var(--font-size-small) var(--font-body); color: #bcdde2; }
+.ended { position: absolute; bottom: 96px; margin: 0; font: var(--font-size-small) var(--font-body); color: #cfe6e9; }
+.videoControls {
+  position: absolute;
+  right: 6%;
+  bottom: 5%;
+  left: 6%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.progress { width: 100%; height: 18px; margin: 0; accent-color: #7fe3e7; cursor: pointer; }
+.videoTools { display: flex; align-items: center; gap: 10px; }
+.videoTools button,
+.fullscreenButton,
+.statePanel button,
+.nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.videoTools button { border-radius: 50%; background-color: rgb(9 47 62 / 66%); }
+.videoTools svg { width: 19px; height: 19px; }
+.videoTools span { flex: 1; font: var(--font-size-small) var(--font-caption); font-variant-numeric: tabular-nums; color: #c3e0e4; }
 
-.dialog :focus-visible { outline-color: var(--color-focus-ring-inverse); }
+.nav {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgb(219 249 251 / 36%);
+  border-radius: 50%;
+  background-color: rgb(6 34 48 / 64%);
+  backdrop-filter: blur(12px);
+}
+.nav svg { width: 26px; height: 26px; }
+.nav:disabled { opacity: 0.28; cursor: default; }
+.previous { left: 6px; }
+.next { right: 6px; }
 
-/* 移动端：媒体优先，控制栏贴底并抬高触控目标 */
+.description {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  align-self: center;
+  max-width: min(680px, calc(100% - 120px));
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #e8f7f8;
+  user-select: text;
+}
+.videoViewport .description { max-width: calc(100% - 24px); margin: 0 0 6px; }
+
+.fullscreenButton { position: absolute; z-index: 3; right: 18px; bottom: 12px; border-radius: 50%; background-color: rgb(6 34 48 / 64%); }
+.fullscreenButton svg { width: 19px; height: 19px; }
+.loading { position: absolute; margin: 0; font: var(--font-size-small) var(--font-body); color: #d3eaee; }
+.statePanel {
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 360px;
+  padding: 28px;
+  text-align: center;
+  border: 1px solid rgb(170 232 238 / 28%);
+  border-radius: var(--radius-lg);
+  background-color: rgb(6 30 42 / 84%);
+}
+.statePanel span { font-size: 13px; color: #c1d9dd; }
+.statePanel button { padding: 0 16px; border: 1px solid rgb(215 248 250 / 40%); border-radius: var(--radius-pill); }
+.notice { position: absolute; z-index: 4; right: 18px; bottom: 64px; margin: 0; padding: 8px 12px; border-radius: var(--radius-sm); background-color: #16394a; font-size: 12px; }
+
+/* 模态容器与舞台只是焦点锚点，不是控件：不给整屏容器画焦点环，控件仍保留可见焦点。 */
+.dialog:focus,
+.dialog:focus-visible,
+.stage:focus,
+.stage:focus-visible { outline: none; }
+.dialog button:focus-visible,
+.dialog input:focus-visible { outline: 3px solid var(--color-focus-ring-inverse); outline-offset: 3px; }
+
+/* 平板：压缩控制密度，媒体仍占主导。 */
+@media (max-width: 900px) {
+  .stage { padding: 12px 54px 6px; }
+}
+
+/* 移动端：只用左右滑动切换，不显示导航按钮；寄语紧跟影像下方。 */
 @media (max-width: 600px) {
-  .viewport { padding: max(8px, env(safe-area-inset-top)) 12px max(8px, env(safe-area-inset-bottom)); }
-  .stage { padding: var(--space-xs) 0 max(56px, env(safe-area-inset-bottom)); }
-  .arrow { top: auto; bottom: 0; }
-  .previous { left: calc(50% - 62px); }
-  .next { right: calc(50% - 62px); }
-  .controls { min-height: var(--media-viewer-control-height-mobile); }
-  .themeButton span { display: none; }
+  .viewport { padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
+  .stage { padding: 8px 0 10px; }
+  .nav { display: none; }
+  .photoStage { padding: 0 10px; }
+  .description { max-width: calc(100% - 24px); font-size: 13px; }
+  .videoStage { padding: 8% 5% 22%; border-radius: var(--radius-md); }
+  .videoControls { right: 5%; bottom: 4%; left: 5%; }
+  .videoViewport .description { max-width: calc(100% - 24px); margin-bottom: 74px; font-size: 13px; }
+  .ended { bottom: 118px; }
+  .fullscreenButton { right: 6px; bottom: 4px; }
 }
 
-/* 横屏：控制栏贴底，媒体居中，队列折叠在底部 */
+/* 横屏矮视口：收起描述，保住影像高度。 */
 @media (orientation: landscape) and (max-height: 520px) {
-  .header { min-height: var(--target-min); }
-  .stage { padding: var(--space-xs) calc(var(--media-viewer-next-target) + 8px); }
-  .controls { min-height: auto; padding: var(--space-xs) var(--space-md); }
-  .controls .hint { display: none; }
+  .description { display: none; }
+  .videoViewport .description { display: none; }
 }

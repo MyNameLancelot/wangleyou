@@ -1,267 +1,306 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import type { TouchEvent, WheelEvent } from 'react';
+import { ChevronLeft, ChevronRight, Maximize, Pause, Play, Volume2, VolumeX, X } from 'lucide-react';
 import { mediaUrl } from '../../content';
-import type { Photo } from '../../content';
+import type { Photo, Video } from '../../content';
 import { isVideo } from '../../playback';
 import type { PlaybackStatus, Session } from '../../playback';
 import styles from './ThemeViewer.module.css';
 
-/** 查看器只转发命令，不维护第二套业务状态。 */
+/** 查看器只投影 session 并转发命令；播放业务状态仍归 playback。 */
 export interface ViewerCommands {
   step(delta: number): void;
   close(): void;
   toggleIntent(): void;
-  toggleContinuous(): void;
   reportProgress(progress: number, duration: number): void;
   reportStatus(status: PlaybackStatus): void;
   reportEnded(): void;
   reportError(): void;
-  /** 浏览器拒绝自动播放时降级为暂停，不当作播放失败。 */
   reportBlocked(): void;
-  toggleTheme(): void;
 }
 
-const timeText = (seconds: number) => {
+/** 桌面滚轮阈值与冷却：一次滚动只推进一步。 */
+const SCROLL_STEP = 45;
+const SCROLL_GAP = 420;
+
+const clock = (seconds: number) => {
   if (!Number.isFinite(seconds) || seconds <= 0) return '--:--';
   const whole = Math.floor(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+  return Math.floor(whole / 60) + ':' + String(whole % 60).padStart(2, '0');
 };
 
-function FullPhoto({ photo, onRetry }: { photo: Photo; onRetry?: () => void }) {
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [attempt, setAttempt] = useState(0);
-  return <div className={styles.mediaArea} aria-busy={status === 'loading'}>
-    {status === 'loading' && <p className={styles.caption} role="status">正在打开这一刻…</p>}
-    {status === 'error' ? <div className={styles.statePanel} role="status">
-      <p>这张照片暂时无法加载</p>
-      <p className={styles.hint}>可以重试，也可以切换到下一项或关闭查看器</p>
-      <button type="button" className={styles.retry} onClick={() => { onRetry?.(); setAttempt(n => n + 1); setStatus('loading'); }}>重新加载</button>
-    </div> : <img key={attempt} className={styles.media} src={mediaUrl(photo.src)} alt={photo.alt || photo.description || '相册照片'} onLoad={() => setStatus('ready')} onError={() => setStatus('error')} style={{ visibility: status === 'ready' ? 'visible' : 'hidden' }} />}
-  </div>;
+function PhotoPane({ photo, caption, onReload }: { photo: Photo; caption?: string; onReload: () => void }) {
+  const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [reloadCount, setReloadCount] = useState(0);
+
+  if (phase === 'error') {
+    return <div className={styles.noticeCard} role="status">
+      <p className={styles.noticeTitle}>这张照片暂时无法加载</p>
+      <p className={styles.noticeText}>可以重新加载，或用上一项、下一项继续浏览。</p>
+      <button type="button" onClick={() => { setReloadCount(count => count + 1); setPhase('loading'); onReload(); }}>重新加载</button>
+    </div>;
+  }
+
+  return <figure className={styles.photoPane} aria-busy={phase === 'loading'}>
+    <img
+      key={reloadCount}
+      className={styles.photo}
+      data-ready={phase === 'ready'}
+      src={mediaUrl(photo.src)}
+      alt={photo.alt || photo.description || '相册照片'}
+      draggable={false}
+      onLoad={() => setPhase('ready')}
+      onError={() => setPhase('error')}
+    />
+    {phase === 'loading' && <p className={styles.photoLoading} role="status">正在读取影像…</p>}
+    {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
+  </figure>;
 }
 
-export function MediaViewer({ session, commands, themeLabel }: { session: Session; commands: ViewerCommands; themeLabel: string }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const fullscreenTarget = useRef<HTMLDivElement>(null);
-  const closeButton = useRef<HTMLButtonElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const controlsRef = useRef<HTMLDivElement>(null);
-  const hideTimer = useRef<number | null>(null);
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const mounted = useRef(false);
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const [muted, setMuted] = useState(false);
-  const [notice, setNotice] = useState('');
-  const [videoAttempt, setVideoAttempt] = useState(0);
+function VideoPane({ video, caption, session, commands, onReload }: { video: Video; caption?: string; session: Session; commands: ViewerCommands; onReload: () => void }) {
+  const element = useRef<HTMLVideoElement>(null);
+  const [silent, setSilent] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0);
+
+  useEffect(() => {
+    const node = element.current;
+    if (!node || session.status === 'error') return;
+    if (session.intent === 'playing' && node.paused) void node.play().catch(commands.reportBlocked);
+    if (session.intent === 'paused' && !node.paused) node.pause();
+  }, [reloadCount, commands, session.intent, session.status, video.id]);
+
+  if (session.status === 'error') {
+    return <div className={styles.noticeCard} role="status">
+      <p className={styles.noticeTitle}>这段视频暂时无法播放</p>
+      <p className={styles.noticeText}>可以重新加载，或用上一项、下一项继续浏览。</p>
+      <button type="button" onClick={() => { setReloadCount(count => count + 1); commands.reportStatus('loading'); onReload(); }}>重新加载</button>
+    </div>;
+  }
+
+  const scrub = (ratio: number) => {
+    const node = element.current;
+    if (!node || !Number.isFinite(node.duration) || node.duration <= 0) return;
+    node.currentTime = ratio * node.duration;
+    commands.reportProgress(ratio, node.duration);
+  };
+
+  return <section className={styles.videoPane} aria-label="视频播放器">
+    <video
+      key={video.id + ':' + reloadCount}
+      ref={element}
+      className={styles.video}
+      src={mediaUrl(video.src)}
+      poster={video.poster ? mediaUrl(video.poster) : undefined}
+      playsInline
+      preload="metadata"
+      muted={silent}
+      aria-label={video.description || '相册视频'}
+      onLoadedMetadata={event => commands.reportProgress(0, event.currentTarget.duration)}
+      onCanPlay={() => commands.reportStatus(session.intent === 'playing' ? 'playing' : 'paused')}
+      onTimeUpdate={event => {
+        const total = event.currentTarget.duration;
+        commands.reportProgress(total > 0 ? event.currentTarget.currentTime / total : 0, total);
+      }}
+      onPlay={() => commands.reportStatus('playing')}
+      onPause={event => { if (!event.currentTarget.ended) commands.reportStatus('paused'); }}
+      onWaiting={() => commands.reportStatus('loading')}
+      onEnded={commands.reportEnded}
+      onError={commands.reportError}
+    >
+      {video.captions && <track kind="captions" src={mediaUrl(video.captions)} srcLang="zh" label="中文说明" default />}
+    </video>
+    {caption && <p className={styles.caption}>{caption}</p>}
+    <div className={styles.videoMeta}>
+      {!video.poster && <span className={styles.flag}>无封面视频</span>}
+      {session.status === 'loading' && <span role="status">正在加载视频…</span>}
+      {session.status === 'ended' && <span role="status">播放已结束，请手动切换下一项</span>}
+    </div>
+    <div className={styles.timeline} data-viewer-controls>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={Math.round(session.progress * 100)}
+        aria-label="视频播放进度"
+        onChange={event => scrub(Number(event.currentTarget.value) / 100)}
+      />
+      <div className={styles.timelineTools}>
+        <button type="button" aria-label={session.intent === 'playing' ? '暂停视频' : '播放视频'} onClick={commands.toggleIntent}>
+          {session.intent === 'playing' ? <Pause /> : <Play />}
+        </button>
+        <span className={styles.clock}>{clock(session.progress * session.duration)} / {clock(session.duration)}</span>
+        <button type="button" aria-label={silent ? '取消静音' : '静音'} aria-pressed={silent} onClick={() => setSilent(value => !value)}>
+          {silent ? <VolumeX /> : <Volume2 />}
+        </button>
+      </div>
+    </div>
+  </section>;
+}
+
+export function MediaViewer({ session, commands }: { session: Session; commands: ViewerCommands }) {
+  const shell = useRef<HTMLDialogElement>(null);
+  const fullscreenHost = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const canvas = useRef<HTMLDivElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const scrollRun = useRef(0);
+  const scrollBlockedUntil = useRef(0);
+  const live = useRef(false);
+  const [fullscreenNote, setFullscreenNote] = useState('');
 
   const media = session.media[session.index] ?? null;
   const video = isVideo(media) ? media : null;
   const photo = media?.type === 'photo' ? media : null;
-  const isLast = session.index >= session.media.length - 1;
-  const isFirst = session.index === 0;
-
-  /** 控制栏：无操作 3 秒后隐藏，但仅在播放中隐藏；控件获得焦点时永不隐藏。 */
-  const showControls = useCallback(() => {
-    setControlsVisible(true);
-    if (hideTimer.current !== null) window.clearTimeout(hideTimer.current);
-    if (!video || session.intent !== 'playing') return;
-    hideTimer.current = window.setTimeout(() => {
-      const active = document.activeElement;
-      if (active instanceof HTMLElement && controlsRef.current?.contains(active)) return;
-      setControlsVisible(false);
-    }, 3000);
-  }, [session.intent, video]);
+  const caption = media?.caption ?? media?.description;
+  const atStart = session.index === 0;
+  const atEnd = session.index === session.media.length - 1;
 
   useEffect(() => {
-    mounted.current = true;
-    const element = dialog.current;
-    const fullscreenElement = fullscreenTarget.current;
-    const focusTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const overflow = document.body.style.overflow;
-    element?.showModal();
-    closeButton.current?.focus();
+    const upcoming = session.media[session.index + 1];
+    if (upcoming?.type !== 'photo') return;
+    const image = new Image();
+    image.src = mediaUrl(upcoming.src);
+    return () => { image.src = ''; };
+  }, [session]);
+
+  useEffect(() => {
+    live.current = true;
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const node = shell.current;
+    const host = fullscreenHost.current;
+    const previousOverflow = document.body.style.overflow;
+    node?.showModal();
+    // 打开时不聚焦按钮，避免鼠标打开也出现焦点环；Tab 进入控件时才显示焦点。
+    node?.focus();
     document.body.style.overflow = 'hidden';
     return () => {
-      mounted.current = false;
-      if (hideTimer.current !== null) window.clearTimeout(hideTimer.current);
-      if (document.fullscreenElement === fullscreenElement) void document.exitFullscreen().catch(() => {});
-      element?.close();
-      document.body.style.overflow = overflow;
-      if (focusTarget?.isConnected) focusTarget.focus();
+      live.current = false;
+      if (document.fullscreenElement === host) void document.exitFullscreen().catch(() => {});
+      node?.close();
+      document.body.style.overflow = previousOverflow;
+      if (opener.current?.isConnected) opener.current.focus();
       else document.querySelector<HTMLElement>('main')?.focus();
     };
   }, []);
 
   useEffect(() => {
-    showControls();
-    return () => {
-      if (hideTimer.current !== null) window.clearTimeout(hideTimer.current);
+    const guard = (event: FocusEvent) => {
+      if (!live.current || !shell.current) return;
+      if (event.target instanceof Node && shell.current.contains(event.target)) return;
+      shell.current.focus();
     };
-  }, [showControls, session.index]);
-
-  /** 播放意图驱动真实播放：真实暂停或失败不改写意图。 */
-  useEffect(() => {
-    const element = videoRef.current;
-    if (!element || !video || session.status === 'error') return;
-    if (session.intent === 'playing' && element.paused) void element.play().catch(() => commands.reportBlocked());
-    if (session.intent === 'paused' && !element.paused) element.pause();
-  }, [commands, session.intent, session.status, video, videoAttempt]);
-
-  useEffect(() => {
-    const next = session.media[session.index + 1];
-    if (!next) return;
-    if (next.type !== 'photo') return;
-    const image = new Image();
-    image.src = mediaUrl(next.src);
-    return () => { image.src = ''; };
-  }, [session]);
-
-  useEffect(() => {
-    const active = document.activeElement;
-    if (!(active instanceof HTMLElement) || !dialog.current?.contains(active) || (active instanceof HTMLButtonElement && active.disabled)) closeButton.current?.focus();
-  }, [session.index]);
-
-  /** 模态焦点兜底：任何原因把焦点丢到对话框外时拉回来，保证键盘快捷键始终可用。 */
-  useEffect(() => {
-    const onFocusIn = (event: FocusEvent) => {
-      const element = dialog.current;
-      if (!element || !mounted.current) return;
-      if (event.target instanceof Node && element.contains(event.target)) return;
-      closeButton.current?.focus();
-    };
-    document.addEventListener('focusin', onFocusIn);
-    return () => document.removeEventListener('focusin', onFocusIn);
+    document.addEventListener('focusin', guard);
+    return () => document.removeEventListener('focusin', guard);
   }, []);
+
+  useEffect(() => { scrollRun.current = 0; }, [session.index]);
 
   const toggleFullscreen = useCallback(() => {
-    const target = fullscreenTarget.current;
-    if (!target) return;
-    const request = document.fullscreenElement === target ? document.exitFullscreen() : target.requestFullscreen();
-    void request.then(() => {
-      if (!mounted.current && document.fullscreenElement === target) return document.exitFullscreen();
-    }).catch(() => {
-      if (mounted.current) setNotice('全屏暂不可用，仍可在此查看');
-    });
+    const host = fullscreenHost.current;
+    if (!host) return;
+    const request = document.fullscreenElement === host ? document.exitFullscreen() : host.requestFullscreen();
+    void request.catch(() => setFullscreenNote('全屏暂不可用，仍可在此查看'));
   }, []);
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
-    if (event.key === 'Tab') {
-      const focusables = Array.from(dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]') ?? []);
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-      return;
-    }
-    showControls();
-    if (event.key === 'ArrowRight') { event.preventDefault(); commands.step(1); return; }
-    if (event.key === 'ArrowLeft') { event.preventDefault(); commands.step(-1); return; }
-    if (event.key === ' ' || event.key === 'Spacebar') { event.preventDefault(); if (video) commands.toggleIntent(); return; }
-    if (event.key === 'm' || event.key === 'M') { setMuted(value => !value); return; }
-    if (event.key === 'f' || event.key === 'F') { toggleFullscreen(); return; }
+  /** 重试按钮卸载后把焦点交回画布，避免键盘与读屏失去落点。 */
+  const focusCanvas = useCallback(() => {
+    requestAnimationFrame(() => canvas.current?.focus());
+  }, []);
+
+  /** 文档级快捷键：状态变化导致焦点丢失时仍然可用，并显式维护 Tab 焦点环。 */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const node = shell.current;
+      if (!node) return;
+      if (event.key === 'Tab') {
+        // 只把真正渲染出来的控件算进焦点环：移动端隐藏的导航按钮不参与。
+        const focusables = Array.from(node.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]'))
+          .filter(item => item.getClientRects().length > 0);
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+        const inside = active instanceof Node && node.contains(active);
+        if (event.shiftKey && (!inside || active === first)) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && (!inside || active === last)) { event.preventDefault(); first.focus(); }
+        return;
+      }
+      if (event.key === 'Escape') { event.preventDefault(); commands.close(); return; }
+      if (event.target instanceof HTMLInputElement && event.target.type === 'range') return;
+      if (event.key === 'ArrowLeft') { event.preventDefault(); commands.step(-1); return; }
+      if (event.key === 'ArrowRight') { event.preventDefault(); commands.step(1); return; }
+      if ((event.key === ' ' || event.key === 'Spacebar') && video) { event.preventDefault(); commands.toggleIntent(); return; }
+      if (event.key === 'f' || event.key === 'F') toggleFullscreen();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [commands, toggleFullscreen, video]);
+
+  /** 单指横向滑动切换；从控件区开始的触摸与纵向滑动都不参与。 */
+  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) { swipe.current = null; return; }
+    if (event.target instanceof Element && event.target.closest('button,input,a,[data-viewer-controls]')) { swipe.current = null; return; }
+    swipe.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+  };
+
+  const onTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start || event.changedTouches.length !== 1) return;
+    const dx = event.changedTouches[0].clientX - start.x;
+    const dy = event.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) >= 56 && Math.abs(dx) > Math.abs(dy) * 1.5) commands.step(dx < 0 ? 1 : -1);
+  };
+
+  /** 桌面滚轮切换：进度条区域保留给视频拖动，不参与切换。 */
+  const onWheel = (event: WheelEvent<HTMLDivElement>) => {
+    if (event.target instanceof Element && event.target.closest('[data-viewer-controls]')) return;
+    const now = Date.now();
+    if (now < scrollBlockedUntil.current) return;
+    scrollRun.current += event.deltaY;
+    if (Math.abs(scrollRun.current) < SCROLL_STEP) return;
+    const direction = scrollRun.current > 0 ? 1 : -1;
+    scrollRun.current = 0;
+    scrollBlockedUntil.current = now + SCROLL_GAP;
+    commands.step(direction);
   };
 
   return <dialog
-    ref={dialog}
-    className={styles.dialog}
+    ref={shell}
+    className={styles.viewer}
     aria-label="影像查看器"
+    tabIndex={-1}
+    data-media-position={session.index + 1}
+    data-media-count={session.media.length}
     onCancel={event => { event.preventDefault(); commands.close(); }}
-    onKeyDown={onKeyDown}
-    onPointerMove={showControls}
-    onTouchStart={showControls}
   >
-    <div ref={fullscreenTarget} className={styles.viewport}>
-      <header className={styles.header}>
-        <button ref={closeButton} type="button" className={styles.iconButton} onClick={commands.close} aria-label="关闭查看器">✕</button>
-        <span className={styles.counter} aria-live="polite">{session.index + 1} / {session.media.length}</span>
-        <button type="button" className={styles.themeButton} onClick={commands.toggleTheme} aria-label={`切换主题，当前是${themeLabel}`}>◐ <span>{themeLabel}</span></button>
-      </header>
-
-      <div className={styles.stage}
-        onTouchStart={event => { showControls(); touchStart.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null; }}
-        onTouchCancel={() => { touchStart.current = null; }}
-        onTouchEnd={event => {
-          const start = touchStart.current;
-          touchStart.current = null;
-          if (!start || event.changedTouches.length !== 1) return;
-          const dx = event.changedTouches[0].clientX - start.x;
-          const dy = event.changedTouches[0].clientY - start.y;
-          if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.5) commands.step(dx < 0 ? 1 : -1);
-        }}
-      >
-        <button type="button" className={`${styles.arrow} ${styles.previous}`} onClick={() => commands.step(-1)} disabled={isFirst} aria-label="上一项">‹</button>
-        {video && session.status === 'error'
-          ? <div className={styles.statePanel} role="status">
-            <p>这段视频暂时无法播放</p>
-            <p className={styles.hint}>可以重试，或直接跳到下一项</p>
-            <span className={styles.stateActions}>
-              <button type="button" className={styles.retry} onClick={() => { setVideoAttempt(n => n + 1); commands.reportStatus('loading'); }}>重新加载</button>
-              <button type="button" className={styles.retry} onClick={() => commands.step(1)} disabled={isLast}>下一项</button>
-            </span>
-          </div>
-          : video
-            ? <video
-              key={`${video.id}-${videoAttempt}`}
-              ref={videoRef}
-              className={styles.media}
-              src={mediaUrl(video.src)}
-              poster={video.poster ? mediaUrl(video.poster) : undefined}
-              playsInline
-              muted={muted}
-              preload="metadata"
-              aria-label={video.description || '相册视频'}
-              onLoadedMetadata={event => commands.reportProgress(0, event.currentTarget.duration)}
-              onTimeUpdate={event => {
-                const duration = event.currentTarget.duration;
-                commands.reportProgress(duration > 0 ? event.currentTarget.currentTime / duration : 0, duration);
-              }}
-              onPlay={() => commands.reportStatus('playing')}
-              onPause={event => { if (!event.currentTarget.ended) commands.reportStatus('paused'); }}
-              onWaiting={() => commands.reportStatus('loading')}
-              onEnded={commands.reportEnded}
-              onError={commands.reportError}
-            >
-              {video.captions && <track kind="captions" src={mediaUrl(video.captions)} srcLang="zh" label="中文说明" default />}
-            </video>
-            : photo && <FullPhoto key={`${photo.id}-${photo.src}`} photo={photo} onRetry={() => closeButton.current?.focus()} />
-        }
-        <button type="button" className={`${styles.arrow} ${styles.next}`} onClick={() => commands.step(1)} disabled={isLast} aria-label="下一项">›</button>
+    <div ref={fullscreenHost} className={video ? styles.frame + ' ' + styles.frameVideo : styles.frame}>
+      <div className={styles.topBar}>
+        {/* 位置不再可见展示；这里只为读屏播报当前进度。 */}
+        <p className={styles.srOnly} role="status">第 {session.index + 1} 项，共 {session.media.length} 项</p>
+        <button ref={closeRef} type="button" className={styles.close} onClick={commands.close} aria-label="关闭查看器"><X /></button>
       </div>
-
       <div
-        ref={controlsRef}
-        className={`${styles.controls} ${controlsVisible ? '' : styles.controlsHidden}`}
-        data-visible={controlsVisible}
-        aria-hidden={!controlsVisible}
-        inert={!controlsVisible}
-        onFocus={showControls}
+        ref={canvas}
+        className={styles.canvas}
+        tabIndex={-1}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={() => { swipe.current = null; }}
+        onWheel={onWheel}
       >
-        <div className={styles.controlsRow}>
-          {video && <>
-            <button type="button" className={styles.iconButton} onClick={commands.toggleIntent} aria-label={session.intent === 'playing' ? '暂停' : '播放'}>{session.intent === 'playing' ? '❙❙' : '▶'}</button>
-            <span className={styles.time}>{timeText(session.progress * session.duration)} / {timeText(session.duration)}</span>
-            <input
-              className={styles.progress}
-              type="range"
-              min={0}
-              max={100}
-              value={Math.round(session.progress * 100)}
-              aria-label="播放进度"
-              onChange={event => {
-                const ratio = Number(event.currentTarget.value) / 100;
-                const element = videoRef.current;
-                if (element && element.duration > 0) element.currentTime = ratio * element.duration;
-                commands.reportProgress(ratio, element?.duration ?? session.duration);
-              }}
-            />
-            <button type="button" className={styles.iconButton} onClick={() => setMuted(value => !value)} aria-label={muted ? '取消静音' : '静音'} aria-pressed={muted}>{muted ? '🔇' : '🔊'}</button>
-            <button type="button" className={styles.textButton} onClick={commands.toggleContinuous} aria-pressed={session.continuous}>连续播放 {session.continuous ? '开' : '关'}</button>
-          </>}
-          {!video && <span className={styles.caption}>{photo?.description || '生活里的一个瞬间'}{photo?.date ? ` · ${photo.date.replaceAll('-', '.')}` : ''}</span>}
-          <button type="button" className={styles.iconButton} onClick={toggleFullscreen} aria-label="全屏查看">⛶</button>
-        </div>
-        <p className={styles.hint}>←/→ 切换 · {video ? 'Space 播放暂停 · M 静音 · ' : ''}F 全屏 · Esc 退出</p>
-        {notice && <p className={styles.hint} role="status">{notice}</p>}
+        <button type="button" className={styles.step + ' ' + styles.back} onClick={() => commands.step(-1)} disabled={atStart} aria-label="上一项"><ChevronLeft /></button>
+        {photo
+          ? <PhotoPane key={photo.id} photo={photo} caption={caption} onReload={focusCanvas} />
+          : video
+            ? <VideoPane key={video.id} video={video} caption={caption} session={session} commands={commands} onReload={focusCanvas} />
+            : <div className={styles.noticeCard} role="status"><p className={styles.noticeTitle}>这里暂时没有影像</p><p className={styles.noticeText}>关闭查看器即可回到相册继续浏览。</p></div>}
+        <button type="button" className={styles.step + ' ' + styles.forward} onClick={() => commands.step(1)} disabled={atEnd} aria-label="下一项"><ChevronRight /></button>
+      </div>
+      <div className={styles.footerLine}>
+        {video && <button type="button" className={styles.fullscreen} onClick={toggleFullscreen} aria-label="全屏查看"><Maximize /></button>}
+        {fullscreenNote && <p className={styles.statusLine} role="status">{fullscreenNote}</p>}
       </div>
     </div>
   </dialog>;

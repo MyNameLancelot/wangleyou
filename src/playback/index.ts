@@ -4,7 +4,6 @@ export {
   isVideo,
   markPlaybackError,
   openSession,
-  setContinuous,
   setIntent,
   setProgress,
   setStatus,

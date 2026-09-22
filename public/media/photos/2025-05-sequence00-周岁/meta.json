@@ -2,5 +2,13 @@
   "album": {
     "description": "会走路了，什么都想摸一摸。",
     "opening": "一岁，是好奇心开始有了方向的年纪。"
+  },
+  "photos_meta": {
+    "captions": [
+      { "fileName": "top01.jpg", "caption": "黄昏把树影拉得很长，我们在这里等天色慢慢暗下来。" },
+      { "fileName": "003.jpg", "caption": "学会走路以后，你总想追着光跑。" },
+      { "fileName": "008.jpg", "caption": "雾里的那条路很长，我们慢慢走就好。" },
+      { "fileName": "009.jpg", "caption": "雨后的叶子很重，你伸手去接，像是在等一滴水落下来。" }
+    ]
   }
 }

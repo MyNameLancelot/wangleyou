@@ -1,5 +1,8 @@
 import type { Album, Media, Photo, SiteContent, Video } from './model'
 
+/** 单张照片寄语的长度上限：查看器里只作一行文案，超过就会挤压影像。 */
+export const CAPTION_MAX_LENGTH = 60
+
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 const PERIOD_PATTERN = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/
@@ -126,6 +129,10 @@ function validateCommonMedia(input: UnknownRecord, location: string): void {
   assertId(input.id, `${location}.id`)
   assertAssetPath(input.src, `${location}.src`)
   assertDate(input.date, `${location}.date`)
+  assertOptionalString(input.caption, `${location}.caption`)
+  if (typeof input.caption === 'string' && (input.caption.trim().length === 0 || [...input.caption.trim()].length > CAPTION_MAX_LENGTH)) {
+    fail(`${location}.caption`, `must contain 1 to ${CAPTION_MAX_LENGTH} non-whitespace characters`)
+  }
   assertOptionalString(input.description, `${location}.description`)
   assertOptionalString(input.alt, `${location}.alt`)
   assertOptionalPositiveInteger(input.width, `${location}.width`)

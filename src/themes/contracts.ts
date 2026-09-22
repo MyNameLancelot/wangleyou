@@ -9,7 +9,6 @@ export interface ThemeViewerCommands {
   step(delta: number): void;
   close(): void;
   toggleIntent(): void;
-  toggleContinuous(): void;
   reportProgress(progress: number, duration: number): void;
   reportStatus(status: PlaybackStatus): void;
   reportEnded(): void;

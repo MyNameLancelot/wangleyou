@@ -15,7 +15,8 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/top01.jpg"
+            "src": "media/photos/2025-05-sequence00-周岁/top01.jpg",
+            "caption": "黄昏把树影拉得很长，我们在这里等天色慢慢暗下来。"
           },
           {
             "id": "002",
@@ -25,7 +26,8 @@
           {
             "id": "003",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/003.jpg"
+            "src": "media/photos/2025-05-sequence00-周岁/003.jpg",
+            "caption": "学会走路以后，你总想追着光跑。"
           },
           {
             "id": "005",
@@ -45,12 +47,14 @@
           {
             "id": "008",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/008.jpg"
+            "src": "media/photos/2025-05-sequence00-周岁/008.jpg",
+            "caption": "雾里的那条路很长，我们慢慢走就好。"
           },
           {
             "id": "009",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/009.jpg"
+            "src": "media/photos/2025-05-sequence00-周岁/009.jpg",
+            "caption": "雨后的叶子很重，你伸手去接，像是在等一滴水落下来。"
           }
         ]
       },

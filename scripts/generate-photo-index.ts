@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { validateContent, validateHomeMemory } from '../src/content/validate'
+import { CAPTION_MAX_LENGTH, validateContent, validateHomeMemory } from '../src/content/validate'
 import type { Album, Photo, SiteContent } from '../src/content/model'
 
 const ALBUM_DIR = /^(\d{4})-(\d{2})-sequence(\d{2})-(.+)$/
@@ -13,6 +13,8 @@ const OPENING_MAX_LENGTH = 20
 
 /** 目录级元信息：描述这一段日子本身，而不是某张照片。 */
 type AlbumMeta = { title?: string; description?: string; opening?: string; date?: string }
+/** 单张照片寄语：photos_meta.captions 里按文件名登记，允许只覆盖一部分照片。 */
+type CaptionEntry = { fileName: string; caption: string; location: string }
 
 const natural = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
@@ -29,11 +31,47 @@ function photoId(file: string): string {
   return base || 'photo'
 }
 
-function readAlbumMeta(name: string, input: unknown): AlbumMeta {
+function readCaptions(name: string, input: unknown): CaptionEntry[] {
+  if (input === undefined) return []
+  const base = `${name}/meta.json.photos_meta`
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) throw new Error(`${base}: must be an object`)
+  const meta = input as Record<string, unknown>
+  const unknownKeys = Object.keys(meta).filter(key => key !== 'captions')
+  if (unknownKeys.length) throw new Error(`${base}.${unknownKeys[0]}: 只支持 captions`)
+  if (meta.captions === undefined) return []
+  if (!Array.isArray(meta.captions)) throw new Error(`${base}.captions: must be an array`)
+  return meta.captions.map((item, index) => {
+    const location = `${base}.captions[${index}]`
+    if (typeof item !== 'object' || item === null || Array.isArray(item)) throw new Error(`${location}: must be an object`)
+    const entry = item as Record<string, unknown>
+    const unknown = Object.keys(entry).filter(key => key !== 'fileName' && key !== 'caption')
+    if (unknown.length) throw new Error(`${location}.${unknown[0]}: 只支持 fileName 与 caption`)
+    if (typeof entry.fileName !== 'string' || entry.fileName.trim().length === 0) throw new Error(`${location}.fileName: 必须写照片文件名，例如 top01.jpg`)
+    if (typeof entry.caption !== 'string') throw new Error(`${location}.caption: must be a string`)
+    const caption = entry.caption.trim()
+    if (caption.length === 0) throw new Error(`${location}.caption: 必须是非空寄语`)
+    if ([...caption].length > CAPTION_MAX_LENGTH) throw new Error(`${location}.caption: 不能超过 ${CAPTION_MAX_LENGTH} 个字符（当前 ${[...caption].length} 个）`)
+    return { fileName: entry.fileName, caption, location }
+  })
+}
+
+/** 寄语按文件名绑定到相册内真实存在的照片，避免写错文件名后静默丢失。 */
+function captionMap(captions: CaptionEntry[], files: string[]): Map<string, string> {
+  const known = new Set(files)
+  const result = new Map<string, string>()
+  for (const entry of captions) {
+    if (!known.has(entry.fileName)) throw new Error(`${entry.location}.fileName: 这个相册里没有 ${entry.fileName}`)
+    if (result.has(entry.fileName)) throw new Error(`${entry.location}.fileName: ${entry.fileName} 重复登记寄语`)
+    result.set(entry.fileName, entry.caption)
+  }
+  return result
+}
+
+function readAlbumMeta(name: string, input: unknown): { album: AlbumMeta; captions: CaptionEntry[] } {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) throw new Error(`${name}/meta.json: must be an object`)
   const meta = input as Record<string, unknown>
-  const unknown = Object.keys(meta).filter(key => key !== 'album')
-  if (unknown.length) throw new Error(`${name}/meta.json.${unknown[0]}: 只支持 album 段；照片顺序与元信息由构建期脚本按文件名生成`)
+  const unknown = Object.keys(meta).filter(key => key !== 'album' && key !== 'photos_meta')
+  if (unknown.length) throw new Error(`${name}/meta.json.${unknown[0]}: 只支持 album 与 photos_meta 段；照片顺序由构建期脚本按文件名生成`)
   const album = (meta.album ?? {}) as Record<string, unknown>
   if (typeof album !== 'object' || album === null || Array.isArray(album)) throw new Error(`${name}/meta.json.album: must be an object`)
   for (const key of ['title', 'description', 'opening', 'date'] as const) {
@@ -45,7 +83,7 @@ function readAlbumMeta(name: string, input: unknown): AlbumMeta {
   if (typeof album.opening === 'string' && (album.opening.trim().length === 0 || [...album.opening.trim()].length > OPENING_MAX_LENGTH)) {
     throw new Error(`${name}/meta.json.album.opening: 必须为 1 至 ${OPENING_MAX_LENGTH} 个非空白字符`)
   }
-  return album as AlbumMeta
+  return { album: album as AlbumMeta, captions: readCaptions(name, meta.photos_meta) }
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -68,16 +106,18 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
       .filter(file => file.isFile() && IMAGE_EXTENSIONS.has(extname(file.name).toLowerCase()))
       .map(file => file.name)
       .sort(natural.compare)
-    const media: Photo[] = orderPhotos(files).map(file => ({
-      id: photoId(file), type: 'photo', src: `media/photos/${entry.name}/${file}`,
-    }))
+    const captions = captionMap(details.captions, files)
+    const media: Photo[] = orderPhotos(files).map(file => {
+      const caption = captions.get(file)
+      return { id: photoId(file), type: 'photo', src: `media/photos/${entry.name}/${file}`, ...(caption ? { caption } : {}) }
+    })
     albums.push({
       album: {
         id: `${match[1]}-${match[2]}-sequence${match[3]}`,
-        title: details.title?.trim() || match[4],
-        description: details.description,
-        opening: details.opening,
-        date: details.date || `${match[1]}-${match[2]}`,
+        title: details.album.title?.trim() || match[4],
+        description: details.album.description,
+        opening: details.album.opening,
+        date: details.album.date || `${match[1]}-${match[2]}`,
         media,
       },
       order: `${match[1]}-${match[2]}-${match[3]}`,

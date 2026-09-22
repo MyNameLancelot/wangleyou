@@ -3,6 +3,8 @@ export interface Photo {
   type: 'photo'
   src: string
   date?: string
+  /** 单张照片的寄语：来自相册 meta.json 的 photos_meta.captions，查看器据此显示照片下方文案。 */
+  caption?: string
   description?: string
   alt?: string
   width?: number
@@ -17,6 +19,8 @@ export interface Video {
   /** 说明字幕（WebVTT）：无对白的家庭短片也应有文字说明，供无法听音的场景使用。 */
   captions?: string
   date?: string
+  /** 与照片共用同一字段语义：媒体自身的寄语文案。 */
+  caption?: string
   description?: string
   alt?: string
   width?: number
