@@ -7,7 +7,6 @@ import {
   isVideo,
   markPlaybackError,
   openSession,
-  setContinuous,
   setIntent,
   setProgress,
   setStatus,
@@ -64,19 +63,16 @@ describe('播放会话', () => {
     expect(paused).toMatchObject({ intent: 'paused', status: 'loading' });
   });
 
-  it('连续播放开启时视频结束后前进并继续播放', () => {
+  it('视频结束后停在当前项，绝不自动推进', () => {
     const session = openSession(mixed, 'v1');
     const ended = handleEnded(session);
-    expect(ended).toMatchObject({ index: 1, intent: 'paused', status: 'paused' });
+    expect(ended).toMatchObject({ index: 0, intent: 'paused', status: 'ended', progress: 1 });
   });
 
-  it('连续播放关闭或已到队尾时停在当前项并标记结束', () => {
+  it('队尾视频结束时停在当前项并标记结束', () => {
     const single: Media[] = [{ id: 'v1', type: 'video', src: 'media/clip.mp4' }];
     const only = openSession(single, 'v1');
     expect(handleEnded(only)).toMatchObject({ index: 0, intent: 'paused', status: 'ended', progress: 1 });
-
-    const closed = setContinuous(openSession(mixed, 'v1'), false);
-    expect(handleEnded(closed)).toMatchObject({ index: 0, status: 'ended' });
   });
 
   it('进度被限制在 0–1 且非法时长归零', () => {

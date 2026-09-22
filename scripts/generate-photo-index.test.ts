@@ -39,9 +39,41 @@ it('reads album metadata from meta.json with folder name and month fallbacks', a
   expect([fallback.title, fallback.date, fallback.description]).toEqual(['破壳', '2024-05', '只有说明'])
 })
 
-it('rejects photo metadata because order and ids are generated at build time', async () => {
+it('rejects unsupported sections because order and ids are generated at build time', async () => {
   const { photos } = await fixture({ album: {}, photos: [{ file: 'top01.jpg', id: 'top-one' }] })
-  await expect(generatePhotoIndex(photos, join(photos, 'generated.json'))).rejects.toThrow('只支持 album 段')
+  await expect(generatePhotoIndex(photos, join(photos, 'generated.json'))).rejects.toThrow('只支持 album 与 photos_meta 段')
+})
+
+it('reads optional per-photo captions from photos_meta', async () => {
+  const { photos, album, output } = await fixture({ album: { description: '一段演示日子' }, photos_meta: { captions: [{ fileName: 'top01.jpg', caption: '第一次见面。' }] } })
+  const media = (await generatePhotoIndex(photos, output)).content.albums[0].media
+  expect(media.find(item => item.id === 'top01')?.caption).toBe('第一次见面。')
+  expect(media.find(item => item.id === '10')?.caption).toBeUndefined()
+
+  await writeFile(join(album, 'meta.json'), JSON.stringify({ album: { description: '一段演示日子' } }))
+  expect((await generatePhotoIndex(photos, output)).content.albums[0].media.every(item => item.caption === undefined)).toBe(true)
+})
+
+it('rejects captions that do not point at a real photo file', async () => {
+  const missing = await fixture({ album: {}, photos_meta: { captions: [{ fileName: 'top09.jpg', caption: '找不到这张' }] } })
+  await expect(generatePhotoIndex(missing.photos, missing.output)).rejects.toThrow('这个相册里没有 top09.jpg')
+
+  const duplicate = await fixture({ album: {}, photos_meta: { captions: [{ fileName: 'top01.jpg', caption: '一' }, { fileName: 'top01.jpg', caption: '二' }] } })
+  await expect(generatePhotoIndex(duplicate.photos, duplicate.output)).rejects.toThrow('重复登记寄语')
+})
+
+it('rejects blank, overlong or malformed caption entries', async () => {
+  const blank = await fixture({ album: {}, photos_meta: { captions: [{ fileName: 'top01.jpg', caption: '   ' }] } })
+  await expect(generatePhotoIndex(blank.photos, blank.output)).rejects.toThrow('必须是非空寄语')
+
+  const long = await fixture({ album: {}, photos_meta: { captions: [{ fileName: 'top01.jpg', caption: '一'.repeat(61) }] } })
+  await expect(generatePhotoIndex(long.photos, long.output)).rejects.toThrow('不能超过 60 个字符')
+
+  const extraKey = await fixture({ album: {}, photos_meta: { captions: [{ fileName: 'top01.jpg', caption: '一', extra: true }] } })
+  await expect(generatePhotoIndex(extraKey.photos, extraKey.output)).rejects.toThrow('只支持 fileName 与 caption')
+
+  const unknownSection = await fixture({ album: {}, photos_meta: { notes: [] } })
+  await expect(generatePhotoIndex(unknownSection.photos, unknownSection.output)).rejects.toThrow('只支持 captions')
 })
 
 it('rejects album descriptions longer than 16 characters', async () => {

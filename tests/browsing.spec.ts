@@ -37,6 +37,8 @@ async function openFirst(page: Page) {
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
 }
+/** 查看器不再显示可见计数器：位置改用 dialog 上的机器可读属性断言。 */
+const viewerAt = (page: Page, position: number) => expect(page.getByRole('dialog')).toHaveAttribute('data-media-position', String(position));
 test('homepage, album, original photo, keyboard and focus restoration', async ({page, isMobile}) => {
   const errors:string[]=[]; page.on('pageerror',error=>errors.push(error.message));
   await page.goto('./');
@@ -58,12 +60,18 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   await expect(page.getByRole('heading',{name:albumTitle,level:1})).toBeVisible();
   const trigger=page.getByRole('button',{name:firstPhoto}); await trigger.click();
   const dialog=page.getByRole('dialog'); await expect(dialog.getByRole('img')).toBeVisible();
-  await expect(dialog.getByRole('button',{name:'上一项'})).toBeDisabled();
-  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
+  if (isMobile) {
+    // 移动端只用左右滑动切换，不渲染导航按钮
+    await expect(dialog.getByRole('button',{name:'上一项'})).toHaveCount(0);
+    await expect(dialog.getByRole('button',{name:'下一项'})).toHaveCount(0);
+  } else {
+    await expect(dialog.getByRole('button',{name:'上一项'})).toBeDisabled();
+  }
+  await page.keyboard.press('ArrowRight'); await viewerAt(page, 2);
   for (let index = 3; index <= albumPhotoCount; index += 1) await page.keyboard.press('ArrowRight');
-  await expect(dialog).toContainText(`${albumPhotoCount} / ${albumPhotoCount}`);
-  await expect(dialog.getByRole('button',{name:'下一项'})).toBeDisabled();
-  await page.keyboard.press('ArrowRight'); await expect(dialog).toContainText(`${albumPhotoCount} / ${albumPhotoCount}`);
+  await viewerAt(page, albumPhotoCount);
+  if (!isMobile) await expect(dialog.getByRole('button',{name:'下一项'})).toBeDisabled();
+  await page.keyboard.press('ArrowRight'); await viewerAt(page, albumPhotoCount);
   await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
@@ -93,18 +101,18 @@ test('image failure can be retried without leaving the viewer',async({page})=>{
   await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
   await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
+  await viewerAt(page, 2);
 });
 test('rapid switching isolates slow image errors, close/reopen resets session',async({page})=>{
   await page.route('**/media/photos/**/002.jpg',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.abort();});
   await openFirst(page);
   await page.keyboard.press('ArrowRight');
-  const dialog=page.getByRole('dialog'); await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
+  const dialog=page.getByRole('dialog'); await viewerAt(page, 2);
   await page.keyboard.press('ArrowLeft');
   await expect(dialog.getByRole('img')).toBeVisible();
   await page.waitForTimeout(400); await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
   await page.getByRole('button',{name:'关闭查看器'}).click();
-  await page.getByRole('button',{name:firstPhoto}).click(); await expect(page.getByRole('dialog')).toContainText(`1 / ${albumPhotoCount}`);
+  await page.getByRole('button',{name:firstPhoto}).click(); await viewerAt(page, 1);
 });
 test('dialog focus stays modal and route navigation disposes it',async({page})=>{
   await openFirst(page);
@@ -137,17 +145,19 @@ test('horizontal swipe navigates, vertical swipe does not',async({page,isMobile}
   const image=page.getByRole('dialog').getByRole('img');
   await image.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:250,clientY:250}]});
   await image.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:80,clientY:260}]});
-  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
+  await viewerAt(page, 2);
   const next=page.getByRole('dialog').getByRole('img');
   await next.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:170,clientY:250}]});
   await next.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:165,clientY:500}]});
-  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
+  await viewerAt(page, 2);
 });
 
 test('fullscreen enters and is released on close',async({page,isMobile})=>{
   test.skip(isMobile,'Native fullscreen is platform-dependent on mobile');
   await openFirst(page);
-  await page.getByRole('button',{name:'全屏查看'}).click();
+  // 图片舞台不显示视频工具，键盘 F 仍可进入全屏。
+  await expect(page.getByRole('button',{name:'全屏查看'})).toHaveCount(0);
+  await page.keyboard.press('f');
   await expect.poll(()=>page.evaluate(()=>!!document.fullscreenElement)).toBe(true);
   await page.getByRole('button',{name:'关闭查看器'}).click();
   await expect.poll(()=>page.evaluate(()=>!!document.fullscreenElement)).toBe(false);
@@ -157,29 +167,95 @@ test('fullscreen rejection leaves normal viewing usable', async ({page,isMobile}
   test.skip(isMobile, 'Fullscreen control is capability-dependent on mobile');
   await page.addInitScript(() => { Element.prototype.requestFullscreen = () => Promise.reject(new Error('denied')); });
   await openFirst(page);
-  await page.getByRole('button',{name:'全屏查看'}).click();
+  await page.keyboard.press('f');
   await expect(page.getByText('全屏暂不可用，仍可在此查看')).toBeVisible();
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('dialog')).toContainText(`2 / ${albumPhotoCount}`);
+  await viewerAt(page, 2);
 });
 
-test('theme switch keeps page, media and playback context', async ({page}) => {
+test('viewer has no theme switch and page theme switching keeps route and media', async ({page}) => {
   await page.goto(`./#/albums/${albumId}`);
   await page.getByRole('button',{name:firstPhoto}).click();
   const dialog=page.getByRole('dialog');
   await page.keyboard.press('ArrowRight');
-  await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
-
-  const before=await page.evaluate(()=>document.documentElement.dataset.theme);
-  await dialog.getByRole('button',{name:/切换主题/}).click();
-  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).not.toBe(before);
-  await expect(dialog).toContainText(`2 / ${albumPhotoCount}`);
-  await expect(page.getByRole('dialog')).toBeVisible();
-  expect(await page.evaluate(()=>location.hash)).toBe(`#/albums/${albumId}`);
+  await viewerAt(page, 2);
+  // 查看器内部不再提供主题切换入口，只保留位置、关闭与手动切换。
+  await expect(dialog.getByRole('button',{name:/切换主题/})).toHaveCount(0);
+  await expect(dialog.getByRole('button',{name:'关闭查看器'})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:'关闭查看器'})).toHaveText('');
 
   await page.keyboard.press('Escape');
+  const before=await page.evaluate(()=>document.documentElement.dataset.theme);
+  await page.getByTestId('theme-switch').getByRole('button',{name:/切换主题/}).click();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).not.toBe(before);
+  expect(await page.evaluate(()=>location.hash)).toBe(`#/albums/${albumId}`);
   await expect(page.getByRole('heading',{name:albumTitle,level:1})).toBeVisible();
-  expect(await page.evaluate(()=>document.documentElement.dataset.theme)).not.toBe(before);
+  await page.getByRole('button',{name:firstPhoto}).click();
+  await viewerAt(page, 1);
+});
+
+test('desktop wheel switches media, stays in bounds and keeps photo controls minimal', async ({page,isMobile}) => {
+  test.skip(isMobile, 'Wheel navigation is desktop-only');
+  await page.setViewportSize({width:1440,height:1000});
+  await openFirst(page);
+  const dialog=page.getByRole('dialog');
+  await page.mouse.move(720,500);
+
+  // 第一项向上滚动不越界
+  await page.mouse.wheel(0,-240);
+  await page.waitForTimeout(500);
+  await viewerAt(page, 1);
+
+  // 低于阈值的小幅滚动不切换
+  await page.mouse.wheel(0,20);
+  await page.waitForTimeout(200);
+  await viewerAt(page, 1);
+
+  await page.mouse.wheel(0,160);
+  await viewerAt(page, 2);
+  await page.waitForTimeout(500);
+  await page.mouse.wheel(0,-160);
+  await viewerAt(page, 1);
+
+  // 图片是静默舞台：没有播放、进度、静音或全屏按钮
+  await expect(dialog.getByRole('slider')).toHaveCount(0);
+  await expect(dialog.getByRole('button',{name:/播放视频|暂停视频|静音|取消静音|全屏查看/})).toHaveCount(0);
+});
+
+test('photo captions come from album metadata and stay optional', async ({page}) => {
+  await page.goto('./#/albums/2025-05-sequence00');
+  await expect(page.getByRole('heading',{name:'周岁',level:1})).toBeVisible();
+  await page.getByRole('button',{name:'查看照片：周岁 第 1 张'}).click();
+  const dialog = page.getByRole('dialog');
+  const firstCaption = '黄昏把树影拉得很长，我们在这里等天色慢慢暗下来。';
+  await expect(dialog.getByText(firstCaption)).toBeVisible();
+  // 计数器已移除：位置只保留机器可读属性，界面不再显示 n / m
+  expect(await dialog.innerText()).not.toMatch(/\d+\s*\/\s*\d+/);
+
+  // 第 2 张没有寄语：不渲染空文案区
+  await page.keyboard.press('ArrowRight');
+  await viewerAt(page, 2);
+  await expect(dialog.getByText(firstCaption)).toHaveCount(0);
+
+  // 最后一张有寄语：切到最后仍能读到
+  for (let index = 3; index <= 8; index += 1) await page.keyboard.press('ArrowRight');
+  await viewerAt(page, 8);
+  await expect(dialog.getByText('雨后的叶子很重，你伸手去接，像是在等一滴水落下来。')).toBeVisible();
+});
+
+test('touch devices stay swipe-only even when landscape width exceeds 600px', async ({page,isMobile}) => {
+  test.skip(!isMobile, '触摸输入能力由移动端项目模拟');
+  await page.setViewportSize({width: 844, height: 390});
+  await enterAlbum(page);
+  await page.getByRole('button', { name: firstPhoto }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  // 宽度大于 600px 但仍是触摸设备：不显示导航按钮，只用滑动
+  await expect(dialog.getByRole('button',{name:'上一项'})).toHaveCount(0);
+  const image = dialog.getByRole('img');
+  await image.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:700,clientY:200}]});
+  await image.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:320,clientY:210}]});
+  await viewerAt(page, 2);
 });
 
 test('year navigation and type filter work on the browse page', async ({page}) => {
@@ -601,7 +677,7 @@ test('two-screen music controls share one audio while theme stays on the first s
   await expect(heroMusic.locator('[data-music-muted-mark]')).toBeVisible();
 });
 
-test('page theme control scrolls with browse content while viewer keeps its own switch', async ({page}) => {
+test('page theme control scrolls with browse content and the viewer carries no theme switch', async ({page}) => {
   await page.setViewportSize({width: 900, height: 500});
   await page.goto('./#/browse');
   const pageTheme = page.getByTestId('theme-switch');
@@ -619,7 +695,8 @@ test('page theme control scrolls with browse content while viewer keeps its own 
   await page.getByRole('button', {name: firstPhoto}).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('button', {name: /切换主题/})).toBeVisible();
+  await expect(dialog.getByRole('button', {name: /切换主题/})).toHaveCount(0);
+  await expect(dialog.getByRole('button', {name: '关闭查看器'})).toBeVisible();
 });
 
 test('hero glass shows the LeYou eyebrow without any white edge', async ({page}) => {

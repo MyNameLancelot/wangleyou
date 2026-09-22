@@ -11,7 +11,6 @@ import {
   readBackgroundMusicPreference,
   setBackgroundMusicStatus,
   setBackgroundMusicVolume,
-  setContinuous,
   setIntent,
   setProgress,
   setStatus,
@@ -102,10 +101,6 @@ export function App() {
     toggleIntent: () => {
       const current = sessionRef.current;
       if (current) applySession(setIntent(current, current.intent === 'playing' ? 'paused' : 'playing'));
-    },
-    toggleContinuous: () => {
-      const current = sessionRef.current;
-      if (current) applySession(setContinuous(current, !current.continuous));
     },
     reportProgress: (progress, duration) => applySession(setProgress(sessionRef.current, progress, duration)),
     reportStatus: status => applySession(setStatus(sessionRef.current, status)),

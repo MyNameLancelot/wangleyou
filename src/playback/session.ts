@@ -12,8 +12,6 @@ export interface Session {
   index: number;
   intent: PlaybackIntent;
   status: PlaybackStatus;
-  /** 连续播放开关；关闭时视频结束停在当前项。 */
-  continuous: boolean;
   /** 当前媒体的播放进度，0–1；照片恒为 0。 */
   progress: number;
   /** 当前媒体时长（秒）；未知为 0。 */
@@ -40,7 +38,6 @@ export function openSession(media: Media[], id: string): Session | null {
     media: [...media],
     index,
     ...initialPlayback(media[index]),
-    continuous: true,
     progress: 0,
     duration: 0,
   };
@@ -62,10 +59,6 @@ export function setStatus(session: Session | null, status: PlaybackStatus): Sess
   return session && session.status !== status ? { ...session, status } : session;
 }
 
-export function setContinuous(session: Session | null, continuous: boolean): Session | null {
-  return session && session.continuous !== continuous ? { ...session, continuous } : session;
-}
-
 export function setProgress(session: Session | null, progress: number, duration: number): Session | null {
   if (!session) return session;
   const bounded = Number.isFinite(progress) ? Math.min(1, Math.max(0, progress)) : 0;
@@ -74,15 +67,10 @@ export function setProgress(session: Session | null, progress: number, duration:
 }
 
 /**
- * 视频自然结束：连续播放开启且还有下一项时前进并保持播放意图；
- * 否则停在当前项并把意图与实际状态都落到暂停/结束。
+ * 视频自然结束永远停在当前项；队列移动必须来自用户显式命令。
  */
 export function handleEnded(session: Session | null): Session | null {
   if (!session) return session;
-  const next = session.index + 1;
-  if (session.continuous && next < session.media.length) {
-    return { ...session, index: next, ...initialPlayback(session.media[next]), progress: 0, duration: 0 };
-  }
   return { ...session, intent: 'paused', status: 'ended', progress: 1 };
 }
 
