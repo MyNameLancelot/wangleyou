@@ -5,10 +5,10 @@
   "behavior": true,
   "architecture": false,
   "verification": [
-    "npm run check：SDD 结构检查、内容校验、类型检查与 ESLint 通过，Vitest 83 个用例全部通过",
-    "npm run build：静态构建成功（dist/index.html 0.60 kB、CSS 63.66 kB、JS 308.65 kB）",
-    "npm run test:e2e：Playwright desktop-chrome（1440×1000）与 mobile-chrome（360×800）71 passed / 11 skipped，无失败",
-    "浏览器人工核对：无头 Chrome 以 1920×1080 打开两个主题的留影页，定位栏、hero 标题与筛选胶囊左边缘同为 360px，网格右边缘 1560px，缩略图说明条显示相册名称且高度 38px、无演示角标，页面无横向溢出"
+    "npm run check：SDD 结构检查、内容校验、类型检查与 ESLint 通过，Vitest 86 个用例全部通过",
+    "npm run build：静态构建成功（dist/index.html 0.60 kB、CSS 67.62 kB、JS 314.32 kB）",
+    "npx playwright test：Playwright desktop-chrome（1440×1000）与 mobile-chrome（360×800）75 passed / 11 skipped，无失败；新增留影页用例验证两个主题的三层结构、top01 前层、右上错位、投影与移动端无横向溢出",
+    "浏览器人工核对：HeadlessChrome 153.0.0.0 通过本地静态构建产物检查两个主题的留影页。1440×1000 下卡片三层错位、轻微阴影与 topNN 前层均可见；360×800 下层叠卡片与年份快捷导航可用且无横向溢出"
   ],
   "impacts": {
     "requirements": {

@@ -236,6 +236,37 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   expect(mobile.overflow).toBe(true);
 });
 
+test('browse album cards stack top covers with depth in both themes', async ({page}) => {
+  await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto('./#/browse');
+
+  for (const theme of ['beach', 'grassland'] as const) {
+    await setTheme(page, theme);
+    const card = page.getByRole('link', {name: `查看相册：${albumTitle}`});
+    const stack = card.locator('[data-browse-album-stack]');
+    await expect(stack).toHaveAttribute('data-stack', '3');
+    await expect(stack.locator('[data-browse-cover]').count()).resolves.toBe(3);
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveAttribute('src', /top01\.jpg$/);
+
+    const layerBox = (layer: string) => stack.locator(`[data-browse-cover="${layer}"]`).evaluate(node => {
+      const box = node.getBoundingClientRect();
+      return {x: Math.round(box.x), y: Math.round(box.y), shadow: getComputedStyle(node).boxShadow};
+    });
+    const [front, middle, back] = await Promise.all([layerBox('front'), layerBox('middle'), layerBox('back')]);
+    expect(back.x).toBeGreaterThan(middle.x);
+    expect(middle.x).toBeGreaterThan(front.x);
+    expect(back.y).toBeLessThan(middle.y);
+    expect(middle.y).toBeLessThan(front.y);
+    expect(front.shadow).not.toBe('none');
+    expect(middle.shadow).not.toBe('none');
+    expect(back.shadow).not.toBe('none');
+  }
+
+  await page.setViewportSize({width: 360, height: 800});
+  await page.reload();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test('album cards stack up to three photos and show album level metadata', async ({page}) => {
   await page.setViewportSize({width: 1440, height: 1000});
   await page.goto('./#/albums');

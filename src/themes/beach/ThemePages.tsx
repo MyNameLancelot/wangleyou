@@ -59,13 +59,22 @@ function MediaTile({ media, onOpen, album, variant = 'wide', eager }: { media: M
 const albumOrdinal = (album: Album) => Number(`${album.id.slice(5, 7)}${album.id.slice(-2)}`) || 0;
 const albumYear = (album: Album) => album.id.slice(0, 4) || album.date?.slice(0, 4) || '未标注日期';
 
+/** 留影页直接采用构建期确定的媒体顺序：topNN 已在前，其余按自然序排列。 */
+const browseAlbumStack = (album: Album): string[] => [...new Set(album.media.map(thumbnailOf).filter((source): source is string => Boolean(source)))].slice(0, 3);
+
 /** 相册卡片沿用影像卡样式，说明条写相册名与相册说明。 */
 function AlbumTile({ album }: { album: Album }) {
-  const cover = album.cover || album.media.map(thumbnailOf).find(Boolean);
+  const stack = browseAlbumStack(album);
+  const front = stack[0];
+  const behind = stack.slice(1);
   return <a className={styles.mediaTile} href={`#/albums/${album.id}`} aria-label={`查看相册：${album.title}`}>
-    <span className={styles.mediaThumb}>
-      {cover ? <PhotoImage src={mediaUrl(cover)} alt={album.title} /> : <span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></span>}
-      <span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span>
+    <span className={`${styles.mediaThumb} ${styles.browseAlbumThumb}`} data-browse-album-stack data-stack={stack.length}>
+      {front
+        ? <>
+          {behind.map((source, index) => <span key={source} data-browse-cover={index === 0 ? 'middle' : 'back'} className={`${styles.browseAlbumLayer} ${index === 0 ? styles.browseAlbumLayerMiddle : styles.browseAlbumLayerBack}`}><PhotoImage src={mediaUrl(source)} alt="" /></span>)}
+          <span data-browse-cover="front" className={`${styles.browseAlbumLayer} ${styles.browseAlbumLayerFront}`}><PhotoImage src={mediaUrl(front)} alt={album.title} /><span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span></span>
+        </>
+        : <><span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></span><span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span></>}
     </span>
   </a>;
 }

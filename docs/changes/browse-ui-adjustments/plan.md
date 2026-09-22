@@ -13,7 +13,7 @@
 2. 两个主题的 `ThemePages.module.css`：给 `.browseBody` 加上与 `.browseHero` 相同的 `padding-inline`（`max(--layout-gutter, 50vw - --layout-max-width / 2)`），使主体内容与 hero 文案同边；把 `.yearHeader` 改为左对齐；删除 `.browseHint`、`.railAlbum`、`.railCard h3` 等失效样式；移动端筛选胶囊改为使用 `--layout-gutter`，与 hero 文案对齐。
 3. 更新 E2E：标题断言改为“留影”，筛选断言改为不带数量的可访问名称，补充无统计数字、无相册快捷区、无提示文案、主体与 hero 左边缘对齐、无横向溢出等检查。
 4. 同步基线：`docs/requirements.md` 增加留影页行为描述，`src/themes/module.md` 记录留影页与相册页的差异。
-5. 两个主题的 `AlbumTile`：按 `topNN`、显式封面、其余媒体的优先级选出最多三张不重复图片，前层固定为优先 `topNN`；使用留影页本地的层叠结构和 CSS，使后层向右上露出并分别带有轻微阴影。
+5. 两个主题的 `AlbumTile`：直接使用构建期确定的 `album.media` 顺序选出前三个不重复缩略图（该顺序已将 `topNN` 排在前面），以前层、后两层的次序渲染；使用留影页本地的层叠结构和 CSS，使后层向右上露出并分别带有轻微阴影。
 6. 扩展 E2E：验证留影页相册卡的三层结构、前层 `topNN` 来源、层间位置和投影、以及 360px 下无横向溢出。
 
 ## 验证方式
