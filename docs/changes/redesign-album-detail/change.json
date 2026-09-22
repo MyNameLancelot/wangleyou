@@ -1,0 +1,36 @@
+{
+  "mode": "full",
+  "summary": "相册详情页从普通标题与固定 4:3 网格重构为主题私有的沉浸式开场和原始比例瀑布流；开场使用档案式引言，并新增可选的相册级 opening 内容字段。",
+  "reason": "用户确认采用电影接触表开场、家庭档案式文案和原始比例瀑布流，且要求横拍、竖拍、方图和手机照片均不裁切。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "规格、计划、任务与声明已完成一致性审阅；git diff --check 通过",
+    "npm run typecheck：通过",
+    "npm test：12 个测试文件、88 个用例通过",
+    "npm run build：内容校验、类型检查和 Vite 静态构建通过",
+    "npm run test:e2e：Playwright 86 个测试执行通过（其中平台相关用例按现有配置跳过）"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "实施尚未开始；完成后将同步详情页布局、状态与 opening 内容维护规则。"
+    },
+    "architecture": {
+      "status": "none",
+      "reason": "实施尚未开始；完成后将记录内容索引新增字段，并确认路由与 playback 边界不变。"
+    },
+    "modules": {
+      "status": "none",
+      "reason": "实施尚未开始；完成后将同步内容校验契约和主题详情页职责。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "复用既有 React、CSS 和图片状态实现，未新增依赖或架构决策。"
+    },
+    "readme": {
+      "status": "none",
+      "reason": "本次不改变本地命令、部署方式或相册目录基本维护步骤。"
+    }
+  }
+}

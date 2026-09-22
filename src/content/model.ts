@@ -33,6 +33,8 @@ export interface Album {
   id: string
   title: string
   description?: string
+  /** 相册详情页沉浸式开场引言；缺省时主题回退到 description。 */
+  opening?: string
   date?: string
   cover?: string
   media: Media[]
