@@ -188,6 +188,14 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
     };
   }, []);
 
+  /** 原生 dialog 的 cancel 默认会关闭对话框；关闭只由 Esc 快捷键或关闭按钮命令发起。 */
+  useEffect(() => {
+    const node = shell.current;
+    const preventNativeCancel = (event: Event) => event.preventDefault();
+    node?.addEventListener('cancel', preventNativeCancel);
+    return () => node?.removeEventListener('cancel', preventNativeCancel);
+  }, []);
+
   useEffect(() => {
     const guard = (event: FocusEvent) => {
       if (!live.current || !shell.current) return;
@@ -221,7 +229,8 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
         // 只把真正渲染出来的控件算进焦点环：移动端隐藏的导航按钮不参与。
         const focusables = Array.from(node.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]'))
           .filter(item => item.getClientRects().length > 0);
-        if (focusables.length === 0) return;
+        // 照片模式下手机/平板没有任何可聚焦控件：把 Tab 留在查看器上，避免焦点跑到模态框后面。
+        if (focusables.length === 0) { event.preventDefault(); node.focus(); return; }
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
         const active = document.activeElement;
@@ -277,13 +286,17 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
     tabIndex={-1}
     data-media-position={session.index + 1}
     data-media-count={session.media.length}
-    onCancel={event => { event.preventDefault(); commands.close(); }}
+    onClick={event => {
+      if (event.target instanceof Element && event.target.closest('img,video,button,input,a,[data-viewer-controls]')) return;
+      commands.close();
+    }}
   >
     <div ref={fullscreenHost} className={video ? styles.frame + ' ' + styles.frameVideo : styles.frame}>
       <div className={styles.topBar}>
         {/* 位置不再可见展示；这里只为读屏播报当前进度。 */}
         <p className={styles.srOnly} role="status">第 {session.index + 1} 项，共 {session.media.length} 项</p>
-        <button ref={closeRef} type="button" className={styles.close} onClick={commands.close} aria-label="关闭查看器"><X /></button>
+        {/* 照片为静默舞台：不渲染关闭按钮，退出只依赖背景点击与 Esc；视频与空状态仍保留显式关闭入口。 */}
+        {!photo && <button ref={closeRef} type="button" className={styles.close} onClick={commands.close} aria-label="关闭查看器"><X /></button>}
       </div>
       <div
         ref={canvas}

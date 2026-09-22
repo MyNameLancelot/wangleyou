@@ -98,6 +98,7 @@
 
 /* 影像卡片：说明条压在卡片底部，与设计稿一致 */
 .mediaTile { display: block; width: 100%; border: 0; background: transparent; padding: 0; text-align: left; min-width: 0; }
+.mediaTile:focus-visible { outline: none; }
 .mediaThumb { position: relative; display: block; aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--radius-md); background: var(--color-background-subtle); }
 .mediaTileTall .mediaThumb { aspect-ratio: 4 / 3; }
 .mediaThumb img { transition: transform var(--motion-standard-duration) var(--motion-standard-easing); }
@@ -133,6 +134,8 @@
 .browseHeroMedia { position: absolute; inset: 0; background-size: cover; background-position: center; background-color: var(--color-background-subtle); }
 .browseHeroMedia::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--color-media-overlay) 18%, transparent), color-mix(in srgb, var(--color-media-overlay) 55%, transparent)); }
 .browseHeroCopy { position: relative; color: var(--color-action-on-primary); }
+.browseBack { display: inline-flex; align-items: center; min-height: var(--target-min); gap: var(--space-xs); color: inherit; font-size: var(--font-size-body); }
+.browseBack + h1 { margin-top: var(--space-2xs); }
 .browseHeroCopy h1 { font-family: var(--font-title); font-size: clamp(30px, 3.4vw, 44px); font-weight: 600; }
 .browseHeroCopy p { font-size: var(--font-size-body); opacity: 0.92; }
 .filterPill { position: absolute; left: max(var(--layout-gutter), calc(50vw - var(--layout-max-width) / 2)); bottom: 0; transform: translateY(50%); display: inline-flex; gap: var(--space-xs); padding: var(--space-xs); border-radius: var(--radius-pill); background: var(--color-background-surface); box-shadow: var(--shadow-sm); }
@@ -148,6 +151,7 @@
 .browseMain { min-width: 0; }
 .yearNav { display: none; align-items: center; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-lg); }
 .yearNavLabel { font-family: var(--font-caption); font-size: 10px; color: var(--color-text-secondary); letter-spacing: 1px; }
+.yearNavScroller { display: contents; }
 .yearChip { min-height: var(--target-min); min-width: var(--target-min); padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid transparent; background: var(--color-background-subtle); color: var(--color-text-primary); font-size: var(--font-size-small); }
 .yearGroup { padding-bottom: var(--space-xl); scroll-margin-top: var(--space-xl); }
 .yearTitle { font-family: var(--font-title); font-size: var(--font-size-h2); font-weight: 600; margin-bottom: var(--space-md); }
@@ -166,17 +170,32 @@
 .detailHeroCopy > p { margin: 0; font-size: var(--font-size-body); opacity: .9; }.detailHero blockquote { max-width: 460px; margin: clamp(28px, 5dvh, 46px) 0 0; padding-left: var(--space-md); border-left: 2px solid currentColor; font: italic clamp(18px, 2vw, 24px) / 1.5 var(--font-title); }
 .detailFacts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); font-size: var(--font-size-small); }.detailFacts .primary { background: var(--color-background-surface); color: var(--color-action-primary); }
 .detailGallery { width: min(var(--layout-max-width), calc(100% - var(--layout-gutter) * 2)); margin: var(--space-2xl) auto 0; }.detailGallery h2 { margin-bottom: var(--space-lg); font: 600 var(--font-size-h2) var(--font-title); }
-.masonryGrid { columns: 3; column-gap: var(--space-lg); }.masonryTile { break-inside: avoid; margin-bottom: var(--space-lg); }.masonryTile .mediaThumb { aspect-ratio: auto; min-height: 150px; }.masonryTile .mediaThumb > span, .masonryTile .mediaThumb img { height: auto; }.masonryTile .mediaThumb img { display: block; width: 100%; object-fit: contain; }.masonryTile:hover .mediaThumb img { transform: none; }
+.masonryGrid { columns: 3; column-gap: var(--space-lg); }.masonryTile { break-inside: avoid; margin-bottom: var(--space-lg); }.masonryTile .mediaThumb { aspect-ratio: auto; min-height: 0; }.masonryTile .mediaThumb > span, .masonryTile .mediaThumb img { height: auto; }.masonryTile .mediaThumb img { display: block; width: 100%; object-fit: contain; }.masonryTile:hover .mediaThumb img { transform: none; }
 
 @media (max-width: 900px) {
   .browseBody { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); padding-top: var(--space-2xl); }
   .rail { display: none; }
-  .yearNav { display: flex; }
+  .yearNav { display: flex; flex-wrap: nowrap; }
+  .yearNavLabel { flex: none; }
+  .yearNavScroller { display: flex; min-width: 0; flex: 1; gap: var(--space-xs); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .yearNavScroller::-webkit-scrollbar { display: none; }
+  .yearChip { flex: none; }
   .browseGrid, .recentGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
   .masonryGrid { columns: 2; column-gap: var(--space-md); }
   .albumGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
   .homeMemoryPlayer { --memory-arrow-gap: 0px; padding-inline: 0; }
   .memoryArrow { display: none; }
+}
+
+/* 平板（含 1024px iPad）：首幅压到桌面版的三分之二，图集三列让首屏至少看到 4 张。 */
+@media (min-width: 601px) and (max-width: 1199px) {
+  .detailHero { min-height: clamp(202px, 26.4dvh, 266px); }
+  .detailBack { font-size: 13px; }
+  .detailHeroCopy { margin-top: clamp(19px, 4dvh, 35px); }
+  .detailHero h1 { font-size: clamp(24px, 3.2vw, 34px); }
+  .detailHeroCopy > p { font-size: 11px; }
+  .detailHero blockquote { margin-top: clamp(13px, 2.4dvh, 21px); font-size: clamp(13px, 1.6vw, 15px); }
+  .masonryGrid { columns: 3; }
 }
 @media (max-width: 600px) {
   .home .hero { padding: var(--space-lg) 21px var(--space-xl); background: var(--color-background-canvas); }
@@ -194,11 +213,33 @@
   .albumGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
   .cover { --stack-gap: 8px; }
   .browseAlbumThumb { --browse-stack-gap: 7px; }
-  .browseHero { min-height: 0; padding-top: var(--space-lg); padding-bottom: var(--space-2xl); }
+  .browseHero { position: fixed; z-index: 31; top: 0; right: 0; left: 0; min-height: 0; height: 222px; margin: 0; padding-top: var(--space-lg); padding-bottom: var(--space-2xl); }
+  /* 手机端不展示返回入口：留影页与详情页各自隐藏，返回依赖浏览器返回手势。 */
+  .browseBack, .detailBack { display: none; }
+  /* 返回入口移除后把文案在剩余可用高度内居中，避免底部留出大片空白。 */
+  .browseHeroCopy { margin-top: 46px; }
   .filterPill { left: var(--layout-gutter); right: var(--layout-gutter); justify-content: space-between; }
   .filterTab { flex: 1; padding: 0 var(--space-sm); }
-  .browseBody { padding-top: var(--space-xl); }
-  .detailHero { min-height: 420px; }.detailHeroCopy { margin-top: 82px; }
+  .yearNav { position: fixed; z-index: 30; top: 222px; right: 0; left: 0; min-height: 84px; flex-wrap: nowrap; gap: 6px; margin: 0; padding: calc(var(--space-sm) + 28px) var(--layout-gutter) var(--space-sm); background: #f5fbfc; }
+  .yearNavLabel { padding-right: 2px; font-size: 9px; }
+  .yearNavScroller { gap: 6px; }
+  .yearChip { min-width: 34px; min-height: 34px; padding: 4px 8px; font-size: 12px; }
+  .browseBody { padding-top: calc(306px + var(--space-xl)); }
+  .browseGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+  .browseAlbumThumb { --browse-stack-gap: 5px; width: 100%; margin-inline: 0; aspect-ratio: 3 / 2; }
+  .yearGroup { padding-bottom: var(--space-md); scroll-margin-top: calc(306px + var(--space-md)); }
+  .yearTitle { margin-bottom: var(--space-sm); font-size: clamp(12px, 3.5vw, 15px); }
+  .browseAlbumLayer .mediaBar { min-height: 30px; padding-inline: var(--space-sm); font-size: 12px; }
+  /* 手机端相册卡片只渲染相册名：说明文字不展示，底色框贴合文字长度。 */
+  .browseAlbumLayer .mediaBar { right: auto; width: fit-content; border-radius: 0 var(--radius-sm) 0 0; }
+  .browseAlbumLayer .mediaText { display: none; }
+  .browseAlbumLayer .mediaAlbum { max-width: none; margin-right: 0; padding-right: 0; border-right: 0; opacity: 1; }
+  .detailHero { min-height: 224px; }.detailHeroCopy { margin-top: 36px; }
+  .detailBack { font-size: 11px; }
+  .detailHero h1 { font-size: 22px; }
+  .detailHeroCopy > p { font-size: 11px; }
+  .detailHero blockquote { margin-top: 16px; font-size: 12px; }
+  .masonryGrid { columns: 3; }
   .mediaBar { min-height: 34px; }
 }
 
@@ -207,7 +248,7 @@
   .heroCard { padding: 20px 16px 18px; }
   .heroCard h1 { font-size: 26px; }
   .homeMemory { width: calc(100% - 32px); }
-  .masonryGrid { columns: 1; }
+  .masonryGrid { columns: 3; }
 }
 
 @media (prefers-reduced-motion: reduce) {

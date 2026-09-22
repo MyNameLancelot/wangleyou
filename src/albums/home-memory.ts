@@ -136,6 +136,12 @@ export function createHomeMemoryIntervalController<Handle>(
       }
       if (handle === undefined) handle = scheduler.setInterval(onTick, interval)
     },
+    /** 手动换图后丢弃旧周期；仅已运行的自动播放重新从完整间隔开始。 */
+    restart() {
+      if (handle === undefined) return
+      stop()
+      handle = scheduler.setInterval(onTick, interval)
+    },
     dispose: stop,
   }
 }

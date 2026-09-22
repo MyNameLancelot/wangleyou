@@ -9,8 +9,14 @@ body {
   line-height: var(--line-height-normal);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  -webkit-user-select: none;
+  user-select: none;
 }
 button, input, select, textarea { font: inherit; }
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
 button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; color: inherit; }
 button:disabled { cursor: default; }
@@ -20,7 +26,13 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible, dialog:focus-vi
   outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: var(--focus-ring-gap);
 }
-img { display: block; max-width: 100%; }
+img {
+  display: block;
+  max-width: 100%;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 h1, h2, h3, p { margin: 0; }
 ::selection { background: var(--color-background-subtle); }
 @media (prefers-reduced-motion: reduce) {

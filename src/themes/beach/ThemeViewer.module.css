@@ -210,13 +210,16 @@
 .dialog input:focus-visible { outline: 3px solid var(--color-focus-ring-inverse); outline-offset: 3px; }
 
 /* 平板：压缩控制密度，媒体仍占主导。 */
-@media (max-width: 900px) {
-  .stage { padding: 12px 54px 6px; }
+@media (max-width: 1199px) {
+  .viewport { padding-right: 0; padding-left: 0; }
+  .stage { padding: 8px 0 10px; }
+  .nav { display: none; }
+  .photo { width: 100%; }
 }
 
 /* 窄屏密度调整：与输入方式无关，只压缩留白与字号。 */
 @media (max-width: 600px) {
-  .viewport { padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
+  .viewport { padding: max(10px, env(safe-area-inset-top)) 0 max(10px, env(safe-area-inset-bottom)); }
   .description { font-size: 13px; }
   .videoStage { padding: 8% 5% 22%; border-radius: var(--radius-md); }
   .videoControls { right: 5%; bottom: 4%; left: 5%; }
@@ -229,7 +232,7 @@
 @media (hover: none) and (pointer: coarse) {
   .stage { padding: 8px 0 10px; }
   .nav { display: none; }
-  .photoStage { padding: 0 10px; }
+  .photoStage { padding: 0; }
   .description { max-width: calc(100% - 24px); }
   .videoViewport .description { max-width: calc(100% - 24px); }
 }

@@ -26,7 +26,7 @@ App 持有 route、唯一 Session、背景音乐状态与当前主题；hashchan
 
 ## 主要文件
 
-App.tsx 应用装配；router.ts 路由解析；global.css 基础样式、焦点环与 reduced-motion。
+App.tsx 应用装配；router.ts 路由解析；global.css 基础样式、焦点环、默认禁止展示文字和图片选择（可编辑字段除外）、图片原生拖拽禁用与 reduced-motion。
 
 ## 扩展与验证
 

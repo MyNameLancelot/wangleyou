@@ -180,12 +180,15 @@
 .viewer button:focus-visible,
 .viewer input:focus-visible { outline: 3px solid var(--color-focus-ring-inverse); outline-offset: 3px; }
 
-@media (max-width: 900px) {
-  .canvas { padding: 12px 52px 6px; }
+@media (max-width: 1199px) {
+  .frame { padding-right: 0; padding-left: 0; }
+  .canvas { padding: 8px 0 10px; }
+  .step { display: none; }
+  .photo { width: 100%; }
 }
 
 @media (max-width: 600px) {
-  .frame { padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
+  .frame { padding: max(10px, env(safe-area-inset-top)) 0 max(10px, env(safe-area-inset-bottom)); }
   .videoPane { padding: 12px 10px 0; }
   .frameVideo .caption { margin-bottom: 74px; }
   .footerLine { min-height: 44px; }
@@ -195,7 +198,7 @@
 @media (hover: none) and (pointer: coarse) {
   .canvas { padding: 8px 0 10px; }
   .step { display: none; }
-  .photoPane { padding: 0 10px; }
+  .photoPane { padding: 0; }
   .caption { max-width: calc(100% - 24px); }
   .frameVideo .caption { max-width: calc(100% - 24px); }
 }
