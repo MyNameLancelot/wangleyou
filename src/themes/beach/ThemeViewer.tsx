@@ -38,12 +38,13 @@ function PhotoStage({ photo, caption, onReload }: { photo: Photo; caption?: stri
     </div>;
   }
   return <div className={styles.photoStage} aria-busy={status === 'loading'}>
+    {/* 寄语已经显示在画面下方，alt 只补画面信息，避免读屏重复同一句话。 */}
     <img
       key={attempt}
       className={styles.photo}
       data-ready={status === 'ready'}
       src={mediaUrl(photo.src)}
-      alt={photo.alt || photo.caption || photo.description || '相册照片'}
+      alt={photo.alt || photo.description || '相册照片'}
       draggable={false}
       onLoad={() => setStatus('ready')}
       onError={() => setStatus('error')}
@@ -151,14 +152,18 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
   const first = session.index === 0;
   const last = session.index === session.media.length - 1;
 
-  /** 相邻照片预加载；离开当前索引时丢弃未完成的图片请求。 */
+  /**
+   * 相邻照片预加载：只依赖下一张照片的地址。
+   * 视频播放时 timeupdate 会不断产生新 session，依赖整个 session 会反复重建 Image() 使预加载失效。
+   */
+  const upcoming = session.media[session.index + 1];
+  const upcomingPhotoSrc = upcoming?.type === 'photo' ? upcoming.src : null;
   useEffect(() => {
-    const next = session.media[session.index + 1];
-    if (next?.type !== 'photo') return;
+    if (!upcomingPhotoSrc) return;
     const image = new Image();
-    image.src = mediaUrl(next.src);
+    image.src = mediaUrl(upcomingPhotoSrc);
     return () => { image.src = ''; };
-  }, [session]);
+  }, [upcomingPhotoSrc]);
 
   /** 打开时锁定页面滚动并记录焦点来源；关闭、路由变化或卸载时全部归还。 */
   useEffect(() => {

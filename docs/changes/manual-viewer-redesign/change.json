@@ -7,7 +7,7 @@
   "verification": [
     "npm run check：SDD 结构、内容校验（3 个相册 / 24 个媒体）、tsc、eslint 与 12 个测试文件 92 个用例全部通过",
     "npm run build：内容校验、类型检查与 Vite 静态构建通过",
-    "npm run test:e2e：desktop-chrome 与 mobile-chrome 共 90 个用例，78 通过、12 个平台条件跳过、0 失败",
+    "npm run test:e2e：desktop-chrome 与 mobile-chrome 共 92 个用例，79 通过、13 个平台条件跳过、0 失败（含手机横屏仍只用滑动的用例）",
     "Playwright（Chrome，1440×1000 / 1352×767 / 390×844）：图片静默舞台、滚轮与横滑切换、首尾边界、寄语显示与缺省、错误重试、焦点环与滚动锁均通过",
     "浏览器复核：在用户本机 Chrome（127.0.0.1:5173）复现并确认修复媒体框发亮、红框焦点环与文字选中高亮；移动端模拟确认隐藏导航按钮与寄语贴合",
     "未验证：iOS/Android 真机与 WebView 套壳；视频路径（当前演示内容没有视频文件，视频舞台只做代码级与类型级验证）"

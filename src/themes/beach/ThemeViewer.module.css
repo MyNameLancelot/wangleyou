@@ -1,4 +1,4 @@
-/* 海边：纯色毛玻璃底 + 影像静默舞台；不使用任何照片作为背景。 */
+/* 海边：纯黑不透明底 + 影像静默舞台；不使用任何照片、渐变或图片纹理作为背景。 */
 .dialog {
   position: fixed;
   inset: 0;
@@ -40,7 +40,6 @@
   min-height: 48px;
   flex-shrink: 0;
 }
-.counter { font: var(--font-size-small) var(--font-caption); letter-spacing: 0.14em; color: #d5eef1; }
 .srOnly {
   position: absolute;
   width: 1px;
@@ -215,18 +214,24 @@
   .stage { padding: 12px 54px 6px; }
 }
 
-/* 移动端：只用左右滑动切换，不显示导航按钮；寄语紧跟影像下方。 */
+/* 窄屏密度调整：与输入方式无关，只压缩留白与字号。 */
 @media (max-width: 600px) {
   .viewport { padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
+  .description { font-size: 13px; }
+  .videoStage { padding: 8% 5% 22%; border-radius: var(--radius-md); }
+  .videoControls { right: 5%; bottom: 4%; left: 5%; }
+  .videoViewport .description { margin-bottom: 74px; font-size: 13px; }
+  .ended { bottom: 118px; }
+  .fullscreenButton { right: 6px; bottom: 4px; }
+}
+
+/* 触摸设备（手机与平板，含手机横屏）：只用左右滑动切换，不显示导航按钮，也不为按钮预留侧边距。 */
+@media (hover: none) and (pointer: coarse) {
   .stage { padding: 8px 0 10px; }
   .nav { display: none; }
   .photoStage { padding: 0 10px; }
-  .description { max-width: calc(100% - 24px); font-size: 13px; }
-  .videoStage { padding: 8% 5% 22%; border-radius: var(--radius-md); }
-  .videoControls { right: 5%; bottom: 4%; left: 5%; }
-  .videoViewport .description { max-width: calc(100% - 24px); margin-bottom: 74px; font-size: 13px; }
-  .ended { bottom: 118px; }
-  .fullscreenButton { right: 6px; bottom: 4px; }
+  .description { max-width: calc(100% - 24px); }
+  .videoViewport .description { max-width: calc(100% - 24px); }
 }
 
 /* 横屏矮视口：收起描述，保住影像高度。 */

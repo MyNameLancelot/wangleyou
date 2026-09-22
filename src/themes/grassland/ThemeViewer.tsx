@@ -156,13 +156,17 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
   const atStart = session.index === 0;
   const atEnd = session.index === session.media.length - 1;
 
+  /**
+   * 相邻照片预加载：只依赖下一张照片的地址，避免视频 timeupdate 更新 session 时反复重建 Image()。
+   */
+  const upcoming = session.media[session.index + 1];
+  const upcomingPhotoSrc = upcoming?.type === 'photo' ? upcoming.src : null;
   useEffect(() => {
-    const upcoming = session.media[session.index + 1];
-    if (upcoming?.type !== 'photo') return;
+    if (!upcomingPhotoSrc) return;
     const image = new Image();
-    image.src = mediaUrl(upcoming.src);
+    image.src = mediaUrl(upcomingPhotoSrc);
     return () => { image.src = ''; };
-  }, [session]);
+  }, [upcomingPhotoSrc]);
 
   useEffect(() => {
     live.current = true;

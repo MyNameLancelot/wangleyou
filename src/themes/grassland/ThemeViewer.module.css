@@ -1,4 +1,4 @@
-/* 草原：纯色毛玻璃底 + 地平线式控制层；不使用任何照片作为背景。 */
+/* 草原：纯黑不透明底 + 地平线式控制层；不使用任何照片、渐变或图片纹理作为背景。 */
 .viewer {
   position: fixed;
   inset: 0;
@@ -32,7 +32,6 @@
 .frame:fullscreen { padding: 14px 18px; background-color: #000000; }
 
 .topBar { position: relative; display: flex; align-items: center; justify-content: center; min-height: 48px; flex-shrink: 0; }
-.position { font: var(--font-size-small) var(--font-caption); letter-spacing: 0.16em; color: #dfe6d3; }
 .srOnly {
   position: absolute;
   width: 1px;
@@ -187,14 +186,18 @@
 
 @media (max-width: 600px) {
   .frame { padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
+  .videoPane { padding: 12px 10px 0; }
+  .frameVideo .caption { margin-bottom: 74px; }
+  .footerLine { min-height: 44px; }
+}
+
+/* 触摸设备（手机与平板，含手机横屏）：只用左右滑动切换，不显示导航按钮。 */
+@media (hover: none) and (pointer: coarse) {
   .canvas { padding: 8px 0 10px; }
-  /* 移动端只用左右滑动切换，不显示导航按钮。 */
   .step { display: none; }
   .photoPane { padding: 0 10px; }
   .caption { max-width: calc(100% - 24px); }
-  .videoPane { padding: 12px 10px 0; }
-  .frameVideo .caption { max-width: calc(100% - 24px); margin-bottom: 74px; }
-  .footerLine { min-height: 44px; }
+  .frameVideo .caption { max-width: calc(100% - 24px); }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {

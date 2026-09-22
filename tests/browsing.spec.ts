@@ -243,6 +243,21 @@ test('photo captions come from album metadata and stay optional', async ({page})
   await expect(dialog.getByText('雨后的叶子很重，你伸手去接，像是在等一滴水落下来。')).toBeVisible();
 });
 
+test('touch devices stay swipe-only even when landscape width exceeds 600px', async ({page,isMobile}) => {
+  test.skip(!isMobile, '触摸输入能力由移动端项目模拟');
+  await page.setViewportSize({width: 844, height: 390});
+  await enterAlbum(page);
+  await page.getByRole('button', { name: firstPhoto }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  // 宽度大于 600px 但仍是触摸设备：不显示导航按钮，只用滑动
+  await expect(dialog.getByRole('button',{name:'上一项'})).toHaveCount(0);
+  const image = dialog.getByRole('img');
+  await image.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:700,clientY:200}]});
+  await image.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:320,clientY:210}]});
+  await viewerAt(page, 2);
+});
+
 test('year navigation and type filter work on the browse page', async ({page}) => {
   await page.setViewportSize({width: 1920, height: 1080});
   await page.goto('./#/browse');
