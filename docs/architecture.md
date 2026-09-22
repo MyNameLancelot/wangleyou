@@ -21,7 +21,7 @@
 
 ## 内容与媒体
 
-- 相册照片位于 `public/media/photos/YYYY-MM-sequenceNN-相册名/`；每个目录的 `meta.json` 只写 `album` 段描述相册本身（标题、日期、说明），照片顺序与 `id` 由构建期脚本按文件名生成；`meta.json` 和 `home-memory.json` 在构建期生成 `src/content/generated-photo-index.json`。
+- 相册照片位于 `public/media/photos/YYYY-MM-sequenceNN-相册名/`；每个目录的 `meta.json` 用 `album` 段描述相册本身（标题、日期、说明），用可选的 `photos_meta.captions` 按文件名登记单张照片寄语，照片顺序与 `id` 仍由构建期脚本按文件名生成；`meta.json` 和 `home-memory.json` 在构建期生成 `src/content/generated-photo-index.json`，寄语落到 `Media.caption`。
 - 主题私有的首屏图、第二屏背景和音乐位于 `public/media/themes/<主题>/`，只由所属主题使用。
 - 内容配置只保存 `media/...` 相对路径。`content.mediaUrl()` 是图片、视频、海报、字幕和音乐的唯一 URL 入口：构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 Vite `BASE_URL`。它拒绝协议、绝对路径、反斜杠、查询、片段和目录穿越，并对每段路径编码。
 - 页面 base 保持 `/wangleyou/`，路由继续使用 Hash；媒体 CDN 不改变二者。
@@ -30,7 +30,7 @@
 
 ## 状态与资源生命周期
 
-`App` 唯一持有 playback 会话。查看器负责其 DOM、dialog、焦点恢复、滚动锁、全屏和媒体元素；关闭、路由变化或卸载时释放这些资源。`playback` 负责当前媒体、用户播放意图、实际状态、连续播放和视频结束后的推进，旧媒体的异步事件不得回写新会话。
+`App` 唯一持有 playback 会话。查看器负责其 DOM、dialog、焦点恢复、滚动锁、全屏和媒体元素，并拥有输入到命令的映射：键盘、按钮、桌面滚轮与移动端横滑都只调用 `stepSession`，查看器不保存索引副本；关闭、路由变化或卸载时释放这些资源。`playback` 负责当前媒体、用户播放意图、实际状态与进度；视频结束停留当前项，只有用户命令可以推进队列，旧媒体的异步事件不得回写新会话。
 
 首页主回忆是主题页面的短生命周期状态：只在第二屏活动、页面可见、照片数足够且未被用户或交互状态暂停时计时；离开页面、打开查看器或卸载时清理计时器。它不改变查看器会话。
 
@@ -40,7 +40,7 @@
 
 海边和草原是完整、互不依赖的主题应用，各自维护页面、查看器、样式、装饰和资源引用。主题只共享路由、内容和播放等无 UI 契约。装饰必须 `aria-hidden`、不拦截操作，并在不支持增强效果或减少动态时可读可用。
 
-主题开关和音乐入口属于各自页面，不使用 `fixed` 或 `sticky`；可点击区域至少为 44px。主题偏好和背景音乐偏好可保存到 `localStorage`，存储不可用时静默降级。
+主题开关和音乐入口属于各自页面，不使用 `fixed` 或 `sticky`；可点击区域至少为 44px。查看器是模态 top layer，不提供主题切换入口，背景为不使用媒体素材的纯黑不透明层；桌面显示左右切换按钮，移动端只用滑动，照片寄语紧贴画面下缘。主题偏好和背景音乐偏好可保存到 `localStorage`，存储不可用时静默降级。
 
 ## 工具与部署
 
@@ -49,4 +49,4 @@
 - `npm run check`、`npm run build`、`npm run test:e2e`：本地验证入口。
 - `.github/workflows/check.yml`：push 和 PR 的检查；`.github/workflows/deploy.yml`：main 的 Pages 发布，详见 [工作流模块](../.github/workflows/module.md)。
 
-查看器自动照片幻灯片和原生桥接不在当前交付范围；若实现，先更新需求、模块契约和相应验证。
+查看器自动照片幻灯片、自动推进和原生桥接不在当前交付范围；若实现，先更新需求、模块契约和相应验证。

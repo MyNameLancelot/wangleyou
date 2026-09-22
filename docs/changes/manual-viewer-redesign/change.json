@@ -1,0 +1,41 @@
+{
+  "mode": "full",
+  "summary": "重构两套主题的相册媒体查看器：相册详情媒体打开后以图片静默舞台或视频影院舞台呈现，支持手动上一张/下一张，取消视频结束自动推进。",
+  "reason": "用户确认了媒体优先的新查看器设计，并要求图片与视频使用不同控制视觉、保持主题隔离且不实现自动幻灯片或自动跳转。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "npm run check：SDD 结构、内容校验（3 个相册 / 24 个媒体）、tsc、eslint 与 12 个测试文件 92 个用例全部通过",
+    "npm run build：内容校验、类型检查与 Vite 静态构建通过",
+    "npm run test:e2e：desktop-chrome 与 mobile-chrome 共 90 个用例，78 通过、12 个平台条件跳过、0 失败",
+    "Playwright（Chrome，1440×1000 / 1352×767 / 390×844）：图片静默舞台、滚轮与横滑切换、首尾边界、寄语显示与缺省、错误重试、焦点环与滚动锁均通过",
+    "浏览器复核：在用户本机 Chrome（127.0.0.1:5173）复现并确认修复媒体框发亮、红框焦点环与文字选中高亮；移动端模拟确认隐藏导航按钮与寄语贴合",
+    "未验证：iOS/Android 真机与 WebView 套壳；视频路径（当前演示内容没有视频文件，视频舞台只做代码级与类型级验证）"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "paths": ["docs/requirements.md"],
+      "reason": "已同步查看器的图片/视频状态、无可见计数器、纯黑背景、桌面滚轮、移动端仅滑动、照片寄语与无自动推进基线。"
+    },
+    "architecture": {
+      "status": "updated",
+      "paths": ["docs/architecture.md"],
+      "reason": "已同步 playback 取消连续播放、查看器资源与输入归属、纯黑模态背景和寄语内容字段的生成路径。"
+    },
+    "modules": {
+      "status": "updated",
+      "paths": ["src/app/module.md", "src/playback/module.md", "src/content/module.md", "src/themes/module.md"],
+      "reason": "已同步 app、playback、content 与 themes 的公开命令、状态、内容字段和资源生命周期。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "复用 React、原生 dialog/媒体/触摸事件、CSS 与现有 lucide-react；不新增依赖或架构决策。"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": ["README.md"],
+      "reason": "已把连续播放描述改为手动查看器，并补充 meta.json 的 photos_meta.captions 维护规则。"
+    }
+  }
+}
