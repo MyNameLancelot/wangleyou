@@ -49,7 +49,7 @@
 ## 主要文件
 
 - `index.ts`：主题读写与切换；`contracts.ts`：无 UI 装配契约。
-- `beach/`、`grassland/`：完全隔离的主题应用、页面内容层主题与音乐控制、页面、查看器、图片状态、Token 与样式。
+- `beach/`、`grassland/`：完全隔离的主题应用、主题内部首页（`ThemeHome.tsx`）、页面内容层主题与音乐控制、内容页（`ThemePages.tsx`）、查看器、图片状态、Token 与样式。
 - `theme.test.ts`：默认回退、非法值、持久化、存储异常与循环切换。
 
 ## 扩展与验证

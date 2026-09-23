@@ -1,0 +1,37 @@
+{
+  "mode": "light",
+  "summary": "将海边与草原主题的 HomePage 从各自 ThemePages.tsx 拆入主题内部 ThemeHome.tsx；仅调整主题内部文件组织，不改变模块公开接口、渲染结果或交互语义。",
+  "reason": "两套主题的 ThemePages.tsx 均超过 400 行，并同时承担首页强状态交互与内容页展示；按模块职责审查将首页独立，降低单文件内聚压力。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "npm run check：SDD structure、内容校验（7 个相册 / 33 个媒体）、TypeScript、ESLint 与 Vitest（12 个文件 / 93 个用例）全部通过。",
+    "npm run build：静态构建通过；产物为 index.html 0.60 kB、CSS 80.74 kB、JS 318.34 kB。",
+    "npm run test:e2e：Playwright 1.63.0 / Google Chrome 153.0.8010.53，静态构建产物上 desktop-chrome（1440×1000）与 mobile-chrome（Pixel 5，393×851）共 114 个用例：100 通过、14 个按设备能力条件跳过、0 失败。",
+    "npm run check:sdd -- --worktree --base origin/main：通过。",
+    "浏览器验证依据上项自动化 Chrome 结果；未执行 iOS/Android 真机与 WebView 套壳验证。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "不改变任何产品行为、交互语义、路由、媒体路径或视觉结果。"
+    },
+    "architecture": {
+      "status": "none",
+      "reason": "仍保持 beach 与 grassland 隔离；themes 公开入口和模块边界不变。"
+    },
+    "modules": {
+      "status": "updated",
+      "paths": ["src/themes/module.md"],
+      "reason": "主要文件清单需反映主题内部新增的 ThemeHome.tsx。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "不新增依赖，不形成新的长期架构取舍。"
+    },
+    "readme": {
+      "status": "none",
+      "reason": "开发、构建、测试和维护方式不变。"
+    }
+  }
+}

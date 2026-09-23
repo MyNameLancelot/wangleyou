@@ -1,0 +1,36 @@
+{
+  "mode": "light",
+  "summary": "代码治理：逐条审计测试与模块职责，删除或修复有证据的失效测试，并将 1800 行端到端文件按能力域拆分；不做行为、模块接口或依赖变化。",
+  "reason": "端到端套件集中在单一 1800 行文件，浏览、查看器、主题、音乐与响应式无障碍职责混杂；同时需要复核高行数模块是否存在职责漂移，但不得以行数或运行速度为删除或拆分理由。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "npm run check：SDD structure 通过；内容校验通过（7 个相册、33 个媒体）；TypeScript、ESLint 通过；Vitest 12 个文件、93 个用例全部通过。",
+    "npm run build：内容校验、TypeScript 与 Vite 生产构建通过；产物为 index.html 0.60 kB、CSS 80.74 kB、JS 318.34 kB。",
+    "npm run test:e2e：Playwright 1.63.0 / Google Chrome 153.0.8010.53，在静态构建产物上执行 desktop-chrome（1440×1000）与 mobile-chrome（Pixel 5，393×851）两套项目；114 个用例中 100 通过、14 个按设备能力条件跳过、0 失败。",
+    "npm run check:sdd -- --worktree --base origin/main：通过（13 个差异路径）。",
+    "浏览器验证依据上项自动化 Chrome 结果记录；未执行 iOS/Android 真机与 WebView 套壳验证。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "不改变任何用户可见行为、交互语义、路由、媒体路径或产品验收标准。"
+    },
+    "architecture": {
+      "status": "none",
+      "reason": "模块审计结论为公开接口、依赖方向和状态归属不变；测试文件拆分只改变测试组织，不改架构边界。"
+    },
+    "modules": {
+      "status": "none",
+      "reason": "审计后未发现必须立即改变模块契约的混职责；脚本与主题候选拆分记录为待定，本轮不动代码。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "不新增依赖、不改变技术方案，也没有形成新的长期架构取舍。"
+    },
+    "readme": {
+      "status": "none",
+      "reason": "开发、验证与媒体维护命令不变；测试拆分不影响使用方式。"
+    }
+  }
+}
