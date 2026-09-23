@@ -15,12 +15,50 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2029-05-sequence00-海边傍晚/top01.jpg"
+            "src": "media/2029-05-sequence00-海边傍晚/top01.027492aebb54.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2029-05-sequence00-海边傍晚/top01.027492aebb54.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2029-05-sequence00-海边傍晚/top01.027492aebb54.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2029-05-sequence00-海边傍晚/top01.027492aebb54.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "003",
             "type": "photo",
-            "src": "media/photos/2029-05-sequence00-海边傍晚/003.jpg"
+            "src": "media/2029-05-sequence00-海边傍晚/003.89953f0ea69a.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2029-05-sequence00-海边傍晚/003.89953f0ea69a.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2029-05-sequence00-海边傍晚/003.89953f0ea69a.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2029-05-sequence00-海边傍晚/003.89953f0ea69a.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           }
         ]
       },
@@ -34,17 +72,74 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2028-05-sequence00-周末远足/top01.jpg"
+            "src": "media/2028-05-sequence00-周末远足/top01.0433a0fc4a71.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2028-05-sequence00-周末远足/top01.0433a0fc4a71.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2028-05-sequence00-周末远足/top01.0433a0fc4a71.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2028-05-sequence00-周末远足/top01.0433a0fc4a71.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "002",
             "type": "photo",
-            "src": "media/photos/2028-05-sequence00-周末远足/002.jpg"
+            "src": "media/2028-05-sequence00-周末远足/002.122a87f808a3.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2028-05-sequence00-周末远足/002.122a87f808a3.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2028-05-sequence00-周末远足/002.122a87f808a3.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2028-05-sequence00-周末远足/002.122a87f808a3.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "003",
             "type": "photo",
-            "src": "media/photos/2028-05-sequence00-周末远足/003.jpg"
+            "src": "media/2028-05-sequence00-周末远足/003.ede5eb35f1b4.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2028-05-sequence00-周末远足/003.ede5eb35f1b4.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2028-05-sequence00-周末远足/003.ede5eb35f1b4.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2028-05-sequence00-周末远足/003.ede5eb35f1b4.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           }
         ]
       },
@@ -58,12 +153,50 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2027-05-sequence00-雨后花园/top01.jpg"
+            "src": "media/2027-05-sequence00-雨后花园/top01.4b36cbbd16c5.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2027-05-sequence00-雨后花园/top01.4b36cbbd16c5.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2027-05-sequence00-雨后花园/top01.4b36cbbd16c5.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2027-05-sequence00-雨后花园/top01.4b36cbbd16c5.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "002",
             "type": "photo",
-            "src": "media/photos/2027-05-sequence00-雨后花园/002.jpg"
+            "src": "media/2027-05-sequence00-雨后花园/002.41e3a61905c1.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2027-05-sequence00-雨后花园/002.41e3a61905c1.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2027-05-sequence00-雨后花园/002.41e3a61905c1.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2027-05-sequence00-雨后花园/002.41e3a61905c1.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           }
         ]
       },
@@ -77,12 +210,50 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2026-05-sequence00-初夏散步/top01.jpg"
+            "src": "media/2026-05-sequence00-初夏散步/top01.027492aebb54.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2026-05-sequence00-初夏散步/top01.027492aebb54.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2026-05-sequence00-初夏散步/top01.027492aebb54.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2026-05-sequence00-初夏散步/top01.027492aebb54.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "002",
             "type": "photo",
-            "src": "media/photos/2026-05-sequence00-初夏散步/002.jpg"
+            "src": "media/2026-05-sequence00-初夏散步/002.030e888a640b.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2026-05-sequence00-初夏散步/002.030e888a640b.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2026-05-sequence00-初夏散步/002.030e888a640b.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2026-05-sequence00-初夏散步/002.030e888a640b.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           }
         ]
       },
@@ -96,46 +267,198 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/top01.jpg",
-            "caption": "黄昏把树影拉得很长，我们在这里等天色慢慢暗下来。"
+            "src": "media/2025-05-sequence00-周岁/top01.027492aebb54.1600.webp",
+            "caption": "黄昏把树影拉得很长，我们在这里等天色慢慢暗下来。",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/top01.027492aebb54.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/top01.027492aebb54.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/top01.027492aebb54.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "002",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/002.jpg"
+            "src": "media/2025-05-sequence00-周岁/002.030e888a640b.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/002.030e888a640b.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/002.030e888a640b.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/002.030e888a640b.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "003",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/003.jpg",
-            "caption": "学会走路以后，你总想追着光跑。"
+            "src": "media/2025-05-sequence00-周岁/003.89953f0ea69a.1600.webp",
+            "caption": "学会走路以后，你总想追着光跑。",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/003.89953f0ea69a.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/003.89953f0ea69a.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/003.89953f0ea69a.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "005",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/005.jpg"
+            "src": "media/2025-05-sequence00-周岁/005.82b823e96014.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/005.82b823e96014.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/005.82b823e96014.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/005.82b823e96014.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "006",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/006.jpg"
+            "src": "media/2025-05-sequence00-周岁/006.e4d6a5ce3661.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/006.e4d6a5ce3661.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/006.e4d6a5ce3661.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/006.e4d6a5ce3661.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "007",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/007.jpg"
+            "src": "media/2025-05-sequence00-周岁/007.3252fac30116.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/007.3252fac30116.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/007.3252fac30116.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/007.3252fac30116.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "008",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/008.jpg",
-            "caption": "雾里的那条路很长，我们慢慢走就好。"
+            "src": "media/2025-05-sequence00-周岁/008.edb208dc57a0.1600.webp",
+            "caption": "雾里的那条路很长，我们慢慢走就好。",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/008.edb208dc57a0.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/008.edb208dc57a0.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/008.edb208dc57a0.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "009",
             "type": "photo",
-            "src": "media/photos/2025-05-sequence00-周岁/009.jpg",
-            "caption": "雨后的叶子很重，你伸手去接，像是在等一滴水落下来。"
+            "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.1600.webp",
+            "caption": "雨后的叶子很重，你伸手去接，像是在等一滴水落下来。",
+            "width": 1600,
+            "height": 1200,
+            "srcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.480.webp",
+                "width": 480,
+                "height": 360
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.960.webp",
+                "width": 960,
+                "height": 720
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.1600.webp",
+                "width": 1600,
+                "height": 1200
+              }
+            ]
           }
         ]
       },
@@ -148,42 +471,194 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/top01.jpg"
+            "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "002",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/002.jpg"
+            "src": "media/2024-08-sequence01-百日/002.41e3a61905c1.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/002.41e3a61905c1.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/002.41e3a61905c1.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/002.41e3a61905c1.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "003",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/003.jpg"
+            "src": "media/2024-08-sequence01-百日/003.94f7eeca68ac.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/003.94f7eeca68ac.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/003.94f7eeca68ac.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/003.94f7eeca68ac.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "004",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/004.jpg"
+            "src": "media/2024-08-sequence01-百日/004.d2a75678ffdb.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/004.d2a75678ffdb.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/004.d2a75678ffdb.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/004.d2a75678ffdb.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "005",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/005.jpg"
+            "src": "media/2024-08-sequence01-百日/005.fe54d21a430f.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/005.fe54d21a430f.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/005.fe54d21a430f.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/005.fe54d21a430f.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "006",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/006.jpg"
+            "src": "media/2024-08-sequence01-百日/006.fed4ff2f714c.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/006.fed4ff2f714c.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/006.fed4ff2f714c.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/006.fed4ff2f714c.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "007",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/007.jpg"
+            "src": "media/2024-08-sequence01-百日/007.e527dba516c0.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/007.e527dba516c0.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/007.e527dba516c0.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/007.e527dba516c0.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "008",
             "type": "photo",
-            "src": "media/photos/2024-08-sequence01-百日/008.jpg"
+            "src": "media/2024-08-sequence01-百日/008.d38da6f5a132.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-08-sequence01-百日/008.d38da6f5a132.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/008.d38da6f5a132.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-08-sequence01-百日/008.d38da6f5a132.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           }
         ]
       },
@@ -196,42 +671,194 @@
           {
             "id": "top01",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/top01.jpg"
+            "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "002",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/002.jpg"
+            "src": "media/2024-05-sequence00-破壳/002.122a87f808a3.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/002.122a87f808a3.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/002.122a87f808a3.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/002.122a87f808a3.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "003",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/003.jpg"
+            "src": "media/2024-05-sequence00-破壳/003.ede5eb35f1b4.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/003.ede5eb35f1b4.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/003.ede5eb35f1b4.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/003.ede5eb35f1b4.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "004",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/004.jpg"
+            "src": "media/2024-05-sequence00-破壳/004.17563786fb37.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/004.17563786fb37.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/004.17563786fb37.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/004.17563786fb37.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "005",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/005.jpg"
+            "src": "media/2024-05-sequence00-破壳/005.a54cca3cfc13.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/005.a54cca3cfc13.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/005.a54cca3cfc13.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/005.a54cca3cfc13.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "006",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/006.jpg"
+            "src": "media/2024-05-sequence00-破壳/006.222c7be34f41.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/006.222c7be34f41.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/006.222c7be34f41.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/006.222c7be34f41.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "007",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/007.jpg"
+            "src": "media/2024-05-sequence00-破壳/007.d1fb11f7096c.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/007.d1fb11f7096c.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/007.d1fb11f7096c.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/007.d1fb11f7096c.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           },
           {
             "id": "008",
             "type": "photo",
-            "src": "media/photos/2024-05-sequence00-破壳/008.jpg"
+            "src": "media/2024-05-sequence00-破壳/008.be10e25167e7.1600.webp",
+            "width": 1600,
+            "height": 1067,
+            "srcSet": [
+              {
+                "src": "media/2024-05-sequence00-破壳/008.be10e25167e7.480.webp",
+                "width": 480,
+                "height": 320
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/008.be10e25167e7.960.webp",
+                "width": 960,
+                "height": 640
+              },
+              {
+                "src": "media/2024-05-sequence00-破壳/008.be10e25167e7.1600.webp",
+                "width": 1600,
+                "height": 1067
+              }
+            ]
           }
         ]
       }
@@ -241,32 +868,83 @@
     {
       "id": "birthday-leaves",
       "type": "photo",
-      "src": "media/photos/2025-05-sequence00-周岁/009.jpg",
+      "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.1600.webp",
       "date": "2025-05-23",
       "description": "收集一点绿色",
       "alt": "自然光线下的绿色植物",
       "width": 1600,
-      "height": 1200
+      "height": 1200,
+      "srcSet": [
+        {
+          "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.480.webp",
+          "width": 480,
+          "height": 360
+        },
+        {
+          "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.960.webp",
+          "width": 960,
+          "height": 720
+        },
+        {
+          "src": "media/2025-05-sequence00-周岁/009.5f16ea3eeb2e.1600.webp",
+          "width": 1600,
+          "height": 1200
+        }
+      ]
     },
     {
       "id": "hundred-lake",
       "type": "photo",
-      "src": "media/photos/2024-08-sequence01-百日/top01.jpg",
+      "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.1600.webp",
       "date": "2024-08-09",
       "description": "在山与水之间",
       "alt": "山间湖泊的自然风景",
       "width": 1600,
-      "height": 1067
+      "height": 1067,
+      "srcSet": [
+        {
+          "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.480.webp",
+          "width": 480,
+          "height": 320
+        },
+        {
+          "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.960.webp",
+          "width": 960,
+          "height": 640
+        },
+        {
+          "src": "media/2024-08-sequence01-百日/top01.4b36cbbd16c5.1600.webp",
+          "width": 1600,
+          "height": 1067
+        }
+      ]
     },
     {
       "id": "first-sea",
       "type": "photo",
-      "src": "media/photos/2024-05-sequence00-破壳/top01.jpg",
+      "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.1600.webp",
       "date": "2024-05-01",
       "description": "第一次看见海",
       "alt": "阳光下碧蓝海水与沙滩",
       "width": 1600,
-      "height": 1067
+      "height": 1067,
+      "srcSet": [
+        {
+          "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.480.webp",
+          "width": 480,
+          "height": 320
+        },
+        {
+          "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.960.webp",
+          "width": 960,
+          "height": 640
+        },
+        {
+          "src": "media/2024-05-sequence00-破壳/top01.0433a0fc4a71.1600.webp",
+          "width": 1600,
+          "height": 1067
+        }
+      ]
     }
   ]
 }

@@ -61,7 +61,7 @@
 
 `themes/grassland/home-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`themes/beach/home-hero.webp` 与 `themes/beach/home-memory.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。
 
-主题私有资源按主题分目录存放，内容资产（照片、缩略图、视频）仍在 `public/media/` 顶层、`thumbs/` 与 `video/`。
+主题私有资源按主题分目录存放；相册派生资源按相册目录直接位于 `public/media/<相册目录>/`（与源素材 `media-source/<相册目录>/` 层级一致），视频等手工发布的演示素材位于 `public/media/video/`。
 
 ## 演示背景音乐
 

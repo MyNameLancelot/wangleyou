@@ -109,7 +109,7 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
     const captions = captionMap(details.captions, files)
     const media: Photo[] = orderPhotos(files).map(file => {
       const caption = captions.get(file)
-      return { id: photoId(file), type: 'photo', src: `media/photos/${entry.name}/${file}`, ...(caption ? { caption } : {}) }
+      return { id: photoId(file), type: 'photo', src: `media/${entry.name}/${file}`, ...(caption ? { caption } : {}) }
     })
     albums.push({
       album: {
@@ -135,7 +135,7 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const root = process.cwd()
-  generatePhotoIndex(join(root, 'public/media/photos'), join(root, 'src/content/generated-photo-index.json'))
+  generatePhotoIndex(join(root, 'media-source'), join(root, 'src/content/generated-photo-index.json'))
     .then(({ content, homeMemory }) => console.log(`照片索引已生成：${content.albums.length} 个相册，${content.albums.reduce((count, album) => count + album.media.length, 0)} 张照片，${homeMemory.length} 张主回忆`))
     .catch((error: Error) => { console.error(error.message); process.exitCode = 1 })
 }

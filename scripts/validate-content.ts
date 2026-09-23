@@ -13,6 +13,7 @@ export async function validateFiles(configPath: string, publicDir: string) {
     album.media.forEach((media, mi) => {
       const location = `albums[${ai}].media[${mi}]`;
       refs.push({ path: media.src, location: `${location}.src` });
+      if (media.type === 'photo') media.srcSet?.forEach((candidate, index) => refs.push({ path: candidate.src, location: `${location}.srcSet[${index}].src` }));
       if (media.type === 'video' && media.poster) refs.push({ path: media.poster, location: `${location}.poster` });
       if (media.type === 'video' && media.captions) refs.push({ path: media.captions, location: `${location}.captions` });
     });

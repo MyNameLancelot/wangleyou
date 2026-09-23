@@ -1,0 +1,5 @@
+[
+  {"id": "birthday-leaves", "type": "photo", "src": "media/2025-05-sequence00-周岁/009.jpg", "date": "2025-05-23", "description": "收集一点绿色", "alt": "自然光线下的绿色植物", "width": 1600, "height": 1200},
+  {"id": "hundred-lake", "type": "photo", "src": "media/2024-08-sequence01-百日/top01.jpg", "date": "2024-08-09", "description": "在山与水之间", "alt": "山间湖泊的自然风景", "width": 1600, "height": 1067},
+  {"id": "first-sea", "type": "photo", "src": "media/2024-05-sequence00-破壳/top01.jpg", "date": "2024-05-01", "description": "第一次看见海", "alt": "阳光下碧蓝海水与沙滩", "width": 1600, "height": 1067}
+]

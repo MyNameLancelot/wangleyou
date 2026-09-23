@@ -3,9 +3,9 @@ import type { Photo } from '../content'
 import { createHomeMemory, createHomeMemoryIntervalController, stepHomeMemory } from './home-memory'
 
 const photos: Photo[] = [
-  { id: 'third', type: 'photo', src: 'media/photos/a/3.jpg' },
-  { id: 'first', type: 'photo', src: 'media/photos/a/1.jpg' },
-  { id: 'second', type: 'photo', src: 'media/photos/a/2.jpg' },
+  { id: 'third', type: 'photo', src: 'media/a/3.jpg' },
+  { id: 'first', type: 'photo', src: 'media/a/1.jpg' },
+  { id: 'second', type: 'photo', src: 'media/a/2.jpg' },
 ]
 
 describe('createHomeMemory', () => {

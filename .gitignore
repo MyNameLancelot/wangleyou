@@ -37,3 +37,7 @@ npm-debug.log*
 ._*
 Thumbs.db
 Desktop.ini
+
+# Build-time responsive WebP output; original media lives in media-source/<album>/.
+# Derived album folders are ignored by their YYYY-MM-sequenceNN naming pattern.
+/public/media/[0-9][0-9][0-9][0-9]-[0-9][0-9]-sequence*/
