@@ -31,7 +31,8 @@ function PhotoStage({ photo, caption, onReload }: { photo: Photo; caption?: stri
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
   if (status === 'error') {
-    return <div className={styles.statePanel} role="status">
+    // 状态面板属于影像展示的一部分：点击提示文字或重试按钮都不应关闭查看器。
+    return <div className={styles.statePanel} role="status" data-viewer-controls>
       <strong>这张照片暂时无法加载</strong>
       <span>可以重新加载，或手动切换上一张、下一张。</span>
       <button type="button" onClick={() => { setAttempt(value => value + 1); setStatus('loading'); onReload(); }}>重新加载</button>
@@ -49,8 +50,8 @@ function PhotoStage({ photo, caption, onReload }: { photo: Photo; caption?: stri
       onLoad={() => setStatus('ready')}
       onError={() => setStatus('error')}
     />
-    {status === 'loading' && <p className={styles.loading} role="status">正在打开这一刻…</p>}
-    {caption && <p className={styles.description}>{caption}</p>}
+    {status === 'loading' && <p className={styles.loading} role="status" data-viewer-controls>正在打开这一刻…</p>}
+    {caption && <p className={styles.description} data-viewer-controls>{caption}</p>}
   </div>;
 }
 
@@ -67,7 +68,7 @@ function VideoStage({ video, caption, session, commands, onReload }: { video: Vi
   }, [attempt, commands, session.intent, session.status, video.id]);
 
   if (session.status === 'error') {
-    return <div className={styles.statePanel} role="status">
+    return <div className={styles.statePanel} role="status" data-viewer-controls>
       <strong>这段视频暂时无法播放</strong>
       <span>可以重新加载，或手动切换上一项、下一项。</span>
       <button type="button" onClick={() => { setAttempt(value => value + 1); commands.reportStatus('loading'); onReload(); }}>重新加载</button>
@@ -106,10 +107,10 @@ function VideoStage({ video, caption, session, commands, onReload }: { video: Vi
     >
       {video.captions && <track kind="captions" src={mediaUrl(video.captions)} srcLang="zh" label="中文说明" default />}
     </video>
-    {!video.poster && <p className={styles.noPoster}>这段视频没有封面，点击播放即可查看。</p>}
-    {session.status === 'loading' && <p className={styles.loading} role="status">正在加载视频…</p>}
-    {session.status === 'ended' && <p className={styles.ended} role="status">已播放结束，可用上一项、下一项继续查看。</p>}
-    {caption && <p className={styles.description}>{caption}</p>}
+    {!video.poster && <p className={styles.noPoster} data-viewer-controls>这段视频没有封面，点击播放即可查看。</p>}
+    {session.status === 'loading' && <p className={styles.loading} role="status" data-viewer-controls>正在加载视频…</p>}
+    {session.status === 'ended' && <p className={styles.ended} role="status" data-viewer-controls>已播放结束，可用上一项、下一项继续查看。</p>}
+    {caption && <p className={styles.description} data-viewer-controls>{caption}</p>}
     <div className={styles.videoControls} data-viewer-controls>
       <input
         className={styles.progress}

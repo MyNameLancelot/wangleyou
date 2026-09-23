@@ -259,6 +259,33 @@
 
 移除该三条手机端规则即可恢复铺满卡片的“相册名 + 说明”说明条。
 
+## SD-015 评审修复
+
+### 影响模块
+
+- `src/themes/beach/ThemeViewer.tsx`、`src/themes/grassland/ThemeViewer.tsx`：影像展示文字的点击放行标注。
+- `src/themes/beach/ThemePages.module.css`、`src/themes/grassland/ThemePages.module.css`：缩略图焦点替代指示与留影页固定高度变量。
+- `src/themes/beach/ThemePages.tsx`、`src/themes/grassland/ThemePages.tsx`：`restart()` 同步原因注释。
+- `tests/browsing.spec.ts`：状态面板与寄语点击不关闭、缩略图替代焦点指示断言。
+
+### 实施步骤
+
+1. 两个主题给状态面板、加载提示、结束/无封面提示与寄语文字加 `data-viewer-controls`（海岸视频元信息行同样处理）。
+2. 缩略图 `:focus-visible` 用提亮加轻微上浮替代描边，并保留 `outline: none`。
+3. 手机端留影页把 222px 与 84px 提取为 `--browse-hero-height`、`--browse-year-nav-height`，由它们推导 `yearNav` 顶边与 `browseBody` 顶部留白。
+4. 在两个主题的 `changeMemory` 补注释，说明 `restart()` 必须在状态更新前同步执行。
+5. 扩展用例：状态面板文字点击后仍打开、寄语点击后仍打开且位置不变；缩略图聚焦时断言 `filter` 与 `transform`。
+
+### 验证方式
+
+- `npm run check`
+- `npm run build`
+- `npx playwright test tests/browsing.spec.ts`
+
+### 回退方式
+
+移除新增的 `data-viewer-controls` 标注、还原 `:focus-visible` 规则与写死的 222px/84px 即可；不涉及状态与数据。
+
 ## SD-008 手机主题切换按钮固定
 
 两个主题分别在其 App 私有 CSS 的 ≤600px 媒体查询中将现有主题按钮容器改为 fixed；复用既有 page/home 纵向定位类，保持 >600px 的 absolute 定位不变。以浏览器在 360px 与 900px 视口核对位置与滚动行为。

@@ -98,7 +98,8 @@
 
 /* 影像卡片：说明条压在卡片底部，与设计稿一致 */
 .mediaTile { display: block; width: 100%; border: 0; background: transparent; padding: 0; text-align: left; min-width: 0; }
-.mediaTile:focus-visible { outline: none; }
+/* 缩略图保留键盘焦点可见性，但不使用描边：聚焦时轻微提亮并上浮，避免整块灰掉或加红框。 */
+.mediaTile:focus-visible { outline: none; filter: brightness(1.12) saturate(1.08); transform: translateY(-2px); }
 .mediaThumb { position: relative; display: block; aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--radius-md); background: var(--color-background-subtle); }
 .mediaTileTall .mediaThumb { aspect-ratio: 4 / 3; }
 .mediaThumb img { transition: transform var(--motion-standard-duration) var(--motion-standard-easing); }
@@ -213,6 +214,8 @@
   .albumGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
   .cover { --stack-gap: 8px; }
   .browseAlbumThumb { --browse-stack-gap: 7px; }
+  /* 手机端留影页固定操作区高度：hero 与年份导航共用同一变量，避免三处魔法数字各自漂移。 */
+  .browse { --browse-hero-height: 222px; --browse-year-nav-height: 84px; }
   .browseHero { position: fixed; z-index: 31; top: 0; right: 0; left: 0; min-height: 0; height: 222px; margin: 0; padding-top: var(--space-lg); padding-bottom: var(--space-2xl); }
   /* 手机端不展示返回入口：留影页与详情页各自隐藏，返回依赖浏览器返回手势。 */
   .browseBack, .detailBack { display: none; }
@@ -220,11 +223,11 @@
   .browseHeroCopy { margin-top: 46px; }
   .filterPill { left: var(--layout-gutter); right: var(--layout-gutter); justify-content: space-between; }
   .filterTab { flex: 1; padding: 0 var(--space-sm); }
-  .yearNav { position: fixed; z-index: 30; top: 222px; right: 0; left: 0; min-height: 84px; flex-wrap: nowrap; gap: 6px; margin: 0; padding: calc(var(--space-sm) + 28px) var(--layout-gutter) var(--space-sm); background: #f5fbfc; }
+  .yearNav { position: fixed; z-index: 30; top: var(--browse-hero-height); right: 0; left: 0; min-height: var(--browse-year-nav-height); flex-wrap: nowrap; gap: 6px; margin: 0; padding: calc(var(--space-sm) + 28px) var(--layout-gutter) var(--space-sm); background: #f5fbfc; }
   .yearNavLabel { padding-right: 2px; font-size: 9px; }
   .yearNavScroller { gap: 6px; }
   .yearChip { min-width: 34px; min-height: 34px; padding: 4px 8px; font-size: 12px; }
-  .browseBody { padding-top: calc(306px + var(--space-xl)); }
+  .browseBody { padding-top: calc(var(--browse-hero-height) + var(--browse-year-nav-height) + var(--space-xl)); }
   .browseGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
   .browseAlbumThumb { --browse-stack-gap: 5px; width: 100%; margin-inline: 0; aspect-ratio: 3 / 2; }
   .yearGroup { padding-bottom: var(--space-md); scroll-margin-top: calc(306px + var(--space-md)); }

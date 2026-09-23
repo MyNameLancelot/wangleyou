@@ -130,6 +130,9 @@ test('image failure can be retried without leaving the viewer',async({page})=>{
   await page.route('**/media/photos/**/top01.jpg',route=>route.abort());
   await enterAlbum(page); await page.getByRole('button',{name:firstPhoto}).click();
   await expect(page.getByText('这张照片暂时无法加载')).toBeVisible();
+  // 状态面板文字属于影像展示：点击它不应关闭查看器，否则用户重试时会误关
+  await page.getByText('这张照片暂时无法加载').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
   await page.unroute('**/media/photos/**/top01.jpg');
   await page.getByRole('button',{name:'重新加载'}).click();
   await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
@@ -137,6 +140,7 @@ test('image failure can be retried without leaving the viewer',async({page})=>{
   await page.keyboard.press('ArrowRight');
   await viewerAt(page, 2);
 });
+
 test('rapid switching isolates slow image errors, close/reopen resets session',async({page})=>{
   await page.route('**/media/photos/**/002.jpg',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.abort();});
   await openFirst(page);
@@ -294,6 +298,10 @@ test('photo captions come from album metadata and stay optional', async ({page})
   const dialog = page.getByRole('dialog');
   const firstCaption = '黄昏把树影拉得很长，我们在这里等天色慢慢暗下来。';
   await expect(dialog.getByText(firstCaption)).toBeVisible();
+  // 寄语属于照片展示的一部分：点击寄语不应关闭查看器
+  await dialog.getByText(firstCaption).click();
+  await expect(dialog).toBeVisible();
+  await viewerAt(page, 1);
   // 计数器已移除：位置只保留机器可读属性，界面不再显示 n / m
   expect(await dialog.innerText()).not.toMatch(/\d+\s*\/\s*\d+/);
 
@@ -789,12 +797,17 @@ test('thumbnail focus has no outline in either theme while keyboard opening rema
         outlineStyle: button.outlineStyle,
         outlineColor: button.outlineColor,
         innerShadow: image.boxShadow,
+        filter: button.filter,
+        transform: button.transform,
       };
     });
     expect(focusStyle.focused).toBe(true);
     expect(focusStyle.outlineStyle).toBe('none');
     expect(focusStyle.outlineColor).not.toMatch(/217, 96, 68|168, 86, 55/);
     expect(focusStyle.innerShadow).toBe('none');
+    // 去掉描边后必须有替代焦点指示：聚焦时提亮并上浮
+    expect(focusStyle.filter).toContain('brightness');
+    expect(focusStyle.transform).not.toBe('none');
     await page.keyboard.press('Enter');
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');

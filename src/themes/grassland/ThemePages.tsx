@@ -154,6 +154,8 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
   }, []);
 
   const changeMemory = useCallback((direction: -1 | 1) => {
+    // 先同步清理旧 interval 再更新状态：restart() 不能等到 React 批处理结束后才执行，
+    // 否则旧周期可能在手动换图后的同一帧内立刻再推进一张。
     memoryIntervalRef.current?.restart();
     setHomeMemory(current => stepHomeMemory(current, direction));
   }, []);

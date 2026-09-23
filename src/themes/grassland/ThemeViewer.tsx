@@ -34,7 +34,8 @@ function PhotoPane({ photo, caption, onReload }: { photo: Photo; caption?: strin
   const [reloadCount, setReloadCount] = useState(0);
 
   if (phase === 'error') {
-    return <div className={styles.noticeCard} role="status">
+    // 状态面板属于影像展示的一部分：点击提示文字或重试按钮都不应关闭查看器。
+    return <div className={styles.noticeCard} role="status" data-viewer-controls>
       <p className={styles.noticeTitle}>这张照片暂时无法加载</p>
       <p className={styles.noticeText}>可以重新加载，或用上一项、下一项继续浏览。</p>
       <button type="button" onClick={() => { setReloadCount(count => count + 1); setPhase('loading'); onReload(); }}>重新加载</button>
@@ -52,8 +53,8 @@ function PhotoPane({ photo, caption, onReload }: { photo: Photo; caption?: strin
       onLoad={() => setPhase('ready')}
       onError={() => setPhase('error')}
     />
-    {phase === 'loading' && <p className={styles.photoLoading} role="status">正在读取影像…</p>}
-    {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
+    {phase === 'loading' && <p className={styles.photoLoading} role="status" data-viewer-controls>正在读取影像…</p>}
+    {caption && <figcaption className={styles.caption} data-viewer-controls>{caption}</figcaption>}
   </figure>;
 }
 
@@ -70,7 +71,7 @@ function VideoPane({ video, caption, session, commands, onReload }: { video: Vid
   }, [reloadCount, commands, session.intent, session.status, video.id]);
 
   if (session.status === 'error') {
-    return <div className={styles.noticeCard} role="status">
+    return <div className={styles.noticeCard} role="status" data-viewer-controls>
       <p className={styles.noticeTitle}>这段视频暂时无法播放</p>
       <p className={styles.noticeText}>可以重新加载，或用上一项、下一项继续浏览。</p>
       <button type="button" onClick={() => { setReloadCount(count => count + 1); commands.reportStatus('loading'); onReload(); }}>重新加载</button>
@@ -110,7 +111,7 @@ function VideoPane({ video, caption, session, commands, onReload }: { video: Vid
       {video.captions && <track kind="captions" src={mediaUrl(video.captions)} srcLang="zh" label="中文说明" default />}
     </video>
     {caption && <p className={styles.caption}>{caption}</p>}
-    <div className={styles.videoMeta}>
+    <div className={styles.videoMeta} data-viewer-controls>
       {!video.poster && <span className={styles.flag}>无封面视频</span>}
       {session.status === 'loading' && <span role="status">正在加载视频…</span>}
       {session.status === 'ended' && <span role="status">播放已结束，请手动切换下一项</span>}
