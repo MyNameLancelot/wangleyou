@@ -75,7 +75,13 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
-  await page.getByRole('link',{name:'← 返回留影'}).click();
+  if (isMobile) {
+    // 手机端不展示返回入口，回到留影页依赖浏览器返回手势
+    await expect(page.getByRole('link',{name:'← 返回留影'})).toBeHidden();
+    await page.goto('./#/browse');
+  } else {
+    await page.getByRole('link',{name:'← 返回留影'}).click();
+  }
   await expect(page.getByRole('heading',{name:'留影',level:1})).toBeVisible();
   await page.goto('./#/');
   await expect(page.getByRole('heading',{name:'把有海风的日子，留在这里。'})).toBeVisible();
@@ -92,10 +98,41 @@ test('subpath refresh and invalid routes',async({page})=>{
     await expect(page.getByRole('heading',{name:'没有找到这个相册'})).toBeVisible();
   }
 });
+test('display text and images cannot be selected or natively dragged', async ({page}) => {
+  await page.goto('./');
+  for (const theme of ['beach', 'grassland'] as const) {
+    await setTheme(page, theme);
+    const heading = page.getByRole('heading', {level: 1});
+    expect(await heading.evaluate(element => getComputedStyle(element).userSelect)).toBe('none');
+
+    await enterAlbum(page);
+    const image = page.getByRole('button', {name: firstPhoto}).getByRole('img');
+    await expect(image).toBeVisible();
+    await expect.poll(() => image.evaluate(element => {
+      const style = getComputedStyle(element);
+      return `${style.userSelect}/${style.getPropertyValue('-webkit-user-drag')}`;
+    })).toBe('none/none');
+  }
+
+  const editableSelection = await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    const editable = document.createElement('div');
+    editable.contentEditable = 'true';
+    document.body.append(textarea, editable);
+    const result = [getComputedStyle(textarea).userSelect, getComputedStyle(editable).userSelect];
+    textarea.remove();
+    editable.remove();
+    return result;
+  });
+  expect(editableSelection).toEqual(['text', 'text']);
+});
 test('image failure can be retried without leaving the viewer',async({page})=>{
   await page.route('**/media/photos/**/top01.jpg',route=>route.abort());
   await enterAlbum(page); await page.getByRole('button',{name:firstPhoto}).click();
   await expect(page.getByText('这张照片暂时无法加载')).toBeVisible();
+  // 状态面板文字属于影像展示：点击它不应关闭查看器，否则用户重试时会误关
+  await page.getByText('这张照片暂时无法加载').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
   await page.unroute('**/media/photos/**/top01.jpg');
   await page.getByRole('button',{name:'重新加载'}).click();
   await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
@@ -103,6 +140,7 @@ test('image failure can be retried without leaving the viewer',async({page})=>{
   await page.keyboard.press('ArrowRight');
   await viewerAt(page, 2);
 });
+
 test('rapid switching isolates slow image errors, close/reopen resets session',async({page})=>{
   await page.route('**/media/photos/**/002.jpg',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.abort();});
   await openFirst(page);
@@ -111,7 +149,9 @@ test('rapid switching isolates slow image errors, close/reopen resets session',a
   await page.keyboard.press('ArrowLeft');
   await expect(dialog.getByRole('img')).toBeVisible();
   await page.waitForTimeout(400); await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
-  await page.getByRole('button',{name:'关闭查看器'}).click();
+  // 照片模式没有关闭按钮：用 Esc 关闭后重开，确认会话已重置
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
   await page.getByRole('button',{name:firstPhoto}).click(); await viewerAt(page, 1);
 });
 test('dialog focus stays modal and route navigation disposes it',async({page})=>{
@@ -120,6 +160,34 @@ test('dialog focus stays modal and route navigation disposes it',async({page})=>
   await page.evaluate(()=>{location.hash='#/';});
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
+});
+test('viewer background closes while media and controls remain interactive in both themes', async ({page, isMobile}) => {
+  test.skip(isMobile, 'Navigation button is desktop-only');
+  for (const theme of ['beach', 'grassland'] as const) {
+    await page.goto(`./#/albums/${albumId}`);
+    await setTheme(page, theme);
+    await page.getByRole('button', {name: firstPhoto}).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    const stage = dialog.locator('[class*="stage"], [class*="canvas"]').first();
+    await stage.click({position: {x: 4, y: 4}});
+    await expect(dialog).toHaveCount(0);
+
+    await page.getByRole('button', {name: firstPhoto}).click();
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole('img').click();
+    await expect(dialog).toBeVisible();
+    await viewerAt(page, 1);
+
+    await page.getByRole('button', {name: '下一项'}).click();
+    await expect(dialog).toBeVisible();
+    await viewerAt(page, 2);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+  }
 });
 test('responsive layout and real image loading',async({page},testInfo)=>{
   await page.goto('./');
@@ -159,7 +227,9 @@ test('fullscreen enters and is released on close',async({page,isMobile})=>{
   await expect(page.getByRole('button',{name:'全屏查看'})).toHaveCount(0);
   await page.keyboard.press('f');
   await expect.poll(()=>page.evaluate(()=>!!document.fullscreenElement)).toBe(true);
-  await page.getByRole('button',{name:'关闭查看器'}).click();
+  // 照片模式没有关闭按钮，点击黑色背景退出
+  await page.getByRole('dialog').locator('[class*="stage"], [class*="canvas"]').first().click({position:{x:4,y:4}});
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect.poll(()=>page.evaluate(()=>!!document.fullscreenElement)).toBe(false);
 });
 
@@ -179,10 +249,9 @@ test('viewer has no theme switch and page theme switching keeps route and media'
   const dialog=page.getByRole('dialog');
   await page.keyboard.press('ArrowRight');
   await viewerAt(page, 2);
-  // 查看器内部不再提供主题切换入口，只保留位置、关闭与手动切换。
+  // 查看器内部不再提供主题切换或关闭按钮：照片模式只保留位置与手动切换，退出靠背景点击与 Esc。
   await expect(dialog.getByRole('button',{name:/切换主题/})).toHaveCount(0);
-  await expect(dialog.getByRole('button',{name:'关闭查看器'})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:'关闭查看器'})).toHaveText('');
+  await expect(dialog.getByRole('button',{name:'关闭查看器'})).toHaveCount(0);
 
   await page.keyboard.press('Escape');
   const before=await page.evaluate(()=>document.documentElement.dataset.theme);
@@ -229,6 +298,10 @@ test('photo captions come from album metadata and stay optional', async ({page})
   const dialog = page.getByRole('dialog');
   const firstCaption = '黄昏把树影拉得很长，我们在这里等天色慢慢暗下来。';
   await expect(dialog.getByText(firstCaption)).toBeVisible();
+  // 寄语属于照片展示的一部分：点击寄语不应关闭查看器
+  await dialog.getByText(firstCaption).click();
+  await expect(dialog).toBeVisible();
+  await viewerAt(page, 1);
   // 计数器已移除：位置只保留机器可读属性，界面不再显示 n / m
   expect(await dialog.innerText()).not.toMatch(/\d+\s*\/\s*\d+/);
 
@@ -243,22 +316,204 @@ test('photo captions come from album metadata and stay optional', async ({page})
   await expect(dialog.getByText('雨后的叶子很重，你伸手去接，像是在等一滴水落下来。')).toBeVisible();
 });
 
-test('touch devices stay swipe-only even when landscape width exceeds 600px', async ({page,isMobile}) => {
-  test.skip(!isMobile, '触摸输入能力由移动端项目模拟');
-  await page.setViewportSize({width: 844, height: 390});
-  await enterAlbum(page);
-  await page.getByRole('button', { name: firstPhoto }).click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  // 宽度大于 600px 但仍是触摸设备：不显示导航按钮，只用滑动
-  await expect(dialog.getByRole('button',{name:'上一项'})).toHaveCount(0);
-  const image = dialog.getByRole('img');
-  await image.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:700,clientY:200}]});
-  await image.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:320,clientY:210}]});
-  await viewerAt(page, 2);
+test('phone and tablet viewers hide step buttons and give the photo the full width', async ({page}) => {
+  for (const [width, height] of [[360, 800], [1024, 768]] as const) {
+    await page.setViewportSize({width, height});
+    await enterAlbum(page);
+    await page.getByRole('button', { name: firstPhoto }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    // 手机与平板隐藏切换按钮，只用横向滑动
+    await expect(dialog.getByRole('button',{name:'上一项'})).toHaveCount(0);
+    await expect(dialog.getByRole('button',{name:'下一项'})).toHaveCount(0);
+
+    // 图片舞台不留横向内边距，并延伸至查看器左右边缘
+    const geometry = await page.evaluate(() => {
+      const shell = document.querySelector('dialog')!;
+      const stage = shell.querySelector('[class*="photoStage"], [class*="photoPane"]') as HTMLElement;
+      const image = shell.querySelector('img')!;
+      const box = (node: Element) => node.getBoundingClientRect();
+      const style = getComputedStyle(stage);
+      return {
+        paddingLeft: style.paddingLeft,
+        paddingRight: style.paddingRight,
+        stageLeft: box(stage).left,
+        stageRight: box(stage).right,
+        shellLeft: box(shell).left,
+        shellRight: box(shell).right,
+        stageWidth: box(stage).width,
+        // 照片外框宽度：保持原比例时它是图片实际占用的横向范围
+        photoWidth: box(image.parentElement!).width,
+        // contain 表示浏览器按原始比例缩放，不做拉伸或裁切
+        objectFit: getComputedStyle(image).objectFit,
+        photoNaturalRatio: (image as HTMLImageElement).naturalWidth / (image as HTMLImageElement).naturalHeight,
+      };
+    });
+    expect(geometry.paddingLeft).toBe('0px');
+    expect(geometry.paddingRight).toBe('0px');
+    expect(Math.abs(geometry.stageLeft - geometry.shellLeft)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.stageRight - geometry.shellRight)).toBeLessThanOrEqual(1);
+    // 竖屏手机里高度不构成限制，照片宽度必须等于舞台宽度
+    if (width === 360) expect(Math.abs(geometry.photoWidth - geometry.stageWidth)).toBeLessThanOrEqual(1);
+    expect(geometry.objectFit).toBe('contain');
+    expect(geometry.photoNaturalRatio).toBeGreaterThan(1);
+
+    const image = dialog.getByRole('img');
+    await image.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:width - 80,clientY:200}]});
+    await image.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:80,clientY:210}]});
+    await viewerAt(page, 2);
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+  }
+});
+
+test('phone browse list opens the album and its viewer without horizontal overflow', async ({page}) => {
+  await page.setViewportSize({width: 360, height: 800});
+  await page.goto('./#/browse');
+  const grid = page.locator('[class*="browseGrid"]').first();
+  await expect(grid).toBeVisible();
+  const card = page.getByRole('link', {name: `查看相册：${albumTitle}`});
+  await card.scrollIntoViewIfNeeded();
+  const box = await card.boundingBox();
+  expect(box?.width ?? 0).toBeLessThanOrEqual(360 - 32);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  // 卡片仍可进入相册详情并从图集打开查看器
+  await card.click();
+  await expect(page.getByRole('heading', {name: albumTitle, level: 1})).toBeVisible();
+  await page.getByRole('button', {name: firstPhoto}).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+});
+
+test('phone browse album cards show only the album name with a text-hugging chip', async ({page}) => {
+  const measure = () => page.evaluate(() => {
+    const card = document.querySelector('a[aria-label^="查看相册"]')!;
+    const bar = card.querySelector('[class*="mediaBar"]') as HTMLElement;
+    const title = card.querySelector('[class*="mediaAlbum"]') as HTMLElement;
+    const text = card.querySelector('[class*="mediaText"]') as HTMLElement;
+    return {
+      cardWidth: Math.round(card.getBoundingClientRect().width),
+      barWidth: Math.round(bar.getBoundingClientRect().width),
+      titleWidth: Math.round(title.getBoundingClientRect().width),
+      textDisplay: getComputedStyle(text).display,
+      titleBorder: getComputedStyle(title).borderRightWidth,
+      titleOpacity: getComputedStyle(title).opacity,
+    };
+  });
+
+  await page.setViewportSize({width: 390, height: 844});
+  for (const theme of ['beach', 'grassland'] as const) {
+    await page.goto('./#/browse');
+    await setTheme(page, theme);
+    const phone = await measure();
+    // 手机端只渲染相册名，说明文字不渲染
+    expect(phone.textDisplay).toBe('none');
+    expect(phone.titleBorder).toBe('0px');
+    expect(phone.titleOpacity).toBe('1');
+    // 底色框贴合文字：宽度约为文字宽加左右内边距，明显小于卡片宽度
+    expect(phone.barWidth).toBeGreaterThanOrEqual(phone.titleWidth);
+    expect(phone.barWidth - phone.titleWidth).toBeLessThanOrEqual(32);
+    expect(phone.barWidth).toBeLessThan(phone.cardWidth);
+  }
+
+  // 平板与桌面仍展示相册名与说明文字
+  await page.setViewportSize({width: 820, height: 1180});
+  await page.reload();
+  expect((await measure()).textDisplay).not.toBe('none');
+});
+
+test('album detail hero shrinks to two thirds and shows at least four photos on phone and pad', async ({page}) => {
+  const measure = () => page.evaluate(() => {
+    const hero = document.querySelector('[class*="detailHero"]')!.getBoundingClientRect();
+    const grid = document.querySelector('[class*="masonryGrid"]') as HTMLElement;
+    const tiles = Array.from(grid.querySelectorAll('[class*="masonryTile"]')) as HTMLElement[];
+    const blockquote = document.querySelector('[class*="detailHeroCopy"] blockquote')!;
+    return {
+      heroHeight: hero.height,
+      heroBottom: hero.bottom,
+      copyBottom: blockquote.getBoundingClientRect().bottom,
+      columns: Number(getComputedStyle(grid).columnCount),
+      titleSize: parseFloat(getComputedStyle(document.querySelector('[class*="detailHeroCopy"] h1')!).fontSize),
+      fullyVisibleTiles: tiles.filter(tile => tile.getBoundingClientRect().bottom <= window.innerHeight).length,
+    };
+  });
+
+  for (const theme of ['beach', 'grassland'] as const) {
+    await page.setViewportSize({width: 1440, height: 900});
+    await page.goto(`./#/albums/${albumId}`);
+    await setTheme(page, theme);
+    const desktop = await measure();
+
+    // 手机：首幅压到 420 → 280 → 224（再降 1/5），三列让首屏至少完整看到 4 张
+    await page.setViewportSize({width: 390, height: 844});
+    await page.reload();
+    const phone = await measure();
+    expect(phone.heroHeight).toBeLessThanOrEqual(225);
+    expect(phone.columns).toBe(3);
+    expect(phone.fullyVisibleTiles).toBeGreaterThanOrEqual(4);
+    expect(phone.copyBottom).toBeLessThanOrEqual(phone.heroBottom);
+    expect(phone.titleSize).toBeLessThan(desktop.titleSize);
+    // 缩略图容器贴合图片本身，不再用容器底色撑出空白块
+    const tileFit = await page.evaluate(() => {
+      const tiles = Array.from(document.querySelectorAll('[class*="masonryTile"]')) as HTMLElement[];
+      return tiles.every(tile => {
+        const thumb = tile.querySelector('[class*="mediaThumb"]') as HTMLElement;
+        const image = tile.querySelector('img');
+        return image ? Math.abs(thumb.getBoundingClientRect().height - image.getBoundingClientRect().height) <= 1 : true;
+      });
+    });
+    expect(tileFit).toBe(true);
+
+    // 平板：首幅 500 → 333 → 266（再降 1/5），三列让首屏至少完整看到 4 张
+    await page.setViewportSize({width: 820, height: 1180});
+    await page.reload();
+    const pad = await measure();
+    expect(pad.heroHeight).toBeLessThanOrEqual(267);
+    expect(pad.columns).toBe(3);
+    expect(pad.fullyVisibleTiles).toBeGreaterThanOrEqual(4);
+    expect(pad.copyBottom).toBeLessThanOrEqual(pad.heroBottom);
+    expect(pad.titleSize).toBeLessThan(desktop.titleSize);
+
+    // 1024px iPad：沿用平板规则
+    await page.setViewportSize({width: 1024, height: 768});
+    await page.reload();
+    const widePad = await measure();
+    // 桌面首幅上限 500px，平板保持其 2/3 上限
+    expect(widePad.heroHeight).toBeLessThanOrEqual(334);
+    expect(widePad.columns).toBe(3);
+    expect(widePad.fullyVisibleTiles).toBeGreaterThanOrEqual(4);
+  }
+});
+
+test('photo viewer has no close button at phone, tablet and desktop widths in both themes', async ({page}) => {
+  for (const theme of ['beach', 'grassland'] as const) {
+    for (const [width, height] of [[360, 800], [1024, 768], [1440, 900]] as const) {
+      await page.setViewportSize({width, height});
+      await page.goto(`./#/albums/${albumId}`);
+      await setTheme(page, theme);
+      await page.getByRole('button', {name: firstPhoto}).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
+      // 照片模式三端都不渲染关闭按钮
+      await expect(dialog.getByRole('button', {name: '关闭查看器'})).toHaveCount(0);
+
+      // Esc 仍是显式退出入口
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+
+      // 黑色背景点击仍是退出入口
+      await page.getByRole('button', {name: firstPhoto}).click();
+      await expect(dialog).toBeVisible();
+      await dialog.locator('[class*="stage"], [class*="canvas"]').first().click({position: {x: 4, y: 4}});
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByRole('heading', {name: albumTitle, level: 1})).toBeVisible();
+    }
+  }
 });
 
 test('year navigation and type filter work on the browse page', async ({page}) => {
+  await page.emulateMedia({reducedMotion: 'reduce'});
   await page.setViewportSize({width: 1920, height: 1080});
   await page.goto('./#/browse');
   await expect(page.getByRole('heading',{name:'留影',level:1})).toBeVisible();
@@ -277,12 +532,16 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   await expect(page.getByRole('heading',{name:'光阴刻度'})).toBeVisible();
   await expect(page.locator('aside').getByRole('button',{name:'2025'})).toBeVisible();
   await expect(page.getByText(albumTitle,{exact:true}).first()).toBeVisible();
-  // 留影页按相册聚合：2025 只有周岁，2024 是破壳、百日，且同一年内按 YYYY-MM 与 sequenceNN 排列
+  // 留影页按年份倒序聚合；同一年内仍按 YYYY-MM 与 sequenceNN 排列。
   const groups = await page.evaluate(() => Array.from(document.querySelectorAll('section[id^="year-"]')).map(section => ({
     year: section.querySelector('h2')?.textContent?.trim(),
     albums: Array.from(section.querySelectorAll('[class*="mediaTile"]')).map(tile => (tile.getAttribute('aria-label') || '').replace('查看相册：', '')),
   })));
   expect(groups).toEqual([
+    { year: '2029 年', albums: ['海边傍晚'] },
+    { year: '2028 年', albums: ['周末远足'] },
+    { year: '2027 年', albums: ['雨后花园'] },
+    { year: '2026 年', albums: ['初夏散步'] },
     { year: '2025 年', albums: ['周岁'] },
     { year: '2024 年', albums: ['破壳', '百日'] },
   ]);
@@ -312,6 +571,94 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   });
   expect(Math.abs(mobile.pillLeft - mobile.titleLeft)).toBeLessThanOrEqual(1);
   expect(mobile.overflow).toBe(true);
+  const initialGridTop = await page.locator('[class*="browseGrid"]').first().evaluate(node => node.getBoundingClientRect().top);
+  await page.evaluate(() => window.scrollTo(0, 400));
+  const fixedHeader = await page.evaluate(() => ({
+    heroTop: document.querySelector('[class*="browseHero"]')!.getBoundingClientRect().top,
+    yearsTop: document.querySelector('[class*="yearNav"]')!.getBoundingClientRect().top,
+    gridTop: document.querySelector('[class*="browseGrid"]')!.getBoundingClientRect().top,
+    heroZIndex: Number(getComputedStyle(document.querySelector('[class*="browseHero"]')!).zIndex),
+    yearsZIndex: Number(getComputedStyle(document.querySelector('[class*="yearNav"]')!).zIndex),
+  }));
+  expect(fixedHeader.heroTop).toBe(0);
+  expect(fixedHeader.yearsTop).toBe(222);
+  expect(fixedHeader.heroZIndex).toBeGreaterThan(fixedHeader.yearsZIndex);
+  expect(initialGridTop).toBeGreaterThanOrEqual(322);
+  expect(fixedHeader.gridTop).toBeLessThan(initialGridTop);
+  const yearNavigation = await page.evaluate(() => {
+    const label = document.querySelector('[class*="yearNavLabel"]') as HTMLElement;
+    const scroller = document.querySelector('[class*="yearNavScroller"]') as HTMLElement;
+    const nav = document.querySelector('[class*="yearNav"]') as HTMLElement;
+    const before = label.getBoundingClientRect().left;
+    scroller.scrollLeft = 80;
+    return {
+      labelShift: label.getBoundingClientRect().left - before,
+      labelBackground: getComputedStyle(label).backgroundColor,
+      navigationBackground: getComputedStyle(nav).backgroundColor,
+      shellBackground: getComputedStyle(document.querySelector('main')!.parentElement!).backgroundColor,
+    };
+  });
+  expect(yearNavigation.labelShift).toBe(0);
+  expect(yearNavigation.labelBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(yearNavigation.navigationBackground).toBe(yearNavigation.shellBackground);
+  await page.getByRole('navigation', {name: '年份定位'}).getByRole('button', {name: '2028', exact: true}).click();
+  await expect.poll(() => page.locator('#year-2028').evaluate(node => node.getBoundingClientRect().top)).toBeGreaterThanOrEqual(306);
+});
+
+test('browse hero returns home in both isolated themes', async ({page}) => {
+  // 链接本身只在平板与桌面展示，位置与跳转行为在桌面视口核对
+  await page.setViewportSize({width: 1440, height: 900});
+  for (const theme of ['beach', 'grassland'] as const) {
+    await page.goto('./#/browse');
+    await setTheme(page, theme);
+    const back = page.getByRole('link', {name: '返回首页'});
+    await expect(back).toBeVisible();
+    await expect(back).toHaveAttribute('href', '#/');
+    expect(await back.evaluate(element => {
+      const heading = document.querySelector('#browse-title')!;
+      const link = element.getBoundingClientRect();
+      const title = heading.getBoundingClientRect();
+      return link.bottom <= title.top && link.height >= 44;
+    })).toBe(true);
+    await back.click();
+    await expect.poll(() => page.evaluate(() => location.hash)).toBe('#/');
+    await expect(page.locator('[data-home-section="hero"]')).toBeVisible();
+  }
+
+  await page.goto('./#/browse');
+  await page.setViewportSize({width: 360, height: 800});
+  const back = page.getByRole('link', {name: '返回首页'});
+  // 手机端不展示返回首页入口
+  await expect(back).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  // 平板仍展示返回首页入口，并保持 44px 命中区
+  await page.setViewportSize({width: 820, height: 1180});
+  await page.reload();
+  await expect(back).toBeVisible();
+  expect(await back.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+});
+
+test('phone hides the back links while tablet and desktop keep them', async ({page}) => {
+  const browseBack = page.getByRole('link', {name: '返回首页'});
+  const detailBack = page.getByRole('link', {name: '← 返回留影'});
+
+  for (const [width, height, visible] of [[360, 800, false], [390, 844, false], [820, 1180, true], [1440, 900, true]] as const) {
+    await page.setViewportSize({width, height});
+    await page.goto('./#/browse');
+    await expect(browseBack)[visible ? 'toBeVisible' : 'toBeHidden']();
+    if (visible) expect(await browseBack.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    await page.goto(`./#/albums/${albumId}`);
+    await expect(detailBack)[visible ? 'toBeVisible' : 'toBeHidden']();
+    if (visible) expect(await detailBack.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    // 手机端文案上移后仍在 hero 内且不产生横向溢出
+    expect(await page.evaluate(() => {
+      const hero = document.querySelector('[class*="detailHero"]')!.getBoundingClientRect();
+      const copy = document.querySelector('[class*="detailHeroCopy"]')!.getBoundingClientRect();
+      return copy.top >= hero.top && copy.bottom <= hero.bottom;
+    })).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
 });
 
 test('browse album cards stack top covers with depth in both themes', async ({page}) => {
@@ -433,6 +780,38 @@ test('reduced motion collapses durations and focus ring stays visible', async ({
     before: getComputedStyle(node, '::before').content,
     after: getComputedStyle(node, '::after').content,
   }))).toEqual({before: 'none', after: 'none'});
+});
+
+test('thumbnail focus has no outline in either theme while keyboard opening remains available', async ({page}) => {
+  for (const theme of ['beach', 'grassland'] as const) {
+    await page.goto(`./#/albums/${albumId}`);
+    await setTheme(page, theme);
+    const thumbnail = page.getByRole('button', {name: firstPhoto});
+    await thumbnail.focus();
+    const focusStyle = await thumbnail.evaluate(element => {
+      const thumb = element.querySelector<HTMLElement>('[class*="mediaThumb"]')!;
+      const button = getComputedStyle(element);
+      const image = getComputedStyle(thumb);
+      return {
+        focused: element.matches(':focus-visible'),
+        outlineStyle: button.outlineStyle,
+        outlineColor: button.outlineColor,
+        innerShadow: image.boxShadow,
+        filter: button.filter,
+        transform: button.transform,
+      };
+    });
+    expect(focusStyle.focused).toBe(true);
+    expect(focusStyle.outlineStyle).toBe('none');
+    expect(focusStyle.outlineColor).not.toMatch(/217, 96, 68|168, 86, 55/);
+    expect(focusStyle.innerShadow).toBe('none');
+    // 去掉描边后必须有替代焦点指示：聚焦时提亮并上浮
+    expect(focusStyle.filter).toContain('brightness');
+    expect(focusStyle.transform).not.toBe('none');
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+  }
 });
 
 test('media skeletons resolve into real images', async ({page}) => {
@@ -670,7 +1049,9 @@ test('two-screen music controls share one audio while theme stays on the first s
 
   // 第二屏按钮仍聚焦时，移动端可能在下一帧把视口重新滚回焦点；先释放焦点再回顶。
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+  // 全局 html { scroll-behavior: smooth } 下，移动端模拟环境用 behavior: 'instant' 回顶会偶发停在
+  // 2–10px（第二轮程序化滚动或改用 'auto' 可立即归零）；这里用 'auto' 避免把环境抖动当成产品缺陷。
+  await page.evaluate(() => window.scrollTo({top: 0, behavior: 'auto'}));
   // 移动端 dvh + scroll-snap 在并行负载下可能残留 1–2px，这里只要求回到首屏顶部
   await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThanOrEqual(4);
   await expect(heroMusic).toBeInViewport();
@@ -696,7 +1077,38 @@ test('page theme control scrolls with browse content and the viewer carries no t
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button', {name: /切换主题/})).toHaveCount(0);
-  await expect(dialog.getByRole('button', {name: '关闭查看器'})).toBeVisible();
+  await expect(dialog.getByRole('button', {name: '关闭查看器'})).toHaveCount(0);
+});
+
+test('theme switch stays fixed only on phone-width browse pages', async ({page}) => {
+  await page.setViewportSize({width: 360, height: 800});
+  await page.goto('./#/browse');
+  const phoneTheme = page.getByTestId('theme-switch');
+  expect(await phoneTheme.evaluate(node => getComputedStyle(node.parentElement!).position)).toBe('fixed');
+  const phoneTop = await phoneTheme.evaluate(node => node.parentElement!.getBoundingClientRect().top);
+  await page.evaluate(() => window.scrollTo({top: 400, behavior: 'instant'}));
+  await expect(phoneTheme).toBeInViewport();
+  expect(await phoneTheme.evaluate(node => node.parentElement!.getBoundingClientRect().top)).toBe(phoneTop);
+
+  await page.setViewportSize({width: 900, height: 500});
+  await page.reload();
+  const tabletTheme = page.getByTestId('theme-switch');
+  expect(await tabletTheme.evaluate(node => getComputedStyle(node.parentElement!).position)).not.toMatch(/fixed|sticky/);
+  await page.evaluate(() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'}));
+  await expect(tabletTheme).not.toBeInViewport();
+
+  await page.setViewportSize({width: 360, height: 800});
+  await page.goto('./#/albums/2025-05-sequence00');
+  const albumTheme = page.getByTestId('theme-switch');
+  expect(await albumTheme.evaluate(node => getComputedStyle(node.parentElement!).position)).not.toMatch(/fixed|sticky/);
+  // 详情页压缩后，手机上可能已经短到无需滚动：用文档坐标不变来证明按钮随内容滚动。
+  const documentOffset = () => albumTheme.evaluate(node => node.parentElement!.getBoundingClientRect().top + window.scrollY);
+  const offsetBefore = await documentOffset();
+  await page.evaluate(() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'}));
+  expect(Math.abs(await documentOffset() - offsetBefore)).toBeLessThanOrEqual(1);
+  if (await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight + 1)) {
+    await expect(albumTheme).not.toBeInViewport();
+  }
 });
 
 test('hero glass shows the LeYou eyebrow without any white edge', async ({page}) => {
@@ -973,6 +1385,26 @@ test('mobile memory hides arrows, swipes photos and keeps the two-screen flow', 
   await memory.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:180,clientY:300}]});
   await memory.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:186,clientY:640}]});
   await expect(page.locator('[data-home-section="hero"]')).toBeInViewport();
+});
+
+test('tablet memory hides arrows and changes photos by horizontal swipe', async ({page, isMobile}) => {
+  test.skip(!isMobile, '触控输入由移动项目模拟');
+  await page.setViewportSize({width: 768, height: 1024});
+  await page.goto('./');
+  await page.keyboard.press('ArrowDown');
+  const memory = page.locator('[data-home-section="memory"]');
+  const photo = memory.getByRole('button', {name: /主回忆自动播放/});
+  await expect(memory).toBeInViewport();
+  await expect(memory.getByRole('button', {name: '上一张照片'})).toBeHidden();
+  await expect(memory.getByRole('button', {name: '下一张照片'})).toBeHidden();
+
+  const before = await photo.getAttribute('aria-label');
+  await memory.dispatchEvent('touchstart', {touches: [{identifier: 1, clientX: 650, clientY: 480}]});
+  await memory.dispatchEvent('touchend', {changedTouches: [{identifier: 1, clientX: 300, clientY: 490}]});
+  await expect.poll(() => photo.getAttribute('aria-label')).not.toBe(before);
+  await memory.dispatchEvent('touchstart', {touches: [{identifier: 1, clientX: 300, clientY: 480}]});
+  await memory.dispatchEvent('touchend', {changedTouches: [{identifier: 1, clientX: 650, clientY: 490}]});
+  await expect.poll(() => photo.getAttribute('aria-label')).toBe(before);
 });
 
 test('desktop memory switches photos by mouse drag without pausing', async ({page}) => {

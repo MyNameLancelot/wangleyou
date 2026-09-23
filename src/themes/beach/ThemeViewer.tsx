@@ -31,7 +31,8 @@ function PhotoStage({ photo, caption, onReload }: { photo: Photo; caption?: stri
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
   if (status === 'error') {
-    return <div className={styles.statePanel} role="status">
+    // 状态面板属于影像展示的一部分：点击提示文字或重试按钮都不应关闭查看器。
+    return <div className={styles.statePanel} role="status" data-viewer-controls>
       <strong>这张照片暂时无法加载</strong>
       <span>可以重新加载，或手动切换上一张、下一张。</span>
       <button type="button" onClick={() => { setAttempt(value => value + 1); setStatus('loading'); onReload(); }}>重新加载</button>
@@ -49,8 +50,8 @@ function PhotoStage({ photo, caption, onReload }: { photo: Photo; caption?: stri
       onLoad={() => setStatus('ready')}
       onError={() => setStatus('error')}
     />
-    {status === 'loading' && <p className={styles.loading} role="status">正在打开这一刻…</p>}
-    {caption && <p className={styles.description}>{caption}</p>}
+    {status === 'loading' && <p className={styles.loading} role="status" data-viewer-controls>正在打开这一刻…</p>}
+    {caption && <p className={styles.description} data-viewer-controls>{caption}</p>}
   </div>;
 }
 
@@ -67,7 +68,7 @@ function VideoStage({ video, caption, session, commands, onReload }: { video: Vi
   }, [attempt, commands, session.intent, session.status, video.id]);
 
   if (session.status === 'error') {
-    return <div className={styles.statePanel} role="status">
+    return <div className={styles.statePanel} role="status" data-viewer-controls>
       <strong>这段视频暂时无法播放</strong>
       <span>可以重新加载，或手动切换上一项、下一项。</span>
       <button type="button" onClick={() => { setAttempt(value => value + 1); commands.reportStatus('loading'); onReload(); }}>重新加载</button>
@@ -106,10 +107,10 @@ function VideoStage({ video, caption, session, commands, onReload }: { video: Vi
     >
       {video.captions && <track kind="captions" src={mediaUrl(video.captions)} srcLang="zh" label="中文说明" default />}
     </video>
-    {!video.poster && <p className={styles.noPoster}>这段视频没有封面，点击播放即可查看。</p>}
-    {session.status === 'loading' && <p className={styles.loading} role="status">正在加载视频…</p>}
-    {session.status === 'ended' && <p className={styles.ended} role="status">已播放结束，可用上一项、下一项继续查看。</p>}
-    {caption && <p className={styles.description}>{caption}</p>}
+    {!video.poster && <p className={styles.noPoster} data-viewer-controls>这段视频没有封面，点击播放即可查看。</p>}
+    {session.status === 'loading' && <p className={styles.loading} role="status" data-viewer-controls>正在加载视频…</p>}
+    {session.status === 'ended' && <p className={styles.ended} role="status" data-viewer-controls>已播放结束，可用上一项、下一项继续查看。</p>}
+    {caption && <p className={styles.description} data-viewer-controls>{caption}</p>}
     <div className={styles.videoControls} data-viewer-controls>
       <input
         className={styles.progress}
@@ -186,6 +187,14 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
     };
   }, []);
 
+  /** 原生 dialog 的 cancel 默认会关闭对话框；关闭只由 Esc 快捷键或关闭按钮命令发起。 */
+  useEffect(() => {
+    const element = dialog.current;
+    const preventNativeCancel = (event: Event) => event.preventDefault();
+    element?.addEventListener('cancel', preventNativeCancel);
+    return () => element?.removeEventListener('cancel', preventNativeCancel);
+  }, []);
+
   /** 模态焦点兜底：焦点被挪出对话框时拉回关闭按钮，保证键盘操作始终可用。 */
   useEffect(() => {
     const onFocusIn = (event: FocusEvent) => {
@@ -225,7 +234,8 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
         // 只把真正渲染出来的控件算进焦点环：移动端隐藏的导航按钮不参与。
         const focusables = Array.from(element.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]'))
           .filter(node => node.getClientRects().length > 0);
-        if (focusables.length === 0) return;
+        // 照片模式下手机/平板没有任何可聚焦控件：把 Tab 留在查看器上，避免焦点跑到模态框后面。
+        if (focusables.length === 0) { event.preventDefault(); element.focus(); return; }
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
         const active = document.activeElement;
@@ -281,13 +291,17 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
     tabIndex={-1}
     data-media-position={session.index + 1}
     data-media-count={session.media.length}
-    onCancel={event => { event.preventDefault(); commands.close(); }}
+    onClick={event => {
+      if (event.target instanceof Element && event.target.closest('img,video,button,input,a,[data-viewer-controls]')) return;
+      commands.close();
+    }}
   >
     <div ref={fullscreenTarget} className={video ? styles.viewport + ' ' + styles.videoViewport : styles.viewport}>
       <header className={styles.header}>
         {/* 位置不再可见展示；这里只为读屏播报当前进度。 */}
         <p className={styles.srOnly} role="status">第 {session.index + 1} 项，共 {session.media.length} 项</p>
-        <button ref={closeButton} type="button" className={styles.closeButton} onClick={commands.close} aria-label="关闭查看器"><X /></button>
+        {/* 照片为静默舞台：不渲染关闭按钮，退出只依赖背景点击与 Esc；视频与空状态仍保留显式关闭入口。 */}
+        {!photo && <button ref={closeButton} type="button" className={styles.closeButton} onClick={commands.close} aria-label="关闭查看器"><X /></button>}
       </header>
       <div
         ref={stage}

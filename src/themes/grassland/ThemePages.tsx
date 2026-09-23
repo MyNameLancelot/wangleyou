@@ -153,6 +153,13 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
     if (transitionTimerRef.current !== undefined) window.clearTimeout(transitionTimerRef.current);
   }, []);
 
+  const changeMemory = useCallback((direction: -1 | 1) => {
+    // 先同步清理旧 interval 再更新状态：restart() 不能等到 React 批处理结束后才执行，
+    // 否则旧周期可能在手动换图后的同一帧内立刻再推进一张。
+    memoryIntervalRef.current?.restart();
+    setHomeMemory(current => stepHomeMemory(current, direction));
+  }, []);
+
   useEffect(() => {
     const updateVisibility = () => {
       const visible = document.visibilityState !== 'hidden';
@@ -216,7 +223,7 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
       if (section === 'memory' && Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
         const { state: wheelState, direction } = reduceHomeMemoryWheel(memoryWheelRef.current, { deltaX: event.deltaX, at: event.timeStamp });
         memoryWheelRef.current = wheelState;
-        if (direction) setHomeMemory(current => stepHomeMemory(current, direction));
+        if (direction) changeMemory(direction);
         return;
       }
       const intent = getHomeWheelIntent(wheelDeltaRef.current, event.deltaY);
@@ -225,7 +232,7 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
     };
     window.addEventListener('wheel', onWheel, { passive: false });
     return () => window.removeEventListener('wheel', onWheel);
-  }, [moveSection, section, viewerOpen]);
+  }, [changeMemory, moveSection, section, viewerOpen]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -280,8 +287,8 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
   }, [shouldRunMemoryInterval]);
 
   const currentMemory = homeMemory.items[homeMemory.index];
-  const previousMemory = () => setHomeMemory(current => stepHomeMemory(current, -1));
-  const nextMemory = () => setHomeMemory(current => stepHomeMemory(current, 1));
+  const previousMemory = () => changeMemory(-1);
+  const nextMemory = () => changeMemory(1);
   const resumeMemory = () => {
     // 播放按钮随后会卸载；先移交焦点，让 blur 清除区域焦点暂停。
     setMemoryResumeRequired(false);
@@ -308,7 +315,7 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
     const direction = getHomeMemorySwipeIntent(start, { x: touch.clientX, y: touch.clientY });
     if (!direction) return;
     memorySwipeClickGuardUntilRef.current = performance.now() + 400;
-    setHomeMemory(current => stepHomeMemory(current, direction));
+    changeMemory(direction);
   };
   /**
    * 桌面端按住鼠标左右拖动等同触屏滑动；触屏交给上面的 touch 处理器。
@@ -325,7 +332,7 @@ export function HomePage({ memory, heroImage = null, copy, viewerOpen = false }:
     if (!direction) return;
     drag.dragging = true;
     event.currentTarget.setPointerCapture(event.pointerId);
-    setHomeMemory(current => stepHomeMemory(current, direction));
+    changeMemory(direction);
   };
   const onMemoryPointerUp = () => { memoryDragRef.current = null; };
 
@@ -409,6 +416,7 @@ export function BrowsePage({ data, heroImage = null }: { data: SiteContent; hero
     <div className={styles.browseHero}>
       <div className={styles.browseHeroMedia} style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} aria-hidden="true" />
       <div className={styles.browseHeroCopy}>
+        <a className={styles.browseBack} href="#/"><span aria-hidden="true">←</span> 返回首页</a>
         <h1 id="browse-title">留影</h1>
         <p>沿着时间，慢慢翻看。</p>
       </div>
@@ -426,7 +434,9 @@ export function BrowsePage({ data, heroImage = null }: { data: SiteContent; hero
       <div className={styles.browseMain}>
         <nav className={styles.yearNav} aria-label="年份定位">
           <span className={styles.yearNavLabel}>年份</span>
-          {years.map(year => <button key={year} type="button" className={styles.yearChip} onClick={() => goToYear(year)}>{year}</button>)}
+          <div className={styles.yearNavScroller}>
+            {years.map(year => <button key={year} type="button" className={styles.yearChip} onClick={() => goToYear(year)}>{year}</button>)}
+          </div>
         </nav>
         {albums.length === 0
           ? <div className={styles.empty}><span aria-hidden="true">☀</span><h2>这里还没有影像</h2><p>换一个筛选条件，或回到首页看看相册。</p><a className={styles.primary} href="#/">返回首页 <span aria-hidden="true">↗</span></a></div>
