@@ -1049,7 +1049,9 @@ test('two-screen music controls share one audio while theme stays on the first s
 
   // 第二屏按钮仍聚焦时，移动端可能在下一帧把视口重新滚回焦点；先释放焦点再回顶。
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+  // 全局 html { scroll-behavior: smooth } 下，移动端模拟环境用 behavior: 'instant' 回顶会偶发停在
+  // 2–10px（第二轮程序化滚动或改用 'auto' 可立即归零）；这里用 'auto' 避免把环境抖动当成产品缺陷。
+  await page.evaluate(() => window.scrollTo({top: 0, behavior: 'auto'}));
   // 移动端 dvh + scroll-snap 在并行负载下可能残留 1–2px，这里只要求回到首屏顶部
   await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThanOrEqual(4);
   await expect(heroMusic).toBeInViewport();
