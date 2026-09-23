@@ -1,5 +1,6 @@
 import { mediaUrl } from '../../content';
-import { AlbumPage, AlbumsPage, BrowsePage, HomePage } from './ThemePages';
+import { AlbumPage, AlbumsPage, BrowsePage } from './ThemePages';
+import { HomePage } from './ThemeHome';
 import { GrasslandMusicToggle } from './GrasslandMusicToggle';
 import { GrasslandThemeSwitch } from './GrasslandThemeSwitch';
 import { currentMedia, isVideo } from '../../playback';

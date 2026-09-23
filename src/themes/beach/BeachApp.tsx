@@ -1,5 +1,6 @@
 import { mediaUrl } from '../../content';
-import { AlbumPage, AlbumsPage, BrowsePage, HomePage } from './ThemePages';
+import { AlbumPage, AlbumsPage, BrowsePage } from './ThemePages';
+import { HomePage } from './ThemeHome';
 import { BeachMusicToggle } from './BeachMusicToggle';
 import { BeachThemeSwitch } from './BeachThemeSwitch';
 import { currentMedia, isVideo } from '../../playback';
