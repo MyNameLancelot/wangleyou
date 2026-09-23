@@ -3,6 +3,15 @@ import type { Album, Media, Photo, SiteContent, Video } from './model'
 /** 单张照片寄语的长度上限：查看器里只作一行文案，超过就会挤压影像。 */
 export const CAPTION_MAX_LENGTH = 60
 
+/** 视频只接受 H.264 + AAC 的 MP4；其它容器由维护者离线转码后再入库。 */
+export const VIDEO_EXTENSION = '.mp4'
+
+/** 单个视频的硬上限：超过即构建失败。 */
+export const VIDEO_MAX_BYTES = 200 * 1024 * 1024
+
+/** 推荐上限：超过只警告；同时对应 GitHub 单文件推送限制。 */
+export const VIDEO_RECOMMENDED_MAX_BYTES = 100 * 1024 * 1024
+
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 const PERIOD_PATTERN = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/
@@ -137,12 +146,18 @@ function validateCommonMedia(input: UnknownRecord, location: string): void {
   assertOptionalString(input.alt, `${location}.alt`)
   assertOptionalPositiveInteger(input.width, `${location}.width`)
   assertOptionalPositiveInteger(input.height, `${location}.height`)
-  if (input.srcSet !== undefined) {
-    if (!Array.isArray(input.srcSet) || input.srcSet.length === 0) fail(`${location}.srcSet`, 'must be a non-empty array when provided')
+  assertOptionalDuration(input.duration, `${location}.duration`)
+  // 响应式候选图（照片 srcSet、视频封面 posterSrcSet）共用同一套检查。
+  for (const field of ['srcSet', 'posterSrcSet'] as const) {
+    const value = input[field]
+    if (value === undefined) continue
+    const fieldLocation = `${location}.${field}`
+    if (!Array.isArray(value) || value.length === 0) fail(fieldLocation, 'must be a non-empty array when provided')
     const width = input.width
     const height = input.height
-    input.srcSet.forEach((candidate, index) => {
-      const candidateLocation = `${location}.srcSet[${index}]`
+    const candidates = value as unknown[]
+    candidates.forEach((candidate, index) => {
+      const candidateLocation = `${fieldLocation}[${index}]`
       assertRecord(candidate, candidateLocation)
       assertAssetPath(candidate.src, `${candidateLocation}.src`)
       assertOptionalPositiveInteger(candidate.width, `${candidateLocation}.width`)
@@ -161,9 +176,9 @@ function validateMedia(input: unknown, location: string): Media {
     return input as unknown as Photo
   }
   if (input.type === 'video') {
-    assertOptionalAssetPath(input.poster, `${location}.poster`)
-    assertOptionalAssetPath(input.captions, `${location}.captions`)
-    assertOptionalDuration(input.duration, `${location}.duration`)
+    assertAssetPath(input.poster, `${location}.poster`)
+    assertString(input.src, `${location}.src`)
+    if (!input.src.toLowerCase().endsWith(VIDEO_EXTENSION)) fail(`${location}.src`, `must be a ${VIDEO_EXTENSION} file`)
     return input as unknown as Video
   }
   fail(`${location}.type`, "must be 'photo' or 'video'")

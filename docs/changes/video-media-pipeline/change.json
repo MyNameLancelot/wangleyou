@@ -1,0 +1,84 @@
+{
+  "mode": "full",
+  "summary": "内容管线补齐视频类型：相册目录内的视频按内容哈希发布到 public/media/<相册目录>/，封面走同一套 WebP 派生管线（有 <视频同名>.poster.jpg 就派生真实帧，没有则由构建期渲染 16:9 中立占位封面），索引生成 Video 项（poster/posterSrcSet），相册详情瀑布流把视频与照片排进同一条构建期顺序，并由页面按媒体类型在缩略图正中叠加主题色圆形 + lucide Play 图标；字幕能力整体下线（字段、校验、<track>、.vtt 与文档说明）；相册页与全部影像页改用全站共用的查看器模块 src/media-viewer（yet-another-react-lightbox + Captions/Fullscreen/Slideshow/Thumbnails/Video/Zoom，库默认样式），两套主题只挂载该组件、不可定制其样式与功能，会话仍由 playback 唯一持有。",
+  "reason": "用户要求从 origin/main 拉分支做多媒体视频类型适配，并确认：视频封面不自动抽帧、也不因缺封面失败（维护者按需提供真实帧，否则构建期生成占位封面），视频不引入转码（约定 H.264 + AAC 的 MP4 离线准备，构建期只校验扩展名与体积，PC/移动/WebView 共用同一种容器）；查看器按用户指定的 yet-another-react-lightbox 官方 Full-blown 示例对齐（启用 Captions/Fullscreen/Slideshow/Thumbnails/Video/Zoom、库默认样式），随后明确查看器是最外层共用组件——样式与功能都不可按主题定制，因此从主题目录抽离为独立模块 media-viewer；播放标识改为页面按媒体类型居中叠加 lucide Play 图标，不烘焙进封面资源。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "npm run check：check:sdd --structure、validate:content（7 个相册 / 34 个媒体）、typecheck、lint、vitest 全部通过。",
+    "npm test（vitest run）：12 个测试文件、103 个用例通过，含新增用例——生成器视频项与 topNN/自然序排序、缺封面与孤儿封面报错、非 .mp4 容器报错、封面源素材不被当成照片、视频寄语按文件名登记、home-memory 拒收视频；校验脚本 poster 缺失定位、体积基线（>100 MB 警告 / >200 MB 失败）；playback 的 stepSessionTo 边界；内容校验的视频字段规则。",
+    "npm run build：内容校验（7 个相册 / 34 个媒体）+ tsc + Vite 构建通过；dist/assets JS 358.18 kB（gzip 109.31 kB）、CSS 80.88 kB（gzip 15.69 kB）。",
+    "dist 产物核对：dist/media/2025-05-sequence00-周岁/weekend-clip.0cd83d944a6c.mp4（1.1 MB，内容哈希命名）与 weekend-clip.poster.a299c21d978f.480/960.webp；find dist 未发现 *.vtt、media-source 或 public/media/video 残留；public/media/video/ 目录已删除。",
+    "npm run test:e2e：完整套件 109 通过 / 9 跳过 / 0 失败（desktop-chrome 1440×1000 与 mobile-chrome 360×800，使用 scripts/serve-built.mjs 严格静态服务）。新增/改写用例覆盖：视频缩略图与播放角标、视频播放→暂停→拖动进度→自然结束停留第 9 项（结束后等待 1.5s 位置与 currentTime 均不变，下一项按钮禁用）、照片定位到所点击媒体与 object-fit contain 不裁切、寄语显示与可选、Esc/关闭按钮/背景点击三种关闭方式与焦点回归触发元素、Tab 焦点不逃逸、两套主题各自的关闭按钮底色（rgba(6,34,48,…) vs rgba(38,46,28,…)）、按钮各状态无边框与键盘焦点环、首尾禁用不循环、视频打开时不存在第二路音源。",
+    "e2e 过程中暴露并修复的两处测试基础设施问题：scripts/serve-built.mjs 缺少 .mp4 MIME 与 Range 支持（无 Range 时浏览器把视频视为不可拖动进度），以及媒体拦截未按 Range 分片；补上后视频拖动与结束行为才能在构建产物上真实验证。",
+    "相册加入视频后页面变长，暴露 themes.spec.ts 中「主题按钮滚出视口」用例仅按页面长度判断的脆弱断言，已改为按文档坐标与滚动距离判断。",
+    "依赖兼容性核对：yet-another-react-lightbox@3.32.2 的 peerDependencies 为 react ^16.8.0 || ^17 || ^18 || ^19，@types/react ^16 || ^17 || ^18 || ^19；在本仓库 React 19.3.0 下 npm install 无 peer 警告，未使用 overrides/--force。",
+    "本地浏览器人工核对（Chrome 153.0.8010.53，真实构建产物 + 严格静态服务，截图逐张查看）：1440×1000 相册详情出现第 9 个视频缩略图（MDN 花朵片段封面）与居中的玻璃播放标识；查看器打开后视频自动播放并显示原生控制条（播放/暂停、时间、静音、全屏、更多），查看器工具栏与缩略图带为库默认样式（PC 端只留幻灯片与全屏两个按钮，缩略图上方是通栏收起条）；照片为完整比例（contain，不裁切），寄语显示在画面左下角的玻璃条；360×800 相册详情两列布局、视频缩略图与角标可见；退出后无 video/audio 元素与 yarl__no_scroll 残留。移动端与平板结论来自桌面 Chrome 的移动视口模拟（360×800），未在 iOS/Android 真机上验证，也未做 WebView 套壳验证。",
+    "环境记录：本机未安装 ffmpeg/ffprobe（构建与 CI 均不需要）；本机 Node 为 v26.8.2，而 package.json engines 要求 >=24 <25，npm ci/运行脚本时出现 EBADENGINE 警告但不影响结果；CI（.github/workflows/check.yml、deploy.yml）使用 actions/setup-node node-version: 24，即 CI 在 Node 24 下执行同一套命令。",
+    "占位封面分支单测（scripts/generate-media.test.ts，临时工作区切换 cwd 跑真实 generateMedia）：无封面源素材时产出 weekend-clip.<哈希12>.mp4 与 weekend-clip.poster.<哈希12>.480/960/1600.webp（sharp 校验 format=webp、1600×900），索引 poster/posterSrcSet 与 16:9 的 width/height 正确，public 内不出现源素材；重复运行命中清单，视频 mtime 不变（不重复复制）；提供 960×540 封面源素材时改为派生真实帧（poster 为 960 档、width/height=960×540）。",
+    "占位封面人工核对：临时把演示视频的封面源素材移出仓库后重新生成（poster 变为 weekend-clip.poster.378fd7cdef74.1600.webp，1600×900，480/960/1600 三档），构建成功且相册详情显示中立占位封面 + 居中玻璃播放标识；随后恢复源素材并重新生成，索引回到真实帧派生封面 weekend-clip.poster.a299c21d978f.960.webp（960×540）。",
+    "播放标识端到端核对：e2e 断言角标中心与缩略图中心偏差 ≤2px、桌面尺寸 ≥40px（实测 52px）；两套主题各自使用 --color-action-primary 底色与 --shadow-md 投影。",
+    "需求基线一致性复查：查看器计数器的表述改为「沿用库默认工具栏（未启用计数器插件）」，与 ADR 0006 的取代清单一致，避免与「一律回到库默认交互」的决策冲突。",
+    "查看器抽离为共用组件（src/media-viewer）：两套主题删除各自的 lightbox 组件与 CSS，只挂载同一个 MediaViewer；SDD 模块结构检查（check:sdd --structure）通过，依赖白名单新增 themes → media-viewer。e2e「viewer is a shared component」用例断言两个主题下查看器根类名完全一致、焦点环都是 rgb(255, 255, 255)、工具栏按钮为库默认透明底，证明主题不可定制。",
+    "官方插件集对齐核对（e2e，desktop + mobile）：工具栏出现「放大/缩小、显示或隐藏缩略图、播放幻灯片、进入全屏、关闭查看器」；缩略图带常显可点选（点击切到第 2 项）；幻灯片默认不自动播放，点击「播放幻灯片」后按钮变「暂停幻灯片」并推进、暂停后 3.5s 位置不变；「进入全屏」使 document.fullscreenElement 生效并能「退出全屏」；双击照片后当前影像 wrapper 的 transform 变为 scale(...)（Zoom 生效）。",
+    "键盘焦点环修复：启用缩略图插件后缩略图带含 visibility:hidden 的占位项，原先按 getClientRects 统计会把占位项算成最后一个可 Tab 控件，导致焦点逃到浏览器 chrome（Esc/方向键失效）；改为只统计真正可 Tab 的可见控件后，连续 12 次 Tab 均停留在查看器内（e2e 覆盖）。",
+    "播放标识改为图标：相册缩略图角标改用 lucide-react 的实心 Play 图标（strokeWidth=0、fill=currentColor），e2e 断言角标内含 1 个 svg/1 条 path、居中偏差 ≤2px、桌面尺寸 ≥40px。",
+    "查看器交互按用户要求微调（e2e 覆盖，desktop + mobile）：寄语渲染为画面左下角的小玻璃条（断言相对画面左移 ≤40px、位于下半部、宽度 < 画面 75%）；PC（1440×1000）与平板（1024×768）工具栏只剩「播放幻灯片 / 进入全屏」两个按钮（放大、缩小、缩略图开关与关闭按钮均不渲染，`.yarl__toolbar button` 计数为 2），手机（360×800）仍保留放大、幻灯片、全屏与关闭；缩略图上方出现与屏幕同宽（left=0、width=1440）的收起条，箭头居中偏差 ≤2px、位于缩略图带上方，点击后缩略图带隐藏且图标变为向上箭头，可再次展开。",
+    "播放标识改为凸起玻璃按钮：浅色磨砂玻璃圆底（linear-gradient + backdrop-filter + 顶部 inset 高光与外投影）、内部 lucide Play 图标固定灰色 #6e7478；e2e 断言圆角 50%、backdrop-filter 含 blur、box-shadow 含 inset、图标通道差 ≤16（灰色）。"
+    ,
+    "工具栏最终收敛（e2e，1440/1024/360 三档视口）：放大、缩小与关闭按钮在全端都不渲染，`.yarl__toolbar button` 均为 2（播放幻灯片、进入全屏）；上一项/下一项只在 ≥1200px 显示，1024 与 360 下为 display:none（边界禁用语义仍成立）；缩略图带与收起条在三种视口都保留。收集过程中发现两处被自身改动破坏的断言（getByRole 对 display:none 元素不匹配、badge 尺寸期望值过期），已改为按类名断言可见性/禁用状态。",
+    "寄语定位：改为按当前影像实际渲染框计算 left/bottom/max-width，写入查看器根节点的自定义属性；desktop + mobile e2e 断言寄语框相对影像左边与底边各 12px（±4px）、完全落在影像内、宽度不超过影像宽减 20px。",
+    "全屏导航（e2e，desktop + mobile）：进入全屏后工具栏/导航/缩略图带/收起条/寄语全部隐藏，只剩影像；全屏下按 ArrowRight/ArrowLeft 仍能切换当前项，手机全屏下 CDP 触摸滑动同样切换到下一项；退出全屏后控件恢复。修复点：全屏按钮随工具栏隐藏后焦点掉到 body 导致键盘失效，现在进入/退出全屏都把焦点交回查看器容器。",
+    "播放标识尺寸与通透度按反馈再调：浅色玻璃渐变 alpha 由 82%/54% 降到 46%/22%（e2e 断言最大 alpha ≤0.5），尺寸由 56px/46px 缩到 38px/26px（e2e 断言桌面 ≥34px、手机在 22–30px）。"
+    ,
+    "e2e 稳定性：并行负载下曾出现两处偶发失败，均为测试自身问题——打开查看器后立刻发 Esc 时库还没把焦点交给容器（改为先确认焦点落点再发送），以及断言超时偏紧（playwright.config 的 expect.timeout 放宽到 10s）。修复后 tests/viewer.spec.ts 连续 3 轮（72 次）全绿，整套 e2e 连续两轮 117 通过 / 0 失败。"
+    ,
+    "无 Fullscreen API 平台（模拟 iPhone Safari）：新增 e2e 用例把 document.fullscreenEnabled 覆盖为 false，断言查看器不渲染全屏按钮（库自身在 disabled 时 return null）、幻灯片与缩略图带/收起条仍在、键盘与触摸切换仍可用、Esc 仍能关闭；据此确认 iPhone 上无需额外代码即可保持可用，也没有假装全屏的替代实现。",
+    "手机真机核对路径：新增 npm run dev:lan（vite --host 0.0.0.0），实测本机可同时从 127.0.0.1:5199 与局域网地址（本机内网 IP，HTTP 200）访问；README 补充了用手机访问局域网地址的步骤，并说明生产媒体前缀指向 jsDelivr@main，发布前不能用 preview 的手机结果判断新素材。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "reason": "改写 4.2 为媒体查看（lightbox + 库默认交互、替代项清单、Tab 焦点契约、加载失败行为），更新 4.3 的视频格式/体积/音乐协调，补充视频发布与封面源素材规则、照片与视频共用排序、封面栈包含视频封面、寄语可登记视频、以及媒体归属与重生成方式的基线。",
+      "paths": [
+        "docs/requirements.md"
+      ]
+    },
+    "architecture": {
+      "status": "updated",
+      "reason": "记录视频按内容哈希发布与封面派生、缓存清单的 entries/videos 段、查看器由主题包装受控渲染 lightbox 并把 view/视频事件翻译成 playback 命令、Tab 焦点回绕与资源释放归属。",
+      "paths": [
+        "docs/architecture.md"
+      ]
+    },
+    "modules": {
+      "status": "updated",
+      "reason": "新增 media-viewer 模块说明（共用查看器、样式与功能不可主题定制）；content 模块补充视频字段与排序规则；playback 模块补充 stepSessionTo 与查看器命令边界；themes 模块改为「主题只挂载共用查看器、不得包装或复制」并补充相册网格视频缩略图；app 模块补充命令装配说明。",
+      "paths": [
+        "src/media-viewer/module.md",
+        "src/content/module.md",
+        "src/playback/module.md",
+        "src/themes/module.md",
+        "src/app/module.md"
+      ]
+    },
+    "decisions": {
+      "status": "updated",
+      "reason": "新增 ADR 0006 记录查看器依赖选择、共用组件（主题不可定制）的决定、保留与取代清单、备选方案与取舍；更新 ADR 0005 记录视频发布形态、封面派生与不转码/不抽帧的评估结论；在决策索引登记，并把「唯一共用 UI 是 media-viewer 查看器」补进 AGENTS.md 与 SDD 维护指南，避免与主题隔离规则冲突。",
+      "paths": [
+        "docs/decisions/0005-responsive-media-pipeline.md",
+        "docs/decisions/0006-lightbox-viewer.md",
+        "docs/decisions/README.md",
+        "docs/sdd.md",
+        "AGENTS.md"
+      ]
+    },
+    "readme": {
+      "status": "updated",
+      "reason": "更新当前版本说明、添加相册/媒体步骤（含视频与封面源素材）、寄语与封面规则、新增「视频的离线准备」小节（转码示例、封面抽帧、体积基线）、媒体前缀影响范围与 scripts 模块职责。",
+      "paths": [
+        "README.md"
+      ]
+    }
+  }
+}

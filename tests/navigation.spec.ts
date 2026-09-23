@@ -7,6 +7,9 @@ import {
   firstPhoto,
   routeDistMedia,
   setTheme,
+  pressViewerKey,
+  stepViewer,
+  viewerScrollLock,
   viewerAt,
 } from './support';
 
@@ -34,22 +37,18 @@ test('homepage, album, original photo, keyboard and focus restoration', async ({
   await page.getByRole('link',{name:`查看相册：${albumTitle}`}).click();
   await expect(page.getByRole('heading',{name:albumTitle,level:1})).toBeVisible();
   const trigger=page.getByRole('button',{name:firstPhoto}); await trigger.click();
-  const dialog=page.getByRole('dialog'); await expect(dialog.getByRole('img')).toBeVisible();
-  if (isMobile) {
-    // 移动端只用左右滑动切换，不渲染导航按钮
-    await expect(dialog.getByRole('button',{name:'上一项'})).toHaveCount(0);
-    await expect(dialog.getByRole('button',{name:'下一项'})).toHaveCount(0);
-  } else {
-    await expect(dialog.getByRole('button',{name:'上一项'})).toBeDisabled();
-  }
-  await page.keyboard.press('ArrowRight'); await viewerAt(page, 2);
-  for (let index = 3; index <= albumPhotoCount; index += 1) await page.keyboard.press('ArrowRight');
+  const dialog=page.getByRole('dialog'); await expect(page.locator('.yarl__slide_current').getByRole('img')).toBeVisible();
+  // 查看器改用 yet-another-react-lightbox 的默认交互：边界按钮禁用而非循环；
+  // 手机/平板只隐藏这两个按钮（不可点），禁用状态仍然成立。
+  expect(await page.locator('.yarl__navigation_prev').evaluate(node => (node as HTMLButtonElement).disabled)).toBe(true);
+  await stepViewer(page, 1); await viewerAt(page, 2);
+  await stepViewer(page, albumPhotoCount - 2);
   await viewerAt(page, albumPhotoCount);
-  if (!isMobile) await expect(dialog.getByRole('button',{name:'下一项'})).toBeDisabled();
-  await page.keyboard.press('ArrowRight'); await viewerAt(page, albumPhotoCount);
-  await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
+  expect(await page.locator('.yarl__navigation_next').evaluate(node => (node as HTMLButtonElement).disabled)).toBe(true);
+  await pressViewerKey(page, 'ArrowRight'); await viewerAt(page, albumPhotoCount);
+  await pressViewerKey(page, 'Escape'); await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
-  expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
+  await viewerScrollLock(page, false);
   if (isMobile) {
     // 手机端不展示返回入口，回到留影页依赖浏览器返回手势
     await expect(page.getByRole('link',{name:'← 返回留影'})).toBeHidden();

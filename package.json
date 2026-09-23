@@ -10,6 +10,7 @@
     "generate:photo-index": "tsx scripts/generate-media.ts",
     "generate:media": "tsx scripts/generate-media.ts",
     "dev": "npm run generate:media && vite --host 127.0.0.1",
+    "dev:lan": "npm run generate:media && vite --host 0.0.0.0",
     "validate:content": "npm run generate:media && tsx scripts/validate-content.ts src/content/generated-photo-index.json public",
     "compress:photos": "tsx scripts/compress-photos.ts",
     "typecheck": "tsc -b",
@@ -26,7 +27,8 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-liquid-glass-svg": "^1.0.5",
-    "react-photo-album": "^3.6.1"
+    "react-photo-album": "^3.6.1",
+    "yet-another-react-lightbox": "^3.32.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

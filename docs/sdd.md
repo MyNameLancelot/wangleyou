@@ -17,7 +17,7 @@ SDD 用于让有行为或架构影响的变更具备可追溯的范围、验证�
 
 `change.json` 说明模式、原因、行为/架构影响、实际验证以及 requirements、architecture、modules、decisions、README 的文档影响。未更新的文档也要说明原因。验证只能填写已经执行的结果。
 
-不维护 Penpot 或其他外部设计稿，也不使用 `designImpact`、`designReason` 等设计分级字段。主题变更须确认两个主题仍不共享 JSX、CSS 或主题资产；新增依赖或自行实现通用能力时，记录现有实现、平台能力、候选方案和选择理由。
+不维护 Penpot 或其他外部设计稿，也不使用 `designImpact`、`designReason` 等设计分级字段。主题变更须确认两个主题仍不共享 JSX、CSS 或主题资产；唯一允许的共用 UI 是 `media-viewer` 查看器——它是全站共用组件，样式与功能都不可按主题定制，主题只能挂载它。新增依赖或自行实现通用能力时，记录现有实现、平台能力、候选方案和选择理由。
 
 ## 本地命令
 

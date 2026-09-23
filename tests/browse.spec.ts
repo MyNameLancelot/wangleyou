@@ -28,7 +28,7 @@ test('phone browse list opens the album and its viewer without horizontal overfl
   await expect(page.getByRole('heading', {name: albumTitle, level: 1})).toBeVisible();
   await page.getByRole('button', {name: firstPhoto}).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+  await expect(page.locator('.yarl__slide_current').getByRole('img')).toBeVisible();
 });
 
 test('phone browse album cards show only the album name with a text-hugging chip', async ({page}) => {

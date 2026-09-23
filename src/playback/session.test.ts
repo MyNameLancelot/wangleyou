@@ -11,6 +11,7 @@ import {
   setProgress,
   setStatus,
   stepSession,
+  stepSessionTo,
 } from './index';
 
 const photos: Media[] = [
@@ -19,9 +20,9 @@ const photos: Media[] = [
 ];
 
 const mixed: Media[] = [
-  { id: 'v1', type: 'video', src: 'media/clip.mp4', poster: 'media/thumbs/one.webp' },
+  { id: 'v1', type: 'video', src: 'media/clip.mp4', poster: 'media/album/clip.poster.webp' },
   { id: 'p1', type: 'photo', src: 'media/one.jpg' },
-  { id: 'v2', type: 'video', src: 'media/clip-2.mp4' },
+  { id: 'v2', type: 'video', src: 'media/clip-2.mp4', poster: 'media/album/clip-2.poster.webp' },
 ];
 
 describe('播放会话', () => {
@@ -70,9 +71,25 @@ describe('播放会话', () => {
   });
 
   it('队尾视频结束时停在当前项并标记结束', () => {
-    const single: Media[] = [{ id: 'v1', type: 'video', src: 'media/clip.mp4' }];
+    const single: Media[] = [{ id: 'v1', type: 'video', src: 'media/clip.mp4', poster: 'media/album/clip.poster.webp' }];
     const only = openSession(single, 'v1');
     expect(handleEnded(only)).toMatchObject({ index: 0, intent: 'paused', status: 'ended', progress: 1 });
+  });
+
+  it('查看器翻页回写索引：会话仍是唯一事实来源，越界与原地不动保持原会话', () => {
+    const session = setProgress(openSession(mixed, 'p1'), 0.5, 30);
+    // lightbox 内部翻到视频：索引更新并应用新媒体的初始播放语义
+    expect(stepSessionTo(session, 2)).toMatchObject({ index: 2, progress: 0, duration: 0, intent: 'playing', status: 'loading' });
+    // 翻到队列开头的视频：同样按新媒体的初始语义重算
+    expect(stepSessionTo(session, 0)).toMatchObject({ index: 0, intent: 'playing', status: 'loading' });
+    // 原地不动、越界、非整数与空会话都保持原会话（不产生新的状态对象）
+    expect(stepSessionTo(session, 1)).toBe(session);
+    const photo = openSession(photos, 'p1');
+    expect(stepSessionTo(photo, 0)).toBe(photo);
+    expect(stepSessionTo(photo, -1)).toBe(photo);
+    expect(stepSessionTo(photo, 9)).toBe(photo);
+    expect(stepSessionTo(photo, 1.5)).toBe(photo);
+    expect(stepSessionTo(null, 1)).toBeNull();
   });
 
   it('进度被限制在 0–1 且非法时长归零', () => {

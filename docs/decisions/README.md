@@ -8,5 +8,6 @@
 
 - [0001：纯静态相册的工程基础](0001-frontend-foundation.md)
 - [0005：构建期派生 WebP 与相册详情瀑布流](0005-responsive-media-pipeline.md)
+- [0006：查看器改用 yet-another-react-lightbox，主题各自包装](0006-lightbox-viewer.md)
 
-后续涉及音视频格式及播放状态机的决策另行记录。
+视频发布形态与离线转码约定见 0005，查看器与播放状态机边界见 0006；后续涉及新格式或新播放能力的决策另行记录。

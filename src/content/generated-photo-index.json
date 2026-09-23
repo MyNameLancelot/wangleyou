@@ -459,6 +459,26 @@
                 "height": 1200
               }
             ]
+          },
+          {
+            "id": "weekend-clip",
+            "type": "video",
+            "src": "media/2025-05-sequence00-周岁/weekend-clip.0cd83d944a6c.mp4",
+            "poster": "media/2025-05-sequence00-周岁/weekend-clip.poster.a299c21d978f.960.webp",
+            "posterSrcSet": [
+              {
+                "src": "media/2025-05-sequence00-周岁/weekend-clip.poster.a299c21d978f.480.webp",
+                "width": 480,
+                "height": 270
+              },
+              {
+                "src": "media/2025-05-sequence00-周岁/weekend-clip.poster.a299c21d978f.960.webp",
+                "width": 960,
+                "height": 540
+              }
+            ],
+            "width": 960,
+            "height": 540
           }
         ]
       },

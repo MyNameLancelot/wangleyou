@@ -15,13 +15,14 @@ import {
   setProgress,
   setStatus,
   setBackgroundMusicVisibility,
-  stepSession,
+  stepSessionTo,
   toggleBackgroundMusic,
   writeBackgroundMusicPreference,
 } from '../playback';
 import type { BackgroundMusic, BackgroundMusicPreference, Session } from '../playback';
 import { applyTheme, nextTheme, readTheme } from '../themes';
-import type { ThemeMusicCommands, ThemeName, ThemeViewerCommands } from '../themes';
+import type { ThemeMusicCommands, ThemeName } from '../themes';
+import type { MediaViewerCommands } from '../media-viewer';
 import '../themes';
 import { parseRoute } from './router';
 import { BeachApp, GrasslandApp } from '../themes';
@@ -95,13 +96,9 @@ export function App() {
 
   const switchTheme = useCallback(() => setTheme(current => applyTheme(nextTheme(current))), []);
 
-  const commands = useMemo<ThemeViewerCommands>(() => ({
-    step: delta => applySession(stepSession(sessionRef.current, delta)),
+  const commands = useMemo<MediaViewerCommands>(() => ({
+    stepTo: index => applySession(stepSessionTo(sessionRef.current, index)),
     close: () => applySession(null),
-    toggleIntent: () => {
-      const current = sessionRef.current;
-      if (current) applySession(setIntent(current, current.intent === 'playing' ? 'paused' : 'playing'));
-    },
     reportProgress: (progress, duration) => applySession(setProgress(sessionRef.current, progress, duration)),
     reportStatus: status => applySession(setStatus(sessionRef.current, status)),
     reportEnded: () => applySession(handleEnded(sessionRef.current)),

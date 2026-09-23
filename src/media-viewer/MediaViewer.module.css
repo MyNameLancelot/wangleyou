@@ -1,0 +1,83 @@
+/*
+ * 共用查看器样式。
+ *
+ * 外观对齐 yet-another-react-lightbox 官方 Full-blown 示例：工具栏、导航、字幕条、缩略图带
+ * 全部使用库默认样式。本文件与主题无关：不引用任何主题变量，主题也不得覆盖 `.viewer`
+ * 或其中的 `.yarl__*` 类名——查看器是共用组件，样式与功能都不可按主题定制。
+ */
+
+/* 继承站点正文字体（来自 body），不引入主题级查看器变量。 */
+.viewer { font-family: inherit; }
+
+/* 键盘焦点环：深色舞台上固定用白色，与主题色无关，保证两侧主题表现一致。 */
+.viewer :global(.yarl__button:focus-visible) {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+.viewer :global(.yarl__button:focus:not(:focus-visible)) { outline: none; }
+
+/* 缩略图聚焦：沿用库的 box-shadow 方案，只把颜色固定为白色。 */
+.viewer :global(.yarl__thumbnails_thumbnail) {
+  --yarl__thumbnails_thumbnail_focus_box_shadow: #000 0 0 0 2px, #fff 0 0 0 4px;
+}
+
+/* 底部的缩略图收起条占位：给通栏收起条留出高度，画面与寄语不被压住。 */
+.viewer :global(.yarl__slide) { padding-bottom: 68px; }
+
+/* 寄语贴在当前影像的左下角（位置由组件量出影像框后以自定义属性传入，没量到就退回舞台左下角）。 */
+.viewer :global(.yarl__slide_captions_container) {
+  right: auto;
+  left: var(--viewer-caption-left, 16px);
+  bottom: var(--viewer-caption-bottom, 56px);
+  max-width: min(var(--viewer-caption-max-width, 480px), 90%);
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background-color: rgb(0 0 0 / 52%);
+  backdrop-filter: blur(8px);
+}
+.viewer :global(.yarl__slide_description) { text-align: left; }
+
+/* 缩略图上方通栏的收起条：屏幕同宽、居中一个向下的箭头图标。 */
+.thumbBar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+}
+.thumbBarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: hsla(0, 0%, 100%, 0.75);
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.thumbBarButton svg { width: 22px; height: 22px; }
+.thumbBarButton:hover { color: #fff; background-color: rgb(255 255 255 / 6%); }
+.thumbBarButton:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+@media (prefers-reduced-motion: reduce) { .thumbBarButton { transition: none; } }
+
+/* 手机与平板（≤1199px）不显示上一项/下一项按钮：滑动与缩略图带已足够，且避免遮挡画面。 */
+@media (max-width: 1199px) {
+  .viewer :global(.yarl__navigation_prev),
+  .viewer :global(.yarl__navigation_next) { display: none; }
+}
+
+/* 全屏只展示影像：其余组件（工具栏、导航、缩略图带、收起条、寄语）全部移除，Esc 退出全屏。 */
+.viewer.fullscreen :global(.yarl__toolbar),
+.viewer.fullscreen :global(.yarl__navigation_prev),
+.viewer.fullscreen :global(.yarl__navigation_next),
+.viewer.fullscreen :global(.yarl__thumbnails_container),
+.viewer.fullscreen :global(.yarl__slide_captions_container) { display: none; }
+.viewer.fullscreen .thumbBar { display: none; }
+.viewer.fullscreen :global(.yarl__slide) { padding: 0; }

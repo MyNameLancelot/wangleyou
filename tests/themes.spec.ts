@@ -4,6 +4,7 @@ import {
   albumTitle,
   enterAlbum,
   firstPhoto,
+  pressViewerKey,
   routeDistMedia,
   setTheme,
   viewerAt,
@@ -46,13 +47,13 @@ test('viewer has no theme switch and page theme switching keeps route and media'
   await page.goto(`./#/albums/${albumId}`);
   await page.getByRole('button',{name:firstPhoto}).click();
   const dialog=page.getByRole('dialog');
-  await page.keyboard.press('ArrowRight');
+  await pressViewerKey(page, 'ArrowRight');
   await viewerAt(page, 2);
-  // 查看器内部不再提供主题切换或关闭按钮：照片模式只保留位置与手动切换，退出靠背景点击与 Esc。
+  // 查看器内部不提供主题切换；PC 端工具栏只保留幻灯片与全屏（关闭按钮只在手机显示）。
   await expect(dialog.getByRole('button',{name:/切换主题/})).toHaveCount(0);
-  await expect(dialog.getByRole('button',{name:'关闭查看器'})).toHaveCount(0);
+  await expect(dialog.getByRole('button',{name:'播放幻灯片'})).toBeVisible();
 
-  await page.keyboard.press('Escape');
+  await pressViewerKey(page, 'Escape');
   const before=await page.evaluate(()=>document.documentElement.dataset.theme);
   await page.getByTestId('theme-switch').getByRole('button',{name:/切换主题/}).click();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.dataset.theme)).not.toBe(before);
@@ -100,7 +101,7 @@ test('page theme control scrolls with browse content and the viewer carries no t
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button', {name: /切换主题/})).toHaveCount(0);
-  await expect(dialog.getByRole('button', {name: '关闭查看器'})).toHaveCount(0);
+  await expect(dialog.getByRole('button', {name: '播放幻灯片'})).toBeVisible();
 });
 
 test('theme switch stays fixed only on phone-width browse pages', async ({page}) => {
@@ -129,7 +130,15 @@ test('theme switch stays fixed only on phone-width browse pages', async ({page})
   const offsetBefore = await documentOffset();
   await page.evaluate(() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'}));
   expect(Math.abs(await documentOffset() - offsetBefore)).toBeLessThanOrEqual(1);
-  if (await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight + 1)) {
+  // 相册加入视频后页面变长，滚动距离有限时按钮可能仍露出末尾几像素：
+  // 因此先断言它确实随内容上移（文档坐标不变、视口位置更靠上），完全移出视口时再断言不可见。
+  const dockAfterScroll = await albumTheme.evaluate(node => {
+    const box = node.parentElement!.getBoundingClientRect();
+    return { top: Math.round(box.top), bottom: Math.round(box.bottom), scrollY: Math.round(window.scrollY) };
+  });
+  expect(dockAfterScroll.scrollY).toBeGreaterThan(0);
+  expect(dockAfterScroll.top).toBeLessThan(18);
+  if (dockAfterScroll.bottom <= 0) {
     await expect(albumTheme).not.toBeInViewport();
   }
 });
@@ -177,7 +186,7 @@ test('grassland independently renders every route and its viewer', async ({page}
   await expect(page.getByRole('heading',{name:albumTitle,level:1})).toBeVisible();
   await page.getByRole('button',{name:firstPhoto}).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
+  await expect(page.locator('.yarl__slide_current').getByRole('img')).toBeVisible();
 });
 
 test('both themes fill the approved desktop and mobile viewports', async ({page}) => {

@@ -4,7 +4,7 @@ import { HomePage } from './ThemeHome';
 import { BeachMusicToggle } from './BeachMusicToggle';
 import { BeachThemeSwitch } from './BeachThemeSwitch';
 import { currentMedia, isVideo } from '../../playback';
-import { MediaViewer } from './ThemeViewer';
+import { MediaViewer } from '../../media-viewer';
 import type { ThemeApp } from '../contracts';
 import styles from './BeachApp.module.css';
 import './BeachTokens.css';

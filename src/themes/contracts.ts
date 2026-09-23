@@ -1,20 +1,12 @@
 import type { ReactElement } from 'react';
 import type { Album, HomeMemoryPhoto, SiteContent } from '../content';
-import type { Session, PlaybackStatus } from '../playback';
+import type { Session } from '../playback';
 import type { BackgroundMusic, MusicStatus } from '../playback';
+import type { MediaViewerCommands } from '../media-viewer';
 import type { Route } from '../shared';
 
-/** 主题 UI 只接收业务命令，不拥有 Session。 */
-export interface ThemeViewerCommands {
-  step(delta: number): void;
-  close(): void;
-  toggleIntent(): void;
-  reportProgress(progress: number, duration: number): void;
-  reportStatus(status: PlaybackStatus): void;
-  reportEnded(): void;
-  reportError(): void;
-  reportBlocked(): void;
-}
+/** 主题 UI 只接收业务命令，不拥有 Session。查看器本身是共用组件（media-viewer）。 */
+export type ThemeViewerCommands = MediaViewerCommands;
 
 /** 允许主题应用使用的无 UI 装配契约。 */
 export interface ThemeAppProps {

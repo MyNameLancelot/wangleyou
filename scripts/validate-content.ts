@@ -1,7 +1,23 @@
 import { readFile, realpath, stat } from 'node:fs/promises';
-import { resolve, relative, isAbsolute } from 'node:path';
+import { resolve, relative, isAbsolute, extname } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { validateContent } from '../src/content/validate';
+import { VIDEO_EXTENSION, VIDEO_MAX_BYTES, VIDEO_RECOMMENDED_MAX_BYTES, validateContent } from '../src/content/validate';
+
+const MEGABYTE = 1024 * 1024;
+const formatSize = (bytes: number) => `${(bytes / MEGABYTE).toFixed(1)} MB`;
+
+export type VideoSizeVerdict = { level: 'ok' } | { level: 'warning' | 'error'; message: string };
+
+/** 视频体积基线：>200 MB 失败，>100 MB 警告；位置写到具体媒体与字段。 */
+export function checkVideoSize(size: number, location: string, path: string): VideoSizeVerdict {
+  if (size > VIDEO_MAX_BYTES) {
+    return { level: 'error', message: `${location}: ${path} 体积 ${formatSize(size)} 超过单个视频上限 ${formatSize(VIDEO_MAX_BYTES)}；请离线压缩后再入库` };
+  }
+  if (size > VIDEO_RECOMMENDED_MAX_BYTES) {
+    return { level: 'warning', message: `${location}: ${path} 体积 ${formatSize(size)} 超过建议上限 ${formatSize(VIDEO_RECOMMENDED_MAX_BYTES)}（硬上限 ${formatSize(VIDEO_MAX_BYTES)}）` };
+  }
+  return { level: 'ok' };
+}
 
 export async function validateFiles(configPath: string, publicDir: string) {
   const raw = JSON.parse(await readFile(configPath, 'utf8'));
@@ -13,20 +29,34 @@ export async function validateFiles(configPath: string, publicDir: string) {
     album.media.forEach((media, mi) => {
       const location = `albums[${ai}].media[${mi}]`;
       refs.push({ path: media.src, location: `${location}.src` });
-      if (media.type === 'photo') media.srcSet?.forEach((candidate, index) => refs.push({ path: candidate.src, location: `${location}.srcSet[${index}].src` }));
-      if (media.type === 'video' && media.poster) refs.push({ path: media.poster, location: `${location}.poster` });
-      if (media.type === 'video' && media.captions) refs.push({ path: media.captions, location: `${location}.captions` });
+      if (media.type === 'photo') {
+        media.srcSet?.forEach((candidate, index) => refs.push({ path: candidate.src, location: `${location}.srcSet[${index}].src` }));
+        return;
+      }
+      refs.push({ path: media.poster, location: `${location}.poster` });
+      media.posterSrcSet?.forEach((candidate, index) => refs.push({ path: candidate.src, location: `${location}.posterSrcSet[${index}].src` }));
     });
   });
+  const warnings: string[] = [];
   for (const ref of refs) {
+    let actual: string;
+    let size: number;
     try {
-      const actual = await realpath(resolve(root, ref.path));
+      actual = await realpath(resolve(root, ref.path));
       const rel = relative(root, actual);
-      if (isAbsolute(rel) || rel === '..' || rel.startsWith('../') || !(await stat(actual)).isFile()) throw new Error('不是发布目录内的文件');
+      const info = await stat(actual);
+      if (isAbsolute(rel) || rel === '..' || rel.startsWith('../') || !info.isFile()) throw new Error('不是发布目录内的文件');
+      size = info.size;
     } catch (error) {
       throw new Error(`${ref.location}: 无法读取发布资源 ${ref.path}`, { cause: error });
     }
+    // 视频发布基线：容器与体积在构建期拦截，位置写到具体媒体与字段。
+    if (extname(actual).toLowerCase() !== VIDEO_EXTENSION) continue;
+    const verdict = checkVideoSize(size, ref.location, ref.path);
+    if (verdict.level === 'error') throw new Error(verdict.message);
+    if (verdict.level === 'warning') warnings.push(verdict.message);
   }
+  warnings.forEach(warning => console.warn(`警告 ${warning}`));
   return parsed;
 }
 

@@ -6,7 +6,7 @@
 
 ## 职责
 
-- 用同一条队列承载照片与视频：`openSession(media, id)`、`stepSession(session, delta)`、`currentMedia(session)`。
+- 用同一条队列承载照片与视频：`openSession(media, id)`、`stepSession(session, delta)`、`stepSessionTo(session, index)`、`currentMedia(session)`。`stepSessionTo` 供查看器把库内部翻页结果回写会话，会话始终是索引的唯一事实来源。
 - 区分用户意图（`intent`）与实际状态（`status`），真实暂停、缓冲或失败不改写意图。
 - 管理进度与时长（`progress`、`duration`）；视频自然结束只停留当前项（`handleEnded`），队列移动必须由用户显式触发。
 - 提供失败标记（`markPlaybackError`）供界面展示重试或跳到下一项；不保存上次播放或继续浏览偏好。
@@ -15,14 +15,14 @@
 
 ## 非职责
 
-DOM、媒体元素、字幕渲染、控制栏显隐、手势与全屏；主题与样式；内容校验。查看器只转发命令，不维护第二套业务状态。
+DOM、媒体元素、控制栏与全屏（由查看器库与主题包装承担）；主题与样式；内容校验。查看器只转发命令，不维护第二套业务状态。
 
 ## 公开接口
 
-`index.ts` 导出 `openSession`、`stepSession`、`currentMedia`、`isVideo`、`setIntent`、`setStatus`、`setProgress`、`handleEnded`、`markPlaybackError` 与类型 `Session`、`PlaybackIntent`、`PlaybackStatus`。
+`index.ts` 导出 `openSession`、`stepSession`、`stepSessionTo`、`currentMedia`、`isVideo`、`setIntent`、`setStatus`、`setProgress`、`handleEnded`、`markPlaybackError` 与类型 `Session`、`PlaybackIntent`、`PlaybackStatus`。
 背景音乐导出 `createBackgroundMusic`、`toggleBackgroundMusic`、`setBackgroundMusicVisibility`、`clearBackgroundMusicResume`、`setBackgroundMusicStatus`、`setBackgroundMusicVolume`、`markBackgroundMusicBlocked`、`shouldPlayBackgroundMusic`、`isBackgroundMusicPlaying`、`BACKGROUND_MUSIC_VOLUME`、`BACKGROUND_MUSIC_STORAGE_KEY`、`readBackgroundMusicPreference`、`writeBackgroundMusicPreference` 与类型 `BackgroundMusic`、`BackgroundMusicPreference`。
 
-约定：`openSession` 找不到 id 或队列为空时返回 `null`；`stepSession` 越界或非法 delta 保持原会话，不循环；所有 setter 返回新对象，不修改入参；`progress` 限定在 0–1，非法时长归零。
+约定：`openSession` 找不到 id 或队列为空时返回 `null`；`stepSession` 越界或非法 delta 保持原会话，不循环；`stepSessionTo` 对原地不动、越界与非整数索引返回原会话；所有 setter 返回新对象，不修改入参；`progress` 限定在 0–1，非法时长归零。
 
 ## 允许依赖
 
