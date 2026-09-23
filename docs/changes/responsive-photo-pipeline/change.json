@@ -1,0 +1,42 @@
+{
+  "mode": "full",
+  "summary": "将相册原图转为不公开的仓库源素材，并在本地与 CI 构建期间增量生成多尺寸 WebP；相册详情改用 react-photo-album 的响应式瀑布流，列数、间距与 sizes 1:1 采用其默认档位，照片以白色相纸相框呈现；留影页相册封面改用现有 WebP srcSet；全站聚焦框只在键盘导航时出现，按钮任何状态都不使用边框；媒体目录去掉 photos 中间层，照片与视频共用同一相册目录结构。",
+  "reason": "用户确认保留原图、仅发布按内容哈希生成的响应式 WebP，并要求本地和 GitHub Actions 跳过未变化图片的重复编码；随后确认相册详情按官方示例复刻默认响应式档位、为留影页封面复用现有派生资源而不新增尺寸，并在实看后确认采用白色相纸相框。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "npm run generate:media：生成 99 个 WebP 派生资源并写入内容索引；随后重复运行命中本地清单。",
+    "npm run typecheck：通过。",
+    "npm run build：内容校验（7 个相册 / 33 个媒体）、类型检查与 Vite 构建通过；dist 不含 media-source。",
+    "npm test -- --run src/content/content.test.ts：10 个用例通过。",
+    "npm run test:e2e：完整套件 110 通过 / 14 跳过 / 0 失败。首次整跑暴露两处适配遗漏：库自绘缩略图按钮未继承主题的无描边焦点指示（已补 :global 规则），查看器失败用例仍拦截旧 JPG 地址（已改为派生 WebP）。",
+    "生产预览实测（1440/820/390）：相册详情为 5/4/3 列、间距 20/15/10px，缩略图实测宽 224/—/102px，浏览器在同 DPR 下选择 480w 档；首张 1600w 由全宽 hero 背景使用并被列表复用。",
+    "相框实测（1440，两套主题）：相框 padding 8px、白底 rgb(255,255,255)、圆角 8px、投影非 none；照片画面无描边（0px）且无内阴影；外框 224px、画面 208px，单边留白 8px；列数与间距档位未变。",
+    "聚焦框实测：用 CDP 强制 hover / focus / focus-visible / active 扫描首页、留影页与相册详情共 47 个交互元素，未发现黑色描边；只有键盘 focus-visible 出现主题色外圈（海边 rgb(217,96,68)、草原 rgb(168,86,55)）。真实鼠标点击主题切换与筛选按钮后 outline-style 均为 none、focus-visible 为 false；为覆盖其他浏览器与系统设置，已对 :focus:not(:focus-visible) 统一清除描边。",
+    "按钮边框实测：CDP 强制 rest / hover / focus / focus-visible / active 五种状态扫描首页、留影页与相册详情全部按钮，border-top-style 均为 none 且宽度 0px。修复过程中发现留影页年份胶囊使用 1px 透明占位边框（视觉不可见但违反约束），已改为零边框并用底色表达层级。",
+    "媒体目录重构：33 张原图与 home-memory.json 由 media-source/photos/ 上移到 media-source/；重新生成 99 个派生 WebP 到 public/media/<相册目录>/；索引 src 形如 media/<相册目录>/<文件>.<哈希>.<宽度>.webp；dist 中无 jpg 原图与 media-source。因派生布局变化把生成器配置版本提升为 webp-q80-effort4-v2，并清理记录旧路径的本地清单后重新生成。",
+    "次要按钮静态外观实测：海边与草原主题下，首页「浏览全部影像」链接在 hover / focus / focus-visible / active 四种强制状态下的背景色与文字色与默认状态完全一致。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "pending",
+      "reason": "将新增原图与发布派生资源的维护规则、响应式图片选择和相册详情布局验收。"
+    },
+    "architecture": {
+      "status": "pending",
+      "reason": "将记录 media-source、构建期派生目录、内容索引尺寸/srcSet 与本地/CI 缓存生命周期。"
+    },
+    "modules": {
+      "status": "pending",
+      "reason": "content、themes、scripts 与 workflows 的职责、接口和验证方式都会变化。"
+    },
+    "decisions": {
+      "status": "pending",
+      "reason": "将记录 react-photo-album 与自行实现 CSS 瀑布流、以及图片变体策略的候选和取舍。"
+    },
+    "readme": {
+      "status": "pending",
+      "reason": "本地照片添加、媒体生成、缓存与部署步骤均会改变。"
+    }
+  }
+}

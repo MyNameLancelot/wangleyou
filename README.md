@@ -25,7 +25,8 @@ npm run dev
 | 命令 | 用途 |
 | --- | --- |
 | `npm run dev` | 本地开发 |
-| `npm run generate:photo-index` | 扫描照片相册目录并生成应用使用的内容索引 |
+| `npm run generate:media` | 增量生成发布 WebP、尺寸/srcSet 内容索引与本地媒体缓存 |
+| `npm run generate:photo-index` | `generate:media` 的兼容别名 |
 | `npm run compress:photos` | 离线把照片压成发布规格：长边封顶、统一 JPEG、剥离元数据，不改动源文件 |
 | `npm run validate:content` | 检查配置结构、日期、ID 和实际文件 |
 | `npm run typecheck` | TypeScript 检查 |
@@ -40,11 +41,10 @@ npm run dev
 
 ## 添加照片或相册
 
-1. 相机源素材自行保存在仓库外，准备适合网页显示的 JPEG、PNG 或 WebP 大图。
-2. 新建 `public/media/photos/YYYY-MM-sequenceNN-相册名/`，把发布照片放进目录；照片顺序由构建脚本按文件名生成：`top01.jpg`、`top02.jpg` 按编号排在最前面，其余按文件名自然序。
+1. 将原图加入 `media-source/YYYY-MM-sequenceNN-相册名/`；原图会提交 Git，但不会发布到网页。照片与视频共用同一层目录结构。照片顺序由构建脚本按文件名生成：`top01.jpg`、`top02.jpg` 按编号排在最前面，其余按文件名自然序。
 3. 在目录中编辑 `meta.json`：`album` 段写这一段日子的标题、日期和说明；需要给某几张照片配寄语时，在 `photos_meta.captions` 里按文件名登记（可以只写一部分照片）。照片顺序与 ID 不需要登记。
-4. 编辑 `public/media/photos/home-memory.json`，显式填写首页主回忆照片及播放顺序。
-5. 运行 `npm run check` 和 `npm run build`；命令会自动生成索引并校验目录、元信息和实际资源。
+4. 编辑 `media-source/home-memory.json`，显式填写首页主回忆照片及播放顺序。
+5. 运行 `npm run check` 和 `npm run build`；命令会自动生成 480/960/1600/2560 宽度的 WebP、索引并校验资源。未改变的源图会由 `.cache/media-variants/` 跳过重编码；派生目录 `public/media/<相册目录>/` 与缓存均不提交 Git。
 
 相册元信息示例（`meta.json`）：
 
@@ -110,7 +110,7 @@ SITE_BASE=/another-repo/ npm run preview
 
 用户主页或自定义域名根目录使用 `SITE_BASE=/`。构建与预览应使用相同 base。
 
-媒体前缀独立于页面 base。受版本控制的 `.env.production` 让生产构建使用 `https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/`，因此 `media/photos/a.jpg` 会请求 jsDelivr 中同一仓库 main 分支的 `public/media/photos/a.jpg`。不要在 JSON 或主题代码写完整 CDN URL；需要临时替换版本或镜像时，在构建命令覆盖：
+媒体前缀独立于页面 base。受版本控制的 `.env.production` 让生产构建使用 `https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/`，因此 `media/<相册目录>/a.jpg` 会请求 jsDelivr 中同一仓库 main 分支的 `public/media/<相册目录>/a.jpg`。不要在 JSON 或主题代码写完整 CDN URL；需要临时替换版本或镜像时，在构建命令覆盖：
 
 ```bash
 VITE_MEDIA_BASE_URL=https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/ npm run build
