@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { Album, Media, SiteContent, Video } from '../../content';
+import { MasonryPhotoAlbum } from 'react-photo-album';
+import 'react-photo-album/masonry.css';
+import type { Album, Media, Photo, SiteContent, Video } from '../../content';
 import { mediaUrl } from '../../content';
 import { PhotoImage } from './PhotoImage';
 import { reducedMotion } from './browser';
@@ -8,11 +10,15 @@ import styles from './ThemePages.module.css';
 export type OpenMedia = (album: Album, id: string) => void;
 type Filter = 'all' | 'photo' | 'video';
 type TileVariant = 'wide' | 'tall' | 'masonry';
+type ImageSource = Pick<Photo, 'src' | 'srcSet'>;
 
 const dateText = (date?: string) => (date ? date.replaceAll('-', '.') : '待续');
 const isVideo = (media: Media): media is Video => media.type === 'video';
 const durationText = (seconds?: number) => (seconds && seconds > 0 ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : '');
 const thumbnailOf = (media: Media) => (isVideo(media) ? media.poster : undefined) || (media.type === 'photo' ? media.src : undefined);
+const imageSourceOf = (media: Media): ImageSource | undefined => media.type === 'photo' ? media : media.poster ? { src: media.poster } : undefined;
+const responsiveSrcSet = (source: ImageSource) => source.srcSet?.map(candidate => `${mediaUrl(candidate.src)} ${candidate.width}w`).join(', ');
+const browseCoverSizes = '(max-width: 600px) calc((100vw - 72px) / 2), (max-width: 900px) calc((100vw - 80px) / 2), 300px';
 /** 照片没有单独文案时，用相册名与序号兜底，保证每个缩略图都有可读的可访问名称。 */
 const mediaLabel = (album: Album, media: Media) => {
   const index = album.media.findIndex(item => item.id === media.id) + 1;
@@ -37,7 +43,14 @@ const albumOrdinal = (album: Album) => Number(`${album.id.slice(5, 7)}${album.id
 const albumYear = (album: Album) => album.id.slice(0, 4) || album.date?.slice(0, 4) || '未标注日期';
 
 /** 留影页直接采用构建期确定的媒体顺序：topNN 已在前，其余按自然序排列。 */
-const browseAlbumStack = (album: Album): string[] => [...new Set(album.media.map(thumbnailOf).filter((source): source is string => Boolean(source)))].slice(0, 3);
+const browseAlbumStack = (album: Album): ImageSource[] => {
+  const seen = new Set<string>();
+  return album.media.map(imageSourceOf).filter((source): source is ImageSource => Boolean(source)).filter(source => {
+    if (seen.has(source.src)) return false;
+    seen.add(source.src);
+    return true;
+  }).slice(0, 3);
+};
 
 /** 相册卡片沿用影像卡样式，说明条写相册名与相册说明。 */
 function AlbumTile({ album }: { album: Album }) {
@@ -48,8 +61,8 @@ function AlbumTile({ album }: { album: Album }) {
     <span className={`${styles.mediaThumb} ${styles.browseAlbumThumb}`} data-browse-album-stack data-stack={stack.length}>
       {front
         ? <>
-          {behind.map((source, index) => <span key={source} data-browse-cover={index === 0 ? 'middle' : 'back'} className={`${styles.browseAlbumLayer} ${index === 0 ? styles.browseAlbumLayerMiddle : styles.browseAlbumLayerBack}`}><PhotoImage src={mediaUrl(source)} alt="" /></span>)}
-          <span data-browse-cover="front" className={`${styles.browseAlbumLayer} ${styles.browseAlbumLayerFront}`}><PhotoImage src={mediaUrl(front)} alt={album.title} /><span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span></span>
+          {behind.map((source, index) => <span key={source.src} data-browse-cover={index === 0 ? 'middle' : 'back'} className={`${styles.browseAlbumLayer} ${index === 0 ? styles.browseAlbumLayerMiddle : styles.browseAlbumLayerBack}`}><PhotoImage src={mediaUrl(source.src)} srcSet={responsiveSrcSet(source)} sizes={browseCoverSizes} alt="" /></span>)}
+          <span data-browse-cover="front" className={`${styles.browseAlbumLayer} ${styles.browseAlbumLayerFront}`}><PhotoImage src={mediaUrl(front.src)} srcSet={responsiveSrcSet(front)} sizes={browseCoverSizes} alt={album.title} /><span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span></span>
         </>
         : <><span className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></span><span className={styles.mediaBar}><span className={styles.mediaAlbum}>{album.title}</span><span className={styles.mediaText}>{album.description || '这一段日子还在整理'}</span></span></>}
     </span>
@@ -138,8 +151,10 @@ export function AlbumPage({ album, onOpen }: { album: Album; onOpen: OpenMedia }
   const first = album.media[0];
   const heroSource = first ? thumbnailOf(first) : undefined;
   const opening = album.opening || album.description;
+  const photos = album.media.filter((media): media is Photo => media.type === 'photo' && Boolean(media.width && media.height)).map(media => ({ id: media.id, src: mediaUrl(media.src), width: media.width!, height: media.height!, srcSet: media.srcSet?.map(item => ({ ...item, src: mediaUrl(item.src) })), alt: media.alt || media.description || '相册影像', label: mediaLabel(album, media) }));
   return <section className={styles.detail} aria-labelledby="album-title">
     <header className={styles.detailHero} style={heroSource ? { backgroundImage: 'linear-gradient(110deg, rgb(15 59 67 / 76%), rgb(16 81 91 / 24%)), url("' + mediaUrl(heroSource) + '")', backgroundPosition: 'center', backgroundSize: 'cover' } : undefined}><a className={styles.detailBack} href="#/browse">← 返回留影</a><div className={styles.detailHeroCopy}><h1 id="album-title">{album.title}</h1>{album.description && <p>{album.description}</p>}{opening && <blockquote>{opening}</blockquote>}</div></header>
-    {album.media.length ? <section className={styles.detailGallery} aria-label="相册影像"><div className={styles.masonryGrid} data-testid="album-media-grid">{album.media.map((media, i) => <MediaTile key={media.id} album={album} media={media} onOpen={onOpen} variant="masonry" eager={i < 3} />)}</div></section> : <div className={styles.empty}><span aria-hidden="true">☀</span><h2>这本相册正在整理</h2><p>新的影像会在这里出现。</p><a className={styles.primary} href="#/browse">返回留影</a></div>}
+    {/* 列数、间距与 sizes 全部沿用 react-photo-album 默认档位：容器 ≥1200px 为 5 列/20px，600–1199px 为 4 列/15px，300–599px 为 3 列/10px，<300px 为 2 列/5px。padding 提供相框留白，并计入库的列宽计算。 */}
+    {album.media.length ? <section className={styles.detailGallery} aria-label="相册影像" data-testid="album-media-grid">{photos.length ? <MasonryPhotoAlbum photos={photos} padding={8} onClick={({ photo }) => onOpen(album, photo.id)} componentsProps={{ container: { className: styles.masonryGrid } }} /> : <div className={styles.masonryGrid}>{album.media.map((media, i) => <MediaTile key={media.id} album={album} media={media} onOpen={onOpen} variant="masonry" eager={i < 3} />)}</div>}</section> : <div className={styles.empty}><span aria-hidden="true">☀</span><h2>这本相册正在整理</h2><p>新的影像会在这里出现。</p><a className={styles.primary} href="#/browse">返回留影</a></div>}
   </section>;
 }

@@ -3,10 +3,10 @@ import { assertAssetPath, validateContent, validateHomeMemory } from './validate
 
 describe('content validation', () => {
   it('accepts photo-only generated content', () => {
-    expect(validateContent({ site: { title: '王乐悠', subtitle: '' }, albums: [{ id: '2024-05-sequence00', title: '破壳', media: [{ id: 'top', type: 'photo', src: 'media/photos/a/top01.jpg' }] }] }).albums).toHaveLength(1)
+    expect(validateContent({ site: { title: '王乐悠', subtitle: '' }, albums: [{ id: '2024-05-sequence00', title: '破壳', media: [{ id: 'top', type: 'photo', src: 'media/a/top01.jpg' }] }] }).albums).toHaveLength(1)
   })
   it('preserves explicit home memory order', () => {
-    expect(validateHomeMemory([{ id: 'second', type: 'photo', src: 'media/photos/a/2.jpg' }, { id: 'first', type: 'photo', src: 'media/photos/a/1.jpg' }]).map(photo => photo.id)).toEqual(['second', 'first'])
+    expect(validateHomeMemory([{ id: 'second', type: 'photo', src: 'media/a/2.jpg' }, { id: 'first', type: 'photo', src: 'media/a/1.jpg' }]).map(photo => photo.id)).toEqual(['second', 'first'])
   })
   it('accepts a short album opening and rejects blank or overlong values', () => {
     const base = { site: { title: '王乐悠', subtitle: '' }, albums: [{ id: '2024-05-sequence00', title: '破壳', media: [] }] }
@@ -15,7 +15,7 @@ describe('content validation', () => {
     expect(() => validateContent({ ...base, albums: [{ ...base.albums[0], opening: '一二三四五六七八九十一二三四五六七八九十一' }] })).toThrow('opening')
   })
   it('accepts optional photo captions up to 60 characters and rejects blank or overlong ones', () => {
-    const photo = { id: 'top', type: 'photo', src: 'media/photos/a/top01.jpg' }
+    const photo = { id: 'top', type: 'photo', src: 'media/a/top01.jpg' }
     const content = (media: unknown) => ({ site: { title: '王乐悠', subtitle: '' }, albums: [{ id: '2024-05-sequence00', title: '破壳', media: [media] }] })
     expect(validateContent(content({ ...photo, caption: '第一次见面。' })).albums[0].media[0].caption).toBe('第一次见面。')
     expect(validateContent(content(photo)).albums[0].media[0].caption).toBeUndefined()

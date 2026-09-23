@@ -9,6 +9,8 @@ export interface Photo {
   alt?: string
   width?: number
   height?: number
+  /** 发布用的同宽高比响应式 WebP 候选图；原图不在浏览器侧公开。 */
+  srcSet?: Array<{ src: string; width: number; height: number }>
 }
 
 export interface Video {

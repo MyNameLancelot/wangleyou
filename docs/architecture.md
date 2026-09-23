@@ -21,7 +21,7 @@
 
 ## 内容与媒体
 
-- 相册照片位于 `public/media/photos/YYYY-MM-sequenceNN-相册名/`；每个目录的 `meta.json` 用 `album` 段描述相册本身（标题、日期、说明），用可选的 `photos_meta.captions` 按文件名登记单张照片寄语，照片顺序与 `id` 仍由构建期脚本按文件名生成；`meta.json` 和 `home-memory.json` 在构建期生成 `src/content/generated-photo-index.json`，寄语落到 `Media.caption`。
+- 相册原始素材位于 `media-source/YYYY-MM-sequenceNN-相册名/`（照片与视频共用同一层结构），构建期生成不提交的 `public/media/YYYY-MM-sequenceNN-相册名/` 多尺寸 WebP。生成器按原图内容哈希与编码配置（含派生输出布局版本）缓存，写入实际尺寸、最大 WebP `src` 与 `srcSet` 到 `src/content/generated-photo-index.json`；原图不会进入 `dist`。
 - 主题私有的首屏图、第二屏背景和音乐位于 `public/media/themes/<主题>/`，只由所属主题使用。
 - 内容配置只保存 `media/...` 相对路径。`content.mediaUrl()` 是图片、视频、海报、字幕和音乐的唯一 URL 入口：构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 Vite `BASE_URL`。它拒绝协议、绝对路径、反斜杠、查询、片段和目录穿越，并对每段路径编码。
 - 页面 base 保持 `/wangleyou/`，路由继续使用 Hash；媒体 CDN 不改变二者。

@@ -60,7 +60,7 @@
   width: var(--target-min);
   height: var(--target-min);
   padding: 0;
-  border: 1px solid rgb(219 249 251 / 38%);
+  border: 0;
   border-radius: 50%;
   background: rgb(6 34 48 / 62%);
   color: inherit;
@@ -156,7 +156,7 @@
   transform: translateY(-50%);
   width: 48px;
   height: 48px;
-  border: 1px solid rgb(219 249 251 / 36%);
+  border: 0;
   border-radius: 50%;
   background-color: rgb(6 34 48 / 64%);
   backdrop-filter: blur(12px);
@@ -198,7 +198,7 @@
   background-color: rgb(6 30 42 / 84%);
 }
 .statePanel span { font-size: 13px; color: #c1d9dd; }
-.statePanel button { padding: 0 16px; border: 1px solid rgb(215 248 250 / 40%); border-radius: var(--radius-pill); }
+.statePanel button { padding: 0 16px; border: 0; border-radius: var(--radius-pill); background-color: rgb(215 248 250 / 14%); }
 .notice { position: absolute; z-index: 4; right: 18px; bottom: 64px; margin: 0; padding: 8px 12px; border-radius: var(--radius-sm); background-color: #16394a; font-size: 12px; }
 
 /* 模态容器与舞台只是焦点锚点，不是控件：不给整屏容器画焦点环，控件仍保留可见焦点。 */

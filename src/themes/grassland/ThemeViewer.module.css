@@ -52,7 +52,7 @@
   width: var(--target-min);
   height: var(--target-min);
   padding: 0;
-  border: 1px solid rgb(226 234 209 / 32%);
+  border: 0;
   border-radius: var(--radius-sm);
   background-color: rgb(38 46 28 / 66%);
   color: inherit;
@@ -118,7 +118,7 @@
   color: inherit;
   cursor: pointer;
 }
-.timelineTools button { border: 1px solid rgb(205 222 176 / 26%); border-radius: var(--radius-sm); background-color: rgb(32 41 22 / 70%); }
+.timelineTools button { border: 0; border-radius: var(--radius-sm); background-color: rgb(32 41 22 / 70%); }
 .timelineTools svg { width: 18px; height: 18px; }
 .clock { flex: 1; font: var(--font-size-small) var(--font-caption); font-variant-numeric: tabular-nums; color: #c8d5b8; }
 
@@ -129,7 +129,7 @@
   transform: translateY(-50%);
   width: 46px;
   height: 46px;
-  border: 1px solid rgb(226 234 209 / 28%);
+  border: 0;
   border-radius: var(--radius-sm);
   background-color: rgb(34 42 25 / 66%);
 }
@@ -151,7 +151,7 @@
 .frameVideo .caption { margin: 0 0 6px; }
 
 .footerLine { position: relative; display: flex; align-items: center; justify-content: flex-end; min-height: 40px; flex-shrink: 0; }
-.fullscreen { border: 1px solid rgb(226 234 209 / 26%); border-radius: var(--radius-sm); background-color: rgb(32 41 22 / 62%); }
+.fullscreen { border: 0; border-radius: var(--radius-sm); background-color: rgb(32 41 22 / 62%); }
 .fullscreen svg { width: 18px; height: 18px; }
 .statusLine { position: absolute; right: 56px; margin: 0; font: var(--font-size-small) var(--font-body); color: #d6e0c6; }
 
@@ -170,7 +170,7 @@
 }
 .noticeTitle { margin: 0; font-size: 15px; }
 .noticeText { margin: 0; font-size: 13px; color: #c6d2b6; }
-.noticeCard button { padding: 0 16px; border: 1px solid rgb(214 229 186 / 38%); border-radius: var(--radius-sm); }
+.noticeCard button { padding: 0 16px; border: 0; border-radius: var(--radius-sm); background-color: rgb(214 229 186 / 14%); }
 
 /* 模态容器与画布只是焦点锚点，不是控件：不给整屏容器画焦点环，控件仍保留可见焦点。 */
 .viewer:focus,

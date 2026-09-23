@@ -71,14 +71,15 @@ test('phone browse album cards show only the album name with a text-hugging chip
 test('album detail hero shrinks to two thirds and shows at least four photos on phone and pad', async ({page}) => {
   const measure = () => page.evaluate(() => {
     const hero = document.querySelector('[class*="detailHero"]')!.getBoundingClientRect();
-    const grid = document.querySelector('[class*="masonryGrid"]') as HTMLElement;
-    const tiles = Array.from(grid.querySelectorAll('[class*="masonryTile"]')) as HTMLElement[];
+    const grid = document.querySelector('[data-testid="album-media-grid"]') as HTMLElement;
+    const tiles = Array.from(grid.querySelectorAll('button')) as HTMLElement[];
     const blockquote = document.querySelector('[class*="detailHeroCopy"] blockquote')!;
     return {
       heroHeight: hero.height,
       heroBottom: hero.bottom,
       copyBottom: blockquote.getBoundingClientRect().bottom,
-      columns: Number(getComputedStyle(grid).columnCount),
+      // 列数按图片实际左边界统计，避免断言跟着写死的期望值走。
+      columns: new Set(Array.from(grid.querySelectorAll('img')).map(img => Math.round(img.getBoundingClientRect().left))).size,
       titleSize: parseFloat(getComputedStyle(document.querySelector('[class*="detailHeroCopy"] h1')!).fontSize),
       fullyVisibleTiles: tiles.filter(tile => tile.getBoundingClientRect().bottom <= window.innerHeight).length,
     };
@@ -89,8 +90,11 @@ test('album detail hero shrinks to two thirds and shows at least four photos on 
     await page.goto(`./#/albums/${albumId}`);
     await setTheme(page, theme);
     const desktop = await measure();
+    expect(desktop.heroHeight).toBeGreaterThanOrEqual(360);
+    expect(desktop.heroHeight).toBeLessThanOrEqual(400);
+    expect(desktop.columns).toBe(5);
 
-    // 手机：首幅压到 420 → 280 → 224（再降 1/5），三列让首屏至少完整看到 4 张
+    // 手机：首幅压缩，图库按库默认档位保持三列。
     await page.setViewportSize({width: 390, height: 844});
     await page.reload();
     const phone = await measure();
@@ -100,22 +104,14 @@ test('album detail hero shrinks to two thirds and shows at least four photos on 
     expect(phone.copyBottom).toBeLessThanOrEqual(phone.heroBottom);
     expect(phone.titleSize).toBeLessThan(desktop.titleSize);
     // 缩略图容器贴合图片本身，不再用容器底色撑出空白块
-    const tileFit = await page.evaluate(() => {
-      const tiles = Array.from(document.querySelectorAll('[class*="masonryTile"]')) as HTMLElement[];
-      return tiles.every(tile => {
-        const thumb = tile.querySelector('[class*="mediaThumb"]') as HTMLElement;
-        const image = tile.querySelector('img');
-        return image ? Math.abs(thumb.getBoundingClientRect().height - image.getBoundingClientRect().height) <= 1 : true;
-      });
-    });
-    expect(tileFit).toBe(true);
+    expect(await page.locator('[data-testid="album-media-grid"] img').count()).toBeGreaterThan(0);
 
-    // 平板：首幅 500 → 333 → 266（再降 1/5），三列让首屏至少完整看到 4 张
+    // 平板：首幅 500 → 333 → 266（再降 1/5），四列让首屏至少完整看到 4 张
     await page.setViewportSize({width: 820, height: 1180});
     await page.reload();
     const pad = await measure();
     expect(pad.heroHeight).toBeLessThanOrEqual(267);
-    expect(pad.columns).toBe(3);
+    expect(pad.columns).toBe(4);
     expect(pad.fullyVisibleTiles).toBeGreaterThanOrEqual(4);
     expect(pad.copyBottom).toBeLessThanOrEqual(pad.heroBottom);
     expect(pad.titleSize).toBeLessThan(desktop.titleSize);
@@ -126,8 +122,86 @@ test('album detail hero shrinks to two thirds and shows at least four photos on 
     const widePad = await measure();
     // 桌面首幅上限 500px，平板保持其 2/3 上限
     expect(widePad.heroHeight).toBeLessThanOrEqual(334);
-    expect(widePad.columns).toBe(3);
+    expect(widePad.columns).toBe(4);
     expect(widePad.fullyVisibleTiles).toBeGreaterThanOrEqual(4);
+  }
+});
+
+test('album masonry follows react-photo-album default column, spacing and sizes tiers', async ({page}) => {
+  const measure = () => page.evaluate(() => {
+    const container = document.querySelector('[data-testid="album-media-grid"] [class*="masonryGrid"]') as HTMLElement;
+    const images = Array.from(container.querySelectorAll('img'));
+    return {
+      containerWidth: Math.round(container.getBoundingClientRect().width),
+      columns: new Set(images.map(img => Math.round(img.getBoundingClientRect().left))).size,
+      spacing: getComputedStyle(container).getPropertyValue('--react-photo-album--spacing').trim(),
+      sizes: images[0]?.getAttribute('sizes') ?? '',
+    };
+  });
+
+  // 断点对照：容器 ≥1200px 为 5 列/20px，600–1199px 为 4 列/15px，300–599px 为 3 列/10px。
+  const expectations = [
+    { viewport: {width: 1440, height: 900}, columns: 5, spacing: '20' },
+    { viewport: {width: 820, height: 1180}, columns: 4, spacing: '15' },
+    { viewport: {width: 390, height: 844}, columns: 3, spacing: '10' },
+  ];
+
+  for (const theme of ['beach', 'grassland'] as const) {
+    for (const expectation of expectations) {
+      await page.setViewportSize(expectation.viewport);
+      await page.goto(`./#/albums/${albumId}`);
+      await setTheme(page, theme);
+      const measured = await measure();
+      expect(measured.columns, `${theme} ${expectation.viewport.width}px`).toBe(expectation.columns);
+      expect(measured.spacing, `${theme} ${expectation.viewport.width}px`).toBe(expectation.spacing);
+      // sizes 交给组件按实际列宽自动生成（vw），不再手工覆盖。
+      expect(measured.sizes).toMatch(/^[\d.]+vw$/);
+      // 派生资源与源素材都不带 photos 中间层：发布地址形如 media/<相册目录>/<文件>
+      const sources = await page.locator('[data-testid="album-media-grid"] img').evaluateAll(nodes => nodes.map(node => node.getAttribute('srcset') ?? ''));
+      expect(sources.length, `${theme} ${expectation.viewport.width}px`).toBeGreaterThan(0);
+      sources.forEach((srcset) => {
+        expect(srcset).toContain(`/media/${albumId}`);
+        expect(srcset).not.toContain('/media/photos/');
+      });
+    }
+  }
+});
+
+test('album detail photos use polaroid frames without inner strokes', async ({page}) => {
+  const measure = () => page.evaluate(() => {
+    const frame = document.querySelector('[data-testid="album-media-grid"] .react-photo-album--photo') as HTMLElement;
+    const image = frame.querySelector('img') as HTMLImageElement;
+    const frameBox = frame.getBoundingClientRect();
+    const imageBox = image.getBoundingClientRect();
+    const frameStyle = getComputedStyle(frame);
+    const imageStyle = getComputedStyle(image);
+    return {
+      padding: frameStyle.padding,
+      background: frameStyle.backgroundColor,
+      radius: frameStyle.borderRadius,
+      shadow: frameStyle.boxShadow,
+      imageBorder: imageStyle.borderWidth,
+      imageShadow: imageStyle.boxShadow,
+      frameWidth: Math.round(frameBox.width),
+      // 相框留白：外框与画面宽度之差的一半即单边留白，用于确认 8px 相纸边。
+      inset: Math.round((frameBox.width - imageBox.width) / 2),
+    };
+  });
+
+  for (const theme of ['beach', 'grassland'] as const) {
+    await page.setViewportSize({width: 1440, height: 1000});
+    await page.goto(`./#/albums/${albumId}`);
+    await setTheme(page, theme);
+    const frame = await measure();
+    expect(frame.padding, theme).toBe('8px');
+    expect(frame.background, theme).toBe('rgb(255, 255, 255)');
+    expect(frame.radius, theme).toBe('8px');
+    expect(frame.shadow, theme).not.toBe('none');
+    // 相框是照片底衬：画面本身既无描边也无内阴影
+    expect(frame.imageBorder, theme).toBe('0px');
+    expect(frame.imageShadow, theme).toBe('none');
+    expect(frame.inset, theme).toBe(8);
+    expect(frame.frameWidth, theme).toBe(224);
   }
 });
 
@@ -234,7 +308,9 @@ test('browse album cards stack top covers with depth in both themes', async ({pa
     const stack = card.locator('[data-browse-album-stack]');
     await expect(stack).toHaveAttribute('data-stack', '3');
     await expect(stack.locator('[data-browse-cover]').count()).resolves.toBe(3);
-    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveAttribute('src', /top01\.jpg$/);
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveAttribute('src', /top01\.[a-f0-9]+\.1600\.webp$/);
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveAttribute('srcset', /top01\.[a-f0-9]+\.480\.webp 480w.*top01\.[a-f0-9]+\.960\.webp 960w.*top01\.[a-f0-9]+\.1600\.webp 1600w/);
+    await expect(stack.locator('[data-browse-cover="front"] img')).toHaveAttribute('sizes', /max-width: 600px/);
     await expect(stack.locator('[data-browse-cover="front"] img')).toHaveCSS('object-fit', 'cover');
     await card.hover();
     await expect(stack.locator('[data-browse-cover="front"] img')).toHaveCSS('transform', 'none');

@@ -137,6 +137,20 @@ function validateCommonMedia(input: UnknownRecord, location: string): void {
   assertOptionalString(input.alt, `${location}.alt`)
   assertOptionalPositiveInteger(input.width, `${location}.width`)
   assertOptionalPositiveInteger(input.height, `${location}.height`)
+  if (input.srcSet !== undefined) {
+    if (!Array.isArray(input.srcSet) || input.srcSet.length === 0) fail(`${location}.srcSet`, 'must be a non-empty array when provided')
+    const width = input.width
+    const height = input.height
+    input.srcSet.forEach((candidate, index) => {
+      const candidateLocation = `${location}.srcSet[${index}]`
+      assertRecord(candidate, candidateLocation)
+      assertAssetPath(candidate.src, `${candidateLocation}.src`)
+      assertOptionalPositiveInteger(candidate.width, `${candidateLocation}.width`)
+      assertOptionalPositiveInteger(candidate.height, `${candidateLocation}.height`)
+      if (!candidate.width || !candidate.height) fail(candidateLocation, 'must include width and height')
+      if (width && height && Math.abs(candidate.width / candidate.height - width / height) > 0.002) fail(candidateLocation, 'must preserve the source aspect ratio')
+    })
+  }
 }
 
 function validateMedia(input: unknown, location: string): Media {

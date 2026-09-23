@@ -7,5 +7,6 @@
 已采纳：
 
 - [0001：纯静态相册的工程基础](0001-frontend-foundation.md)
+- [0005：构建期派生 WebP 与相册详情瀑布流](0005-responsive-media-pipeline.md)
 
 后续涉及音视频格式及播放状态机的决策另行记录。

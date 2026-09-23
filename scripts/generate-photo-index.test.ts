@@ -13,7 +13,7 @@ async function fixture(albumMeta: unknown = { album: { description: '一段演�
   await mkdir(album, { recursive: true })
   for (const file of ['10.jpg', 'top02.jpg', 'top01.jpg', '2.jpg']) await writeFile(join(album, file), '')
   await writeFile(join(album, 'meta.json'), JSON.stringify(albumMeta))
-  await writeFile(join(photos, 'home-memory.json'), JSON.stringify([{ id: 'top02', type: 'photo', src: 'media/photos/2024-05-sequence00-破壳/top02.jpg' }]))
+  await writeFile(join(photos, 'home-memory.json'), JSON.stringify([{ id: 'top02', type: 'photo', src: 'media/2024-05-sequence00-破壳/top02.jpg' }]))
   return { photos, album, output: join(root, 'generated.json') }
 }
 
@@ -22,10 +22,10 @@ it('orders photos by topNN then natural file order and derives ids from file nam
   const generated = await generatePhotoIndex(photos, output)
   expect(generated.content.albums[0].media.map(photo => photo.id)).toEqual(['top01', 'top02', '2', '10'])
   expect(generated.content.albums[0].media.map(photo => photo.src)).toEqual([
-    'media/photos/2024-05-sequence00-破壳/top01.jpg',
-    'media/photos/2024-05-sequence00-破壳/top02.jpg',
-    'media/photos/2024-05-sequence00-破壳/2.jpg',
-    'media/photos/2024-05-sequence00-破壳/10.jpg',
+    'media/2024-05-sequence00-破壳/top01.jpg',
+    'media/2024-05-sequence00-破壳/top02.jpg',
+    'media/2024-05-sequence00-破壳/2.jpg',
+    'media/2024-05-sequence00-破壳/10.jpg',
   ])
   expect(JSON.parse(await readFile(output, 'utf8')).homeMemory[0].id).toBe('top02')
 })
