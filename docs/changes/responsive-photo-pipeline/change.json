@@ -19,24 +19,41 @@
   ],
   "impacts": {
     "requirements": {
-      "status": "pending",
-      "reason": "将新增原图与发布派生资源的维护规则、响应式图片选择和相册详情布局验收。"
+      "status": "updated",
+      "reason": "更新主回忆来源、源素材与派生发布目录层级（去掉 photos 中间层）、相册详情瀑布流档位与相纸相框、按钮无边框、仅键盘可见的聚焦环以及次要按钮静态外观等行为基线。",
+      "paths": [
+        "docs/requirements.md"
+      ]
     },
     "architecture": {
-      "status": "pending",
-      "reason": "将记录 media-source、构建期派生目录、内容索引尺寸/srcSet 与本地/CI 缓存生命周期。"
+      "status": "updated",
+      "reason": "改写媒体分层：源素材与派生发布资源同层对应，生成器缓存键包含派生输出布局版本，原图不进入 dist。",
+      "paths": [
+        "docs/architecture.md"
+      ]
     },
     "modules": {
-      "status": "pending",
-      "reason": "content、themes、scripts 与 workflows 的职责、接口和验证方式都会变化。"
+      "status": "updated",
+      "reason": "content 契约改为发布 WebP 尺寸与 srcSet（源素材目录不含 photos 层）；themes 契约改为库默认档位瀑布流、相纸相框与无边框按钮等交互样式约束。",
+      "paths": [
+        "src/content/module.md",
+        "src/themes/module.md"
+      ]
     },
     "decisions": {
-      "status": "pending",
-      "reason": "将记录 react-photo-album 与自行实现 CSS 瀑布流、以及图片变体策略的候选和取舍。"
+      "status": "updated",
+      "reason": "新增 ADR 0005，记录构建期派生 WebP、media-source 目录结构、采用 react-photo-album 默认档位与相框实现的候选方案、取舍与影响模块，并在决策索引登记。",
+      "paths": [
+        "docs/decisions/0005-responsive-media-pipeline.md",
+        "docs/decisions/README.md"
+      ]
     },
     "readme": {
-      "status": "pending",
-      "reason": "本地照片添加、媒体生成、缓存与部署步骤均会改变。"
+      "status": "updated",
+      "reason": "更新新增照片目录、主回忆配置路径、派生目录与缓存说明，以及生产媒体前缀随 Pages 产物的解释。",
+      "paths": [
+        "README.md"
+      ]
     }
   }
 }
