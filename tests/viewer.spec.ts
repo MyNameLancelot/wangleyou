@@ -15,13 +15,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('image failure can be retried without leaving the viewer',async({page})=>{
-  await page.route('**/media/photos/**/top01.jpg',route=>route.abort());
+  // 查看器加载每张照片的最大 WebP 档位；媒体已从原图 JPG 改为内容哈希命名的派生 WebP。
+  await page.route('**/media/**/top01.*.1600.webp',route=>route.abort());
   await enterAlbum(page); await page.getByRole('button',{name:firstPhoto}).click();
   await expect(page.getByText('这张照片暂时无法加载')).toBeVisible();
   // 状态面板文字属于影像展示：点击它不应关闭查看器，否则用户重试时会误关
   await page.getByText('这张照片暂时无法加载').click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.unroute('**/media/photos/**/top01.jpg');
+  await page.unroute('**/media/**/top01.*.1600.webp');
   await page.getByRole('button',{name:'重新加载'}).click();
   await expect(page.getByRole('dialog').getByRole('img')).toBeVisible();
   await expect(page.getByText('这张照片暂时无法加载')).toHaveCount(0);
@@ -30,7 +31,7 @@ test('image failure can be retried without leaving the viewer',async({page})=>{
 });
 
 test('rapid switching isolates slow image errors, close/reopen resets session',async({page})=>{
-  await page.route('**/media/photos/**/002.jpg',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.abort();});
+  await page.route('**/media/**/002.*.1600.webp',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.abort();});
   await openFirst(page);
   await page.keyboard.press('ArrowRight');
   const dialog=page.getByRole('dialog'); await viewerAt(page, 2);

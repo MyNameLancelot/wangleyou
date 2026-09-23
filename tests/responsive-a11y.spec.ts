@@ -84,14 +84,16 @@ test('thumbnail focus has no outline in either theme while keyboard opening rema
     const thumbnail = page.getByRole('button', {name: firstPhoto});
     await thumbnail.focus();
     const focusStyle = await thumbnail.evaluate(element => {
-      const thumb = element.querySelector<HTMLElement>('[class*="mediaThumb"]')!;
+      // react-photo-album 自绘缩略图：按钮内是 .react-photo-album--image，不再是主题的 mediaThumb 包裹层。
+      const image = element.querySelector<HTMLImageElement>('img')!;
       const button = getComputedStyle(element);
-      const image = getComputedStyle(thumb);
+      const imageStyle = getComputedStyle(image);
       return {
         focused: element.matches(':focus-visible'),
         outlineStyle: button.outlineStyle,
         outlineColor: button.outlineColor,
-        innerShadow: image.boxShadow,
+        innerShadow: imageStyle.boxShadow,
+        borderWidth: imageStyle.borderWidth,
         filter: button.filter,
         transform: button.transform,
       };
@@ -100,12 +102,100 @@ test('thumbnail focus has no outline in either theme while keyboard opening rema
     expect(focusStyle.outlineStyle).toBe('none');
     expect(focusStyle.outlineColor).not.toMatch(/217, 96, 68|168, 86, 55/);
     expect(focusStyle.innerShadow).toBe('none');
+    expect(focusStyle.borderWidth).toBe('0px');
     // 去掉描边后必须有替代焦点指示：聚焦时提亮并上浮
     expect(focusStyle.filter).toContain('brightness');
     expect(focusStyle.transform).not.toBe('none');
     await page.keyboard.press('Enter');
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');
+  }
+});
+
+test('pointer clicks leave no focus frame while keyboard focus keeps a visible ring', async ({page}) => {
+  // 鼠标点击只改变焦点，点击后拿到焦点的元素不得留下任何描边（含浏览器默认聚焦框）
+  const clickTargets = [
+    { hash: '#/browse', selector: 'button[aria-pressed]' },
+    { hash: `#/albums/${albumId}`, selector: 'button[aria-label^="切换主题"]' },
+  ] as const;
+
+  for (const target of clickTargets) {
+    await page.goto(`./${target.hash}`);
+    const control = page.locator(target.selector).first();
+    await expect(control).toBeVisible();
+    await control.click();
+    const afterClick = await page.evaluate(() => {
+      const node = document.activeElement as HTMLElement | null;
+      if (!node || node === document.body) return { tag: 'body', focusVisible: false, outlineStyle: 'none' };
+      const style = getComputedStyle(node);
+      return { tag: node.tagName.toLowerCase(), focusVisible: node.matches(':focus-visible'), outlineStyle: style.outlineStyle };
+    });
+    expect(afterClick.focusVisible, `${target.hash} 鼠标点击不应触发 focus-visible（焦点在 ${afterClick.tag}）`).toBe(false);
+    expect(afterClick.outlineStyle, `${target.hash} 点击后不应出现描边（焦点在 ${afterClick.tag}）`).toBe('none');
+  }
+
+  // 键盘导航仍必须给出可见焦点环，避免“看不出焦点在哪”
+  await page.goto('./#/browse');
+  await page.keyboard.press('Tab');
+  const keyboard = await page.evaluate(() => {
+    const node = document.activeElement as HTMLElement;
+    const style = getComputedStyle(node);
+    return { focusVisible: node.matches(':focus-visible'), outlineStyle: style.outlineStyle, outlineWidth: style.outlineWidth };
+  });
+  expect(keyboard.focusVisible).toBe(true);
+  expect(keyboard.outlineStyle).not.toBe('none');
+  expect(parseFloat(keyboard.outlineWidth)).toBeGreaterThan(0);
+});
+
+test('buttons never render a border in any state', async ({page}) => {
+  test.setTimeout(120000);
+  const buttonSelector = 'button, [role="button"]';
+  const states: string[][] = [[], ['hover'], ['focus'], ['focus-visible'], ['active']];
+
+  for (const hash of ['#/', '#/browse', `#/albums/${albumId}`]) {
+    await page.goto(`./${hash}`);
+    await expect(page.locator(buttonSelector).first()).toBeVisible();
+    const client = await page.context().newCDPSession(page);
+    await client.send('DOM.enable');
+    await client.send('CSS.enable');
+    const { root } = await client.send('DOM.getDocument', { depth: -1 });
+    const { nodeIds } = await client.send('DOM.querySelectorAll', { nodeId: root.nodeId, selector: buttonSelector });
+    expect(nodeIds.length, `${hash} 应至少有一个按钮`).toBeGreaterThan(0);
+
+    for (const pseudo of states) {
+      for (const nodeId of nodeIds) await client.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: pseudo });
+      const borders = await page.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map(node => {
+        const style = getComputedStyle(node as HTMLElement);
+        return `${style.borderTopStyle}/${style.borderTopWidth}`;
+      }), buttonSelector);
+      borders.forEach((border, index) => {
+        expect(border, `${hash} 第 ${index} 个按钮在 ${pseudo.join('') || 'rest'} 状态不应有边框`).toMatch(/^(none|hidden)\//);
+        expect(border, `${hash} 第 ${index} 个按钮在 ${pseudo.join('') || 'rest'} 状态边框宽度应为 0`).toMatch(/0px$/);
+      });
+    }
+    await client.detach();
+  }
+});
+
+test('secondary action keeps a static appearance in every state', async ({page}) => {
+  for (const theme of ['beach', 'grassland'] as const) {
+    await page.goto('./#/');
+    await setTheme(page, theme);
+    const link = page.locator('a[href="#/browse"]').first();
+    await expect(link).toBeVisible();
+    const client = await page.context().newCDPSession(page);
+    await client.send('DOM.enable');
+    await client.send('CSS.enable');
+    const { root } = await client.send('DOM.getDocument', { depth: -1 });
+    const { nodeIds } = await client.send('DOM.querySelectorAll', { nodeId: root.nodeId, selector: 'a[href="#/browse"]' });
+    const read = () => link.evaluate(node => { const style = getComputedStyle(node); return `${style.backgroundColor}/${style.color}`; });
+    const rest = await read();
+    for (const pseudo of [['hover'], ['focus'], ['focus-visible'], ['active']] as string[][]) {
+      for (const nodeId of nodeIds) await client.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: pseudo });
+      expect(await read(), `${theme} 主题下 ${pseudo.join('')} 状态不应改变底色或文字色`).toBe(rest);
+    }
+    for (const nodeId of nodeIds) await client.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] });
+    await client.detach();
   }
 });
 
