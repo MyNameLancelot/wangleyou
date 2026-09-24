@@ -4,7 +4,7 @@ import { HomePage } from './ThemeHome';
 import { GrasslandMusicToggle } from './GrasslandMusicToggle';
 import { GrasslandThemeSwitch } from './GrasslandThemeSwitch';
 import { currentMedia, isVideo } from '../../playback';
-import { MediaViewer } from './ThemeViewer';
+import { MediaViewer } from '../../media-viewer';
 import type { ThemeApp } from '../contracts';
 import styles from './GrasslandApp.module.css';
 import './GrasslandTokens.css';

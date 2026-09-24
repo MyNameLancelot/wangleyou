@@ -44,12 +44,19 @@
 
 ## 演示视频来源
 
-| 发布文件 | 来源 | 许可 |
-| --- | --- | --- |
-| video/weekend-clip.mp4 | https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4 | CC0（MDN 示例媒体） |
-| video/weekend-clip.zh.vtt | 本项目编写 | 仅用于演示字幕说明，无对白 |
+演示视频是构建期发布形态的样例：源素材与照片同层放在相册目录里，构建期把 MP4 按内容哈希发布到同一相册目录，封面源素材走同一套 WebP 派生管线。
 
-视频封面复用 `thumbs/flowers.webp`（同一 Pexels 演示照片的派生缩略图）。演示视频没有对白，字幕用于说明画面内容与演示用途；替换真实家庭视频时同步更新本文件与字幕。
+| 源素材（提交 Git，不发布） | 来源 | 许可 |
+| --- | --- | --- |
+| media-source/2025-05-sequence00-周岁/weekend-clip.mp4 | https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4 | CC0（MDN 示例媒体） |
+| media-source/2025-05-sequence00-周岁/weekend-clip.poster.jpg | 由 macOS 自带 `qlmanage -t` 从上面这段演示视频离线抽取首帧（960×540），再用本项目 sharp 依赖转成 JPEG（质量 86、mozjpeg、剥离元数据） | 随视频素材，CC0 |
+
+| 发布文件（构建产物，不提交 Git） | 说明 |
+| --- | --- |
+| public/media/2025-05-sequence00-周岁/weekend-clip.&lt;哈希12&gt;.mp4 | 构建期按内容哈希发布，与照片同一层目录 |
+| public/media/2025-05-sequence00-周岁/weekend-clip.poster.&lt;哈希12&gt;.&lt;宽度&gt;.webp | 封面派生 WebP（480/960/1600/2560，不放大） |
+
+演示视频没有对白，也不再使用字幕文件：画面说明改用相册 `meta.json` 的 `photos_meta.captions`（可按文件名登记照片或视频）。替换真实家庭视频时同步更新本文件、封面源素材与许可说明；封面抽帧是维护者的离线一步，构建期不做抽帧、不依赖 ffmpeg。若某个视频没有提供封面源素材，构建期会生成一张中立的占位封面（深色底纹、16:9）；缩略图正中的 ▶ 播放标识由页面按媒体类型叠加，不写进封面资源。
 
 ## 主题背景插画
 
@@ -61,7 +68,7 @@
 
 `themes/grassland/home-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`themes/beach/home-hero.webp` 与 `themes/beach/home-memory.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。
 
-主题私有资源按主题分目录存放；相册派生资源按相册目录直接位于 `public/media/<相册目录>/`（与源素材 `media-source/<相册目录>/` 层级一致），视频等手工发布的演示素材位于 `public/media/video/`。
+主题私有资源按主题分目录存放；相册派生资源按相册目录直接位于 `public/media/<相册目录>/`（与源素材 `media-source/<相册目录>/` 层级一致），包括照片派生 WebP、视频封面派生 WebP 与按内容哈希发布的 MP4；不再有 `public/media/video/` 之类的手工发布目录。
 
 ## 演示背景音乐
 

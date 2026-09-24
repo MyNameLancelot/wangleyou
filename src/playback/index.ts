@@ -8,6 +8,7 @@ export {
   setProgress,
   setStatus,
   stepSession,
+  stepSessionTo,
 } from './session';
 export type { PlaybackIntent, PlaybackStatus, Session } from './session';
 export {

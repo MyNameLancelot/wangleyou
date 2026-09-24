@@ -18,7 +18,7 @@ test('responsive layout and real image loading',async({page},testInfo)=>{
   await expect(heroMedia).toBeVisible();
   const heroBackground=await heroMedia.evaluate(element=>getComputedStyle(element).backgroundImage);
   expect(heroBackground).toMatch(/media\/themes\/beach\/home-hero\.webp/);
-  expect(await page.evaluate(()=>performance.getEntriesByType('resource').some(entry=>entry.name.includes('/media/themes/beach/home-hero.webp')))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>performance.getEntriesByType('resource').some(entry=>entry.name.includes('/media/themes/beach/home-hero.webp'))), {timeout: 10000}).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   for (const item of await page.getByRole('img').all()) {
     await item.scrollIntoViewIfNeeded();

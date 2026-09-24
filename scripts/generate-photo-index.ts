@@ -2,10 +2,16 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { CAPTION_MAX_LENGTH, validateContent, validateHomeMemory } from '../src/content/validate'
-import type { Album, Photo, SiteContent } from '../src/content/model'
+import type { Album, Media, Photo, SiteContent, Video } from '../src/content/model'
 
 const ALBUM_DIR = /^(\d{4})-(\d{2})-sequence(\d{2})-(.+)$/
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
+/** 发布形态只收 H.264 + AAC 的 MP4；其它容器由维护者离线转码后再入库。 */
+const VIDEO_EXTENSIONS = new Set(['.mp4'])
+/** 常见但不在发布形态内的容器：出现在相册目录里就报错，避免被当成无关文件静默忽略。 */
+const UNSUPPORTED_VIDEO_EXTENSIONS = new Set(['.mov', '.m4v', '.webm', '.mkv', '.avi', '.wmv', '.flv', '.mpg', '.mpeg', '.3gp', '.ogv', '.hevc', '.ts'])
+/** 视频封面源素材的保留名：`<视频同名>.poster.jpg`，与视频同目录维护，构建期派生 WebP。 */
+const POSTER_SOURCE = /^(.+)\.poster\.(jpe?g|png|webp)$/i
 const TOP_FILE = /^top(\d+)(?=\.|-|_)/i
 /** 相册说明只出现在卡片的一行里，超过这个长度就会截断，因此在构建期就拦住。 */
 const DESCRIPTION_MAX_LENGTH = 16
@@ -18,17 +24,23 @@ type CaptionEntry = { fileName: string; caption: string; location: string }
 
 const natural = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
-/** 照片顺序由构建期决定：topNN 文件优先（N 升序），其余按文件名自然序。 */
-function orderPhotos(files: string[]): string[] {
+const stemOf = (file: string) => file.slice(0, file.length - extname(file).length)
+const isImage = (file: string) => IMAGE_EXTENSIONS.has(extname(file).toLowerCase()) && !POSTER_SOURCE.test(file)
+const isVideo = (file: string) => VIDEO_EXTENSIONS.has(extname(file).toLowerCase())
+/** 封面源素材对应的视频名，用于把封面绑定到真实视频。 */
+const posterOwner = (file: string) => `${POSTER_SOURCE.exec(file)?.[1] ?? stemOf(file)}.mp4`
+
+/** 媒体顺序由构建期决定：topNN 文件优先（N 升序），其余按文件名自然序；照片与视频共用同一条规则。 */
+function orderMedia(files: string[]): string[] {
   const tops = files.filter(file => TOP_FILE.test(file)).sort((a, b) => Number(TOP_FILE.exec(a)![1]) - Number(TOP_FILE.exec(b)![1]) || natural.compare(a, b))
   const rest = files.filter(file => !TOP_FILE.test(file)).sort(natural.compare)
   return [...tops, ...rest]
 }
 
-/** 照片 ID 由文件名生成：小写、非字母数字转连字符。 */
-function photoId(file: string): string {
+/** 媒体 ID 由文件名生成：小写、非字母数字转连字符。 */
+function mediaId(file: string): string {
   const base = file.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-  return base || 'photo'
+  return base || 'media'
 }
 
 function readCaptions(name: string, input: unknown): CaptionEntry[] {
@@ -55,7 +67,7 @@ function readCaptions(name: string, input: unknown): CaptionEntry[] {
   })
 }
 
-/** 寄语按文件名绑定到相册内真实存在的照片，避免写错文件名后静默丢失。 */
+/** 寄语按文件名绑定到相册内真实存在的媒体（照片或视频），避免写错文件名后静默丢失。 */
 function captionMap(captions: CaptionEntry[], files: string[]): Map<string, string> {
   const known = new Set(files)
   const result = new Map<string, string>()
@@ -102,14 +114,27 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
     if (!match) throw new Error(`${entry.name}: 相册目录必须命名为 YYYY-MM-sequenceNN-相册名`)
     const directory = join(photosDir, entry.name)
     const details = readAlbumMeta(entry.name, await readJson(join(directory, 'meta.json')))
-    const files = (await readdir(directory, { withFileTypes: true }))
-      .filter(file => file.isFile() && IMAGE_EXTENSIONS.has(extname(file.name).toLowerCase()))
-      .map(file => file.name)
-      .sort(natural.compare)
-    const captions = captionMap(details.captions, files)
-    const media: Photo[] = orderPhotos(files).map(file => {
+    const names = (await readdir(directory, { withFileTypes: true })).filter(file => file.isFile()).map(file => file.name)
+    const unsupported = names.filter(file => UNSUPPORTED_VIDEO_EXTENSIONS.has(extname(file).toLowerCase())).sort(natural.compare)
+    if (unsupported.length) {
+      throw new Error(`${entry.name}/${unsupported[0]}: 视频只接受 H.264 + AAC 的 .mp4；请先离线转码（例如 ffmpeg -c:v libx264 -crf 23 -movflags +faststart）再入库`)
+    }
+    const posters = new Map(names.filter(file => POSTER_SOURCE.test(file)).map(file => [posterOwner(file), file]))
+    for (const [owner, poster] of posters) {
+      if (!names.includes(owner)) throw new Error(`${entry.name}/${poster}: 找不到同名的视频源文件 ${owner}；封面源素材必须与视频同名`)
+    }
+    const videos = names.filter(isVideo).sort(natural.compare)
+    const images = names.filter(isImage).sort(natural.compare)
+    const captions = captionMap(details.captions, [...images, ...videos])
+    const media: Media[] = orderMedia([...images, ...videos]).map(file => {
       const caption = captions.get(file)
-      return { id: photoId(file), type: 'photo', src: `media/${entry.name}/${file}`, ...(caption ? { caption } : {}) }
+      const id = mediaId(file)
+      if (isVideo(file)) {
+        // 封面源素材可选：缺失时 generate-media 会生成中立的占位封面，索引里始终写约定名。
+        const poster = posters.get(file) ?? `${stemOf(file)}.poster.jpg`
+        return { id, type: 'video', src: `media/${entry.name}/${file}`, poster: `media/${entry.name}/${poster}`, ...(caption ? { caption } : {}) } satisfies Video
+      }
+      return { id, type: 'photo', src: `media/${entry.name}/${file}`, ...(caption ? { caption } : {}) } satisfies Photo
     })
     albums.push({
       album: {
@@ -136,6 +161,10 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const root = process.cwd()
   generatePhotoIndex(join(root, 'media-source'), join(root, 'src/content/generated-photo-index.json'))
-    .then(({ content, homeMemory }) => console.log(`照片索引已生成：${content.albums.length} 个相册，${content.albums.reduce((count, album) => count + album.media.length, 0)} 张照片，${homeMemory.length} 张主回忆`))
+    .then(({ content, homeMemory }) => {
+      const all = content.albums.flatMap(album => album.media)
+      const videos = all.filter(media => media.type === 'video').length
+      console.log(`媒体索引已生成：${content.albums.length} 个相册，${all.length - videos} 张照片，${videos} 段视频，${homeMemory.length} 张主回忆`)
+    })
     .catch((error: Error) => { console.error(error.message); process.exitCode = 1 })
 }

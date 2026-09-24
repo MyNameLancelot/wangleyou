@@ -9,7 +9,8 @@
 - 定义站点、相册、照片和视频的公开数据类型。
 - 校验配置结构、字段类型、ID、真实日期、资源路径及 ID 唯一性。
 - 消费构建期生成的相册顺序与照片顺序；不在运行时重排。
-- 相册元信息的来源是每个照片目录的 `meta.json`：`album` 段描述相册本身（`title`、`date`、`description` 均可选，缺省分别取目录名后缀与目录名的年月，允许只写到月，`description` 上限 16 个字符）；`photos_meta.captions` 按文件名登记单张照片寄语，数组项只允许 `fileName` 与 `caption`，寄语为 1–60 个非空白字符、允许只覆盖部分照片、文件名必须真实存在且不得重复。照片顺序与 ID 不写进配置：构建期脚本按 `topNN` 优先、其余文件名自然序生成顺序，并由文件名生成照片 ID。解析与错误定位在构建期脚本完成，本模块只消费生成结果，运行时 `validateContent` 复核同一套字段规则。
+- 相册元信息的来源是每个相册目录的 `meta.json`：`album` 段描述相册本身（`title`、`date`、`description` 均可选，缺省分别取目录名后缀与目录名的年月，允许只写到月，`description` 上限 16 个字符）；`photos_meta.captions` 按文件名登记单张媒体寄语（照片或视频），数组项只允许 `fileName` 与 `caption`，寄语为 1–60 个非空白字符、允许只覆盖部分媒体、文件名必须真实存在且不得重复。媒体顺序与 ID 不写进配置：构建期脚本把照片与视频合并后按 `topNN` 优先、其余文件名自然序生成顺序，并由文件名生成稳定 ID。解析与错误定位在构建期脚本完成，本模块只消费生成结果，运行时 `validateContent` 复核同一套字段规则。
+- 视频字段规则：`src` 必须是 `.mp4`，`poster` 必填并与 `posterSrcSet` 保持同宽高比；封面源素材可缺（构建期生成占位封面），容器与体积基线（>200 MB 失败、>100 MB 警告）由构建期脚本对发布文件执行。
 - 通过模块公开入口提供经校验的配置、类型、排序及资源 URL 解析能力。
 
 ## 非职责
@@ -23,7 +24,7 @@
 
 其他模块只通过 `index.ts` 引用本模块；该公开入口由应用装配工作统一维护。
 
-- `Photo`、`Video`、`Media`、`Album`、`SiteContent`：静态内容模型；照片和视频都可提供列表缩略图，视频还可提供播放海报与说明字幕（`captions`，WebVTT）。
+- `Photo`、`Video`、`Media`、`Album`、`SiteContent`：静态内容模型；照片提供派生 WebP `src`/`srcSet`，视频提供 MP4 `src` 与派生封面 `poster`/`posterSrcSet`（`width`/`height` 取自封面派生尺寸：真实帧或构建期占位封面）。
 - `validateContent(input: unknown): SiteContent`：接收未受信任的配置值；成功时返回同一份已校验数据，失败时抛出包含字段位置的 `Error`。
 - `homeMemory`：经校验的显式首页主回忆照片，数组顺序即播放顺序。
 - `assertAssetPath(path: unknown, location: string): asserts path is string`：验证发布目录内的相对资源路径，并用 `location` 定位错误。
@@ -52,6 +53,6 @@
 
 ## 扩展与验证方法
 
-新增字段时先更新模型和规格，再补充字段类型、边界及错误位置测试。新增媒体类型需同时明确列表展示、查看器行为和构建期文件检查，不能只扩充联合类型。视频新增字幕字段时同步把资源纳入 `scripts/validate-content.ts` 的存在性检查。
+新增字段时先更新模型和规格，再补充字段类型、边界及错误位置测试。新增媒体类型需同时明确列表展示、查看器行为和构建期文件检查，不能只扩充联合类型。视频新增引用字段时同步把资源纳入 `scripts/validate-content.ts` 的存在性检查，并说明离线准备方式；构建期不做转码或抽帧。
 
 运行 `npm test -- --run src/content/content.test.ts` 验证内容规则；完整构建期资源存在性由 `npm run validate:content` 验证。

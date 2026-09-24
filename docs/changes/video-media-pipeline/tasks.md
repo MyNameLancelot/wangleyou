@@ -1,0 +1,27 @@
+# 任务
+
+- [x] 编写变更规格、计划与任务记录
+- [x] 单测先行：生成器视频项、poster 引用与保留名、排序、扩展名拦截
+- [x] 单测先行：校验脚本 poster 必填、扩展名与体积拦截（含位置信息）
+- [x] 单测先行：playback 会话索引定位（`stepSessionTo`）边界
+- [x] 实施 A：媒体目录归位（`git mv` 视频、新增 album 目录内封面源素材、删除 `public/media/video/`）
+- [x] 实施 A：生成器产出 Video 项、按内容哈希发布视频、封面走 WebP 派生（真实帧或构建期占位封面）
+- [x] 实施 A+：封面源素材可选，缺失时构建期渲染 16:9 占位封面（含单测）
+- [x] 实施 C+：视频缩略图的 ▶ 播放标识改为页面按类型居中叠加（桌面 52px / 手机 40px）
+- [x] 实施 C++：查看器抽离为共用模块 `src/media-viewer`（主题只挂载、样式与功能不可定制），并把规则写进 requirements / architecture / AGENTS / SDD 指南 / module.md
+- [x] 实施 C++：插件集合对齐官方 Full-blown 示例（Captions/Fullscreen/Slideshow/Thumbnails/Video/Zoom），幻灯片仅在显式启动后运行
+- [x] 实施 C++：播放标识改用 `lucide-react` 实心 Play 图标
+- [x] 实施 A：校验脚本拦截缺失 poster、非法扩展名与超限体积
+- [x] 实施 B：删除 `Video.captions`、校验引用、两套 `<track>`、`.vtt` 与文档说明
+- [x] 实施 C：相册网格混排视频缩略图并保留播放标识
+- [x] 实施 C：两套主题改用 `yet-another-react-lightbox` 包装组件与主题变量化样式覆盖
+- [x] 实施 C：会话索引回写、音乐协调、焦点回归与资源清理
+- [x] 实施 D：同步 requirements、architecture、module.md、README、ADR 0005/0006、SOURCES
+- [x] 验证：`npm run check`（含 check:sdd、validate:content、typecheck、lint、vitest）
+- [x] 验证：`npm run build` 并核对 dist 产物（视频与封面路径、体积、无源素材与 .vtt）
+- [x] 验证：`npm run test:e2e`（109 通过 / 9 跳过 / 0 失败）
+- [x] 验证：本地浏览器人工核对并记录浏览器版本与视口（Chrome 153.0.8010.53，1440×1000 与 360×800；移动端为视口模拟，未做真机与 WebView 验证）
+- [x] 验证：`npm run check:sdd -- --worktree --base origin/main` 变更声明与文档链接检查通过
+- [x] 代码审查修复：同名视频字节变化后清理旧哈希 MP4 与失效封面派生文件，并加入回归测试
+- [x] 代码审查修复：迟到的自动播放失败回调只作用于发起请求的会话队列与索引
+- [x] 代码审查修复：总架构与模块契约同步共用查看器的真实归属及回调来源参数

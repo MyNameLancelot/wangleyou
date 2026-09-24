@@ -51,6 +51,16 @@ export function stepSession(session: Session | null, delta: number): Session | n
   return { ...session, index, ...initialPlayback(session.media[index]), progress: 0, duration: 0 };
 }
 
+/**
+ * 查看器（lightbox）内部翻页后回写索引：会话始终是索引的唯一事实来源，
+ * 越界、非整数或原地不动都保持原会话。
+ */
+export function stepSessionTo(session: Session | null, index: number): Session | null {
+  if (!session || !Number.isInteger(index)) return session;
+  if (index === session.index || index < 0 || index >= session.media.length) return session;
+  return { ...session, index, ...initialPlayback(session.media[index]), progress: 0, duration: 0 };
+}
+
 export function setIntent(session: Session | null, intent: PlaybackIntent): Session | null {
   return session && session.intent !== intent ? { ...session, intent } : session;
 }
