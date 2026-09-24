@@ -72,3 +72,22 @@ it('derives the poster from the source frame when the album provides one', async
   // 封面源素材不进 public：派生产物仍放在相册目录里
   expect((await space.published()).some(file => file.endsWith('.jpg'))).toBe(false)
 })
+
+it('removes the previous video and placeholder poster when video bytes change', async () => {
+  const space = await workspace()
+  await generateMedia()
+  const previous = (await space.index()).content.albums[0].media.find((item: { id: string }) => item.id === 'weekend-clip')
+  const previousPosters = previous.posterSrcSet.map((item: { src: string }) => item.src)
+
+  await writeFile(join(space.root, 'media-source/2025-05-sequence00-周岁/weekend-clip.mp4'), Buffer.from('updated-video-bytes'))
+  await generateMedia()
+
+  const current = (await space.index()).content.albums[0].media.find((item: { id: string }) => item.id === 'weekend-clip')
+  const files = await space.published()
+  expect(current.src).not.toBe(previous.src)
+  expect(current.poster).not.toBe(previous.poster)
+  expect(files).not.toContain(previous.src.split('/').at(-1))
+  for (const poster of previousPosters) expect(files).not.toContain(poster.split('/').at(-1))
+  expect(files).toContain(current.src.split('/').at(-1))
+  expect(Object.values((await space.manifest()).videos)).toEqual([{ hash: expect.any(String), src: current.src }])
+})

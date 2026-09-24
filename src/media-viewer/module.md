@@ -12,7 +12,7 @@
 - 全屏只展示影像（工具栏、导航、缩略图带、收起条与寄语由 CSS 隐藏），并在进入/退出全屏后把焦点交回查看器容器，保证全屏下键盘方向键与触摸滑动都能切图。
 - 平台不支持元素级 Fullscreen API 时（例如 iPhone Safari），库会直接不渲染全屏按钮，本模块不做替代实现：查看器本身已是覆盖视口的沉浸层，视频仍可用原生控件全屏；真机核对见 README 的 `npm run dev:lan`。
 - 受控渲染：`open` 恒为真（调用方只在会话存在时挂载本组件），`index` 来自 `session.index`；库的 `view` 事件通过 `MediaViewerCommands.stepTo` 回写会话索引，本模块不保存第二份索引或播放状态。
-- 把原生 video 事件（play/pause/waiting/timeupdate/ended/error）与打开时的自动播放尝试翻译成 playback 命令；被浏览器拒绝时回报 blocked，视频停留在当前项。
+- 把原生 video 事件（play/pause/waiting/timeupdate/ended/error）与打开时的自动播放尝试翻译成 playback 命令；被浏览器拒绝时携带发起播放的队列与索引回报 blocked，视频停留在当前项。
 - 维护查看器打开期间的键盘契约：Esc 关闭、方向键与缩略图切换、Tab 焦点在查看器内部循环（库把其余页面标记为 inert）。
 - 只提供受控渲染与命令转发，不修改会话、不写存储、不改变路由。
 
@@ -25,7 +25,7 @@
 ## 公开接口与输入输出
 
 - `MediaViewer({ session, commands })`：`session` 是 `playback` 的只读会话快照，`commands` 是 `MediaViewerCommands`。会话为 `null` 时调用方不渲染本组件。
-- `MediaViewerCommands`：`stepTo(index)`、`close()`、`reportProgress(progress, duration)`、`reportStatus(status)`、`reportEnded()`、`reportError()`、`reportBlocked()`。
+- `MediaViewerCommands`：`stepTo(index)`、`close()`、`reportProgress(progress, duration)`、`reportStatus(status)`、`reportEnded()`、`reportError()`、`reportBlocked(media, index)`；调用方只接受当前队列与索引匹配的 blocked 回报。
 
 ## 允许依赖
 
@@ -36,7 +36,7 @@
 组件自身只持有“最新播放意图”的引用与一次性的 DOM 监听：
 
 - 挂载时由库创建 portal、记录打开触发元素、给其余页面加 inert 并锁定页面滚动；卸载时 portal 与其中的 media 元素一起销毁，滚动锁与 inert 恢复，焦点回到触发元素。
-- 视频监听在媒体为视频时建立，切换媒体、关闭或卸载时解绑；关闭后不残留 video/audio 元素与计时任务。
+- 视频监听在媒体为视频时建立，切换媒体、关闭或卸载时解绑并让未完成的自动播放请求回调失效；调用方还会核对回调来源，避免旧请求改写后来打开的会话。关闭后不残留 video/audio 元素与计时任务。
 - 键盘监听在挂载期间注册、卸载时移除；查看器不创建业务计时器（幻灯片计时由库的 Slideshow 插件在用户显式启动后管理，关闭即清理）。
 
 ## 主要文件

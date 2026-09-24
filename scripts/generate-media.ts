@@ -104,6 +104,7 @@ async function placeholderPoster(sourceKey: string, videoPath: string, videoHash
 
 export async function generateMedia(): Promise<void> {
   const manifest = await loadManifest()
+  const previousEntries = { ...manifest.entries }
   await generatePhotoIndex(SOURCE_ROOT, INDEX_PATH)
   const generated = JSON.parse(await readFile(INDEX_PATH, 'utf8')) as { content: { albums: Array<{ media: Media[] }> }; homeMemory: Photo[] }
   const bySource = new Map<string, Photo>()
@@ -148,15 +149,14 @@ export async function generateMedia(): Promise<void> {
     const generatedPhoto = bySource.get(sourcePathOf(photo.src))
     return generatedPhoto ? { ...photo, src: generatedPhoto.src, width: generatedPhoto.width, height: generatedPhoto.height, srcSet: generatedPhoto.srcSet } : photo
   })
-  for (const [key, entry] of Object.entries(manifest.entries)) {
-    if (derivable.has(key)) continue
-    await Promise.all(entry.variants.map(item => rm(join(PUBLIC_ROOT, item.src), { force: true })))
-    delete manifest.entries[key]
+  for (const [key, entry] of Object.entries(previousEntries)) {
+    const current = derivable.has(key) ? manifest.entries[key] : undefined
+    const retained = new Set(current?.variants.map(item => item.src))
+    await Promise.all(entry.variants.filter(item => !retained.has(item.src)).map(item => rm(join(PUBLIC_ROOT, item.src), { force: true })))
+    if (!current) delete manifest.entries[key]
   }
   for (const [key, entry] of Object.entries(manifest.videos)) {
-    if (publishedVideos.has(key)) continue
-    await rm(join(PUBLIC_ROOT, entry.src), { force: true })
-    delete manifest.videos[key]
+    if (publishedVideos.get(key)?.src !== entry.src) await rm(join(PUBLIC_ROOT, entry.src), { force: true })
   }
   manifest.videos = Object.fromEntries([...publishedVideos].map(([key, entry]) => [key, entry]))
   manifest.version = 2

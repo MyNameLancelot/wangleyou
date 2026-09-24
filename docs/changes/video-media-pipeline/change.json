@@ -34,7 +34,10 @@
     "e2e 稳定性：并行负载下曾出现两处偶发失败，均为测试自身问题——打开查看器后立刻发 Esc 时库还没把焦点交给容器（改为先确认焦点落点再发送），以及断言超时偏紧（playwright.config 的 expect.timeout 放宽到 10s）。修复后 tests/viewer.spec.ts 连续 3 轮（72 次）全绿，整套 e2e 连续两轮 117 通过 / 0 失败。"
     ,
     "无 Fullscreen API 平台（模拟 iPhone Safari）：新增 e2e 用例把 document.fullscreenEnabled 覆盖为 false，断言查看器不渲染全屏按钮（库自身在 disabled 时 return null）、幻灯片与缩略图带/收起条仍在、键盘与触摸切换仍可用、Esc 仍能关闭；据此确认 iPhone 上无需额外代码即可保持可用，也没有假装全屏的替代实现。",
-    "手机真机核对路径：新增 npm run dev:lan（vite --host 0.0.0.0），实测本机可同时从 127.0.0.1:5199 与局域网地址（本机内网 IP，HTTP 200）访问；README 补充了用手机访问局域网地址的步骤，并说明生产媒体前缀指向 jsDelivr@main，发布前不能用 preview 的手机结果判断新素材。"
+    "手机真机核对路径：新增 npm run dev:lan（vite --host 0.0.0.0），实测本机可同时从 127.0.0.1:5199 与局域网地址（本机内网 IP，HTTP 200）访问；README 补充了用手机访问局域网地址的步骤，并说明生产媒体前缀指向 jsDelivr@main，发布前不能用 preview 的手机结果判断新素材。",
+    "代码审查修复：同名视频内容改变后，先生成新哈希资源，再清理旧 MP4 与旧占位封面；新增临时工作区回归测试，修复前失败于旧 MP4 留存，修复后 3/3 通过。",
+    "代码审查修复：视频自动播放的异步失败回调带发起时的队列与索引，监听清理时失效，App 仅接受与当前会话匹配的结果；模块契约同步更新。",
+    "修复后 npm run check：内容校验 7 个相册 / 34 个媒体、TypeScript、ESLint、Vitest 13 个文件 / 107 个用例全部通过；npm run build 通过；npx playwright test tests/viewer.spec.ts：桌面与移动 Chrome 26/26 通过。"
   ],
   "impacts": {
     "requirements": {
@@ -46,14 +49,14 @@
     },
     "architecture": {
       "status": "updated",
-      "reason": "记录视频按内容哈希发布与封面派生、缓存清单的 entries/videos 段、查看器由主题包装受控渲染 lightbox 并把 view/视频事件翻译成 playback 命令、Tab 焦点回绕与资源释放归属。",
+      "reason": "记录视频按内容哈希发布与封面派生、缓存清单的 entries/videos 段、两套主题挂载同一个共用查看器、事件翻译、Tab 焦点回绕与资源释放归属；审查后校正寄语位置及幻灯片当前行为。",
       "paths": [
         "docs/architecture.md"
       ]
     },
     "modules": {
       "status": "updated",
-      "reason": "新增 media-viewer 模块说明（共用查看器、样式与功能不可主题定制）；content 模块补充视频字段与排序规则；playback 模块补充 stepSessionTo 与查看器命令边界；themes 模块改为「主题只挂载共用查看器、不得包装或复制」并补充相册网格视频缩略图；app 模块补充命令装配说明。",
+      "reason": "新增 media-viewer 模块说明（共用查看器、样式与功能不可主题定制，审查后补充 reportBlocked 的回调来源参数）；content 模块补充视频字段与排序规则；playback 模块补充 stepSessionTo 与查看器命令边界；themes 模块改为「主题只挂载共用查看器、不得包装或复制」并补充相册网格视频缩略图；app 模块补充命令装配说明。",
       "paths": [
         "src/media-viewer/module.md",
         "src/content/module.md",

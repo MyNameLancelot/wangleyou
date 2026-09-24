@@ -25,7 +25,7 @@ export interface MediaViewerCommands {
   reportStatus(status: PlaybackStatus): void;
   reportEnded(): void;
   reportError(): void;
-  reportBlocked(): void;
+  reportBlocked(media: Media[], index: number): void;
 }
 
 /**
@@ -142,8 +142,11 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
   /** 视频事件只转发命令；切换媒体、关闭或卸载时全部解绑。 */
   useEffect(() => {
     if (current?.type !== 'video') return;
+    const media = session.media;
+    const index = session.index;
     const elementOf = () => document.querySelector<HTMLVideoElement>('.yarl__slide_current video');
     const deadline = performance.now() + 3000;
+    let active = true;
     let element: HTMLVideoElement | null = null;
     let frame = 0;
     const onPlay = () => commands.reportStatus('playing');
@@ -176,16 +179,19 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
       element = next;
       for (const [type, handler] of listeners) next.addEventListener(type, handler);
       // 打开视频即尝试播放；被浏览器拒绝时停留当前项，交给原生控件作为主动播放入口。
-      if (intentRef.current === 'playing' && next.paused) void next.play().catch(commands.reportBlocked);
+      if (intentRef.current === 'playing' && next.paused) void next.play().catch(() => {
+        if (active) commands.reportBlocked(media, index);
+      });
       return true;
     };
     const scan = () => { if (!attach() && performance.now() < deadline) frame = requestAnimationFrame(scan); };
     scan();
     return () => {
+      active = false;
       if (frame) cancelAnimationFrame(frame);
       detach();
     };
-  }, [commands, current]);
+  }, [commands, current, session.media, session.index]);
 
   return <Lightbox
     open

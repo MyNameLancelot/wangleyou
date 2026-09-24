@@ -103,9 +103,9 @@ export function App() {
     reportStatus: status => applySession(setStatus(sessionRef.current, status)),
     reportEnded: () => applySession(handleEnded(sessionRef.current)),
     reportError: () => applySession(markPlaybackError(sessionRef.current)),
-    reportBlocked: () => {
+    reportBlocked: (media, index) => {
       const current = sessionRef.current;
-      if (current) applySession(setStatus(setIntent(current, 'paused'), 'paused'));
+      if (current?.media === media && current.index === index) applySession(setStatus(setIntent(current, 'paused'), 'paused'));
     },
   }), [applySession]);
 

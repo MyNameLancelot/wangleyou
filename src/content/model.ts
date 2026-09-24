@@ -18,7 +18,7 @@ export interface Video {
   type: 'video'
   /** 发布用的 MP4：构建期按内容哈希发布到相册目录，浏览器只在查看器中按需加载。 */
   src: string
-  /** 发布用的封面：来自相册目录内 `<视频同名>.poster.jpg` 的派生 WebP，缺失时构建失败。 */
+  /** 发布用的封面：来自相册目录内的封面源素材或构建期生成的占位图，始终派生为 WebP。 */
   poster: string
   /** 封面的同宽高比响应式 WebP 候选图，供相册网格按列宽取合适尺寸。 */
   posterSrcSet?: Array<{ src: string; width: number; height: number }>
