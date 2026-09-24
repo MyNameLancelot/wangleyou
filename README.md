@@ -117,7 +117,7 @@ npm run compress:photos -- ~/Pictures/trip --dry-run     # 只扫描并打印计
 npm run dev:lan        # 终端会打印 Network: http://<电脑内网IP>:5173/wangleyou/
 ```
 
-手机浏览器打开该 Network 地址即可（媒体由开发服务器直接提供，不需要先把素材推到远端）。注意：生产构建的媒体前缀是 jsDelivr 上的 `@main`，因此在改动发布前不要用 `npm run preview` 的手机结果判断新素材。
+手机浏览器打开该 Network 地址即可（媒体由开发服务器直接提供，不需要先把素材推到远端）。生产构建与 `npm run preview` 使用同一份 `dist/` 和同一个媒体前缀，本地预览看到的素材就是线上素材；线上只会在改动合并到 main 后重新构建。
 
 平台能力差异：Android Chrome 支持元素级全屏，图片与视频都能进系统全屏；iPhone Safari 不提供任意元素的全屏 API（只有 `<video>` 能全屏），此时查看器不渲染全屏按钮，影像仍是覆盖视口的黑色沉浸层，想连浏览器地址栏一起隐藏需要“添加到主屏幕”（standalone）或未来的 WebView 套壳。
 
@@ -138,13 +138,13 @@ SITE_BASE=/another-repo/ npm run preview
 
 用户主页或自定义域名根目录使用 `SITE_BASE=/`。构建与预览应使用相同 base。
 
-媒体前缀独立于页面 base。受版本控制的 `.env.production` 让生产构建使用 `https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/`，因此 `media/<相册目录>/a.jpg` 会请求 jsDelivr 中同一仓库 main 分支的 `public/media/<相册目录>/a.jpg`。不要在 JSON 或主题代码写完整 CDN URL；需要临时替换版本或镜像时，在构建命令覆盖：
+媒体前缀独立于页面 base，由构建期 `VITE_MEDIA_BASE_URL` 决定，未设置时回退页面 base。受版本控制的 `.env.production` 当前不设置该变量，因此生产构建里 `media/<相册目录>/a.jpg` 解析为 `https://mynamelancelot.github.io/wangleyou/media/<相册目录>/a.jpg`，媒体与页面同源。派生 WebP 与视频产物在构建期生成、不提交仓库，所以只读取 Git 仓库文件的 CDN（例如 jsDelivr 的 `gh/<owner>/<repo>@<ref>` 形式）不能作为媒体前缀。不要在 JSON 或主题代码写完整 URL；需要临时指向镜像或其他来源时，在构建命令覆盖：
 
 ```bash
-VITE_MEDIA_BASE_URL=https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/ npm run build
+VITE_MEDIA_BASE_URL=https://media.example.com/ npm run build
 ```
 
-本地 `npm run dev` 未设置该变量时继续从 Vite `BASE_URL` 加载仓库内媒体。该变量只影响图片、视频、视频封面、主题图和背景音乐，不影响 `/wangleyou/`、页面入口或 `#/...` 路由。
+本地 `npm run dev` 未设置该变量时继续从 Vite `BASE_URL` 加载仓库内媒体。该变量只影响图片、视频、视频封面、主题图和背景音乐，不影响 `/wangleyou/`、页面入口或 `#/...` 路由。当前媒体托管结论、升级触发条件与两条候选路径见 [总架构](docs/architecture.md)。
 
 ### 首次部署
 
@@ -171,11 +171,13 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 ### 状态与容量
 
-仓库已提供部署配置和本地验证；本次配置阶段没有执行远端工作流，首次线上部署及 HTTPS 访问尚待提交合并后验证。职责见 [工作流模块](.github/workflows/module.md)。
+部署已执行：2026-09-24 核实的线上地址为 `https://mynamelancelot.github.io/wangleyou/`，HTTPS 返回 200。职责见 [工作流模块](.github/workflows/module.md)。
 
 截至 2026-09-16，GitHub Pages 发布站点最大 1 GB，源仓库建议不超过 1 GB，每月带宽软限制 100 GB，单次 Pages 部署超过 10 分钟会超时；自定义 Actions 不受默认每小时 10 次构建软限制约束。[GitHub Pages 限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
 
 普通 Git 推送会阻止超过 100 MiB 的单文件；添加媒体前先压缩并评估仓库总量，不把仓库当无限容量媒体存储。[GitHub 大文件说明](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
+
+媒体与页面同源，由 GitHub Pages 自带的边缘缓存分发（响应头含 `x-github-edge-region`，并支持 Range 请求），当前不接入额外 CDN；派生资源文件名带内容哈希，更新素材不会命中旧缓存。仓库型 CDN 的适用边界：jsDelivr 对 GitHub 来源限制单文件 20 MB，且只能提供已提交进仓库的文件。媒体托管何时需要重新评估、有哪两条候选路径，见 [总架构](docs/architecture.md)。
 
 配置依据：[GitHub 自定义 Pages 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)、[Vite 静态部署](https://vite.dev/guide/static-deploy#github-pages)。
 

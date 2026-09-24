@@ -26,9 +26,28 @@
 - 视频在同一目录发布：源文件按内容哈希复制为 `<文件名>.<哈希12>.mp4`，目标存在即跳过复制；封面走与照片相同的 480/960/1600/2560 WebP 派生——有 `<视频同名>.poster.jpg` 就派生真实帧，没有则由构建期渲染一张中立占位底纹（16:9、`video-poster-placeholder-v1`，占位版本提升即重新生成），索引里始终写入 `poster`、`posterSrcSet` 与对应 `width`/`height`。构建期不转码、不抽帧、不引入 ffmpeg/ffprobe：只接受 `.mp4`，>100 MB 警告、>200 MB 失败。源→产物映射记录在 `.cache/media-variants/manifest.json` 的 `entries`（含 `${视频源路径}#poster` 占位条目）与 `videos` 段，用于清理旧产物。
 - 主题私有的首屏图、第二屏背景和音乐位于 `public/media/themes/<主题>/`，只由所属主题使用。
 - 内容配置只保存 `media/...` 相对路径。`content.mediaUrl()` 是图片、视频、视频封面和音乐的唯一 URL 入口：构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 Vite `BASE_URL`。它拒绝协议、绝对路径、反斜杠、查询、片段和目录穿越，并对每段路径编码。
-- 页面 base 保持 `/wangleyou/`，路由继续使用 Hash；媒体 CDN 不改变二者。
+- 页面 base 保持 `/wangleyou/`，路由继续使用 Hash。生产构建不设置 `VITE_MEDIA_BASE_URL`，媒体与页面同源，由 GitHub Pages 从构建产物分发；该变量只用于临时镜像或未来迁移，且不改变页面 base 与 Hash 路由。
 
 构建前的 `scripts/generate-photo-index.ts`（扫描目录并生成含视频的内容索引）、`scripts/generate-media.ts`（派生 WebP 与按内容哈希发布视频）和 `scripts/validate-content.ts`（校验配置、发布资源存在性、视频扩展名与体积基线）共同构成内容管线。运行时网络错误由页面内反馈处理，不让应用白屏。
+
+## 媒体托管与演进
+
+媒体与页面同源：GitHub Pages 自身经边缘节点分发并支持 Range 请求，图片、视频、封面、主题图与背景音乐都已经走 CDN，不再叠一层。2026-09-24 实测线上首页与媒体响应均含 `server: GitHub.com`、`x-github-edge-region` 与 `accept-ranges: bytes`，缓存头是固定的 `cache-control: max-age=600`。
+
+派生 WebP 与视频产物在构建期生成、不提交仓库，只读取 Git 仓库文件的 CDN（例如 jsDelivr 的 `gh/<owner>/<repo>@<ref>` 形式）拿不到这些文件，也受 GitHub 来源单文件 20 MB 限制，因此不作为媒体前缀。
+
+媒体托管升级是未决事项，尚未实施；满足任一触发条件时重新评估，取得用户确认后再实施：
+
+- 派生媒体与站点总量超过约 500 MB，或仓库逼近 1 GB 推荐上限。
+- 月度流量接近 GitHub Pages 的 100 GB 软限制。
+- 需要发布超过 100 MiB 的视频（普通 Git 推送会阻止这种文件）。
+
+候选路径：
+
+1. 保留 Pages 作为源站，绑定自定义域并在前面加一层 Cloudflare 代理缓存；媒体 URL 结构不变，只换域名，需要处理 SSL 模式与可能的重定向。
+2. 把媒体迁到对象存储（例如 Cloudflare R2 免费额度为 10 GB-month 存储、每月 100 万次 Class A 与 1000 万次 Class B 操作，出站流量不计费），绑定自定义域后由构建或维护者上传，并把 `VITE_MEDIA_BASE_URL` 指向该域；需要同时确认 CORS、Range 与原生壳的子资源加载。
+
+两条路径都引入站外服务，实施前必须按 [requirements.md](requirements.md) 的技术与部署约束取得用户明确同意，并补齐新的决策记录与验证方式。
 
 ## 状态与资源生命周期
 

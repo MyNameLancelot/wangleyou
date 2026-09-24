@@ -1,0 +1,46 @@
+{
+  "mode": "light",
+  "summary": "把生产媒体前缀的基线文档同步为实际行为：生产构建不设置 VITE_MEDIA_BASE_URL，媒体与页面同源、由 GitHub Pages 分发；更正 README 与产品需求中仍写着 jsDelivr@main 的描述；在总架构记录媒体托管现状、升级触发条件与两条候选路径，并标明为未决事项。",
+  "reason": "线上核对发现图片与视频走 github.io 域名，用户据此追问是否应该改用 CDN。排查确认真实行为来自既有提交 5bce814 的有意改动（派生 WebP 与视频产物在构建期生成、不提交仓库，仓库型 CDN 读不到，且 jsDelivr 对 GitHub 来源限制单文件 20 MB），而 README 与产品需求仍把 jsDelivr 写成生产默认值，属文档与实现冲突。用户确认按 SDD 修正基线文档，并把未来的两条媒体托管路径简单记录下来。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "线上核实（2026-09-24）：curl -sS -I https://mynamelancelot.github.io/wangleyou/ 与 .../media/themes/beach/home-hero.webp 均返回 HTTP/2 200，响应头含 server: GitHub.com、x-github-edge-region: southeastasia、accept-ranges: bytes、cache-control: max-age=600。",
+    "线上产物核实：部署中的 /wangleyou/assets/index-BLybbYCx.js 不含 jsdelivr 字样，页面引用的媒体路径为 media/themes/...，确认生产构建回退到页面 base 而不是 CDN 前缀。",
+    "依据核实：jsDelivr 官方说明为 GitHub 来源单文件 20 MB 不支持、分支引用缓存 12 小时；Cloudflare R2 官方定价页列出 10 GB-month 存储、每月 100 万次 Class A 与 1000 万次 Class B 操作的免费额度，且出站流量不计费；GitHub Pages 官方限制为发布站点 1 GB、软带宽 100 GB/月。",
+    "npm run check:sdd -- --structure：通过（SDD 结构检查，不含语义判断）。",
+    "npm run check:sdd -- --worktree --base origin/main：通过；该模式同时覆盖工作区中其他进行中的变更声明。",
+    "未执行 npm run check、npm run build 与 npm run test:e2e：本次只改 Markdown 文档，未触碰源码、内容配置、构建配置或工作流。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "reason": "更正技术与部署约束里的生产媒体前缀描述：生产构建不设置 VITE_MEDIA_BASE_URL、媒体与页面同源，并链接总架构中的媒体托管触发条件。",
+      "paths": [
+        "docs/requirements.md"
+      ]
+    },
+    "architecture": {
+      "status": "updated",
+      "reason": "更正“媒体 CDN 不改变 base 与路由”的表述，并新增“媒体托管与演进”小节，记录当前同源分发、实测证据、未决的升级触发条件与两条候选路径。",
+      "paths": [
+        "docs/architecture.md"
+      ]
+    },
+    "modules": {
+      "status": "none",
+      "reason": "content.mediaUrl() 的输入输出与校验规则、各模块边界和依赖方向都未变化。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "本次只同步现状并登记未决方向，没有做出新的架构决策，也未引入依赖或站外服务，暂不新增 ADR。"
+    },
+    "readme": {
+      "status": "updated",
+      "reason": "更正手机核对与媒体前缀说明为当前同源行为，状态与容量补充媒体托管结论、仓库型 CDN 边界与总架构链接，并更新首次部署的验证状态。",
+      "paths": [
+        "README.md"
+      ]
+    }
+  }
+}
