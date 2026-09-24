@@ -37,7 +37,8 @@
     "手机真机核对路径：新增 npm run dev:lan（vite --host 0.0.0.0），实测本机可同时从 127.0.0.1:5199 与局域网地址（本机内网 IP，HTTP 200）访问；README 补充了用手机访问局域网地址的步骤，并说明生产媒体前缀指向 jsDelivr@main，发布前不能用 preview 的手机结果判断新素材。",
     "代码审查修复：同名视频内容改变后，先生成新哈希资源，再清理旧 MP4 与旧占位封面；新增临时工作区回归测试，修复前失败于旧 MP4 留存，修复后 3/3 通过。",
     "代码审查修复：视频自动播放的异步失败回调带发起时的队列与索引，监听清理时失效，App 仅接受与当前会话匹配的结果；模块契约同步更新。",
-    "修复后 npm run check：内容校验 7 个相册 / 34 个媒体、TypeScript、ESLint、Vitest 13 个文件 / 107 个用例全部通过；npm run build 通过；npx playwright test tests/viewer.spec.ts：桌面与移动 Chrome 26/26 通过。"
+    "修复后 npm run check：内容校验 7 个相册 / 34 个媒体、TypeScript、ESLint、Vitest 13 个文件 / 107 个用例全部通过；npm run build 通过；npx playwright test tests/viewer.spec.ts：桌面与移动 Chrome 26/26 通过。",
+    "PR #19 的 Actions run 35946325816 在 tests/responsive-a11y.spec.ts:21 失败：首屏背景 CSS 已出现，但资源 PerformanceEntry 尚未写入，立即读取返回 false；把断言改为最多等待 10 秒的轮询，仍验证真实背景资源加载。修正前本地完整套件 119 通过 / 9 跳过；PR 日志为 118 通过 / 9 跳过 / 1 失败。修正后目标用例 desktop-chrome 连续 20 次通过，npm run check 通过（107 个单元测试）；完整套件中目标用例通过，但另有 browse 封面几何断言和 music 回顶滚动断言失败（117 通过 / 9 跳过 / 2 失败），未将完整套件记为通过。"
   ],
   "impacts": {
     "requirements": {
