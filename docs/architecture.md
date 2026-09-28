@@ -26,7 +26,7 @@
 
 ## 内容与媒体
 
-- 相册原始素材位于 `media-source/YYYY-MM-sequenceNN-相册名/`（照片、视频与 `<视频同名>.poster.jpg` 封面源素材共用同一层结构），构建期生成不提交的 `public/media/YYYY-MM-sequenceNN-相册名/` 派生资源。生成器按原图内容哈希与编码配置（含派生输出布局版本）缓存，写入实际尺寸、最大 WebP `src` 与 `srcSet` 到 `src/content/generated-photo-index.json`；原图不会进入 `dist`。
+- 相册原始素材位于 `media-source/YYYY-MM-sequenceNN-相册名/`（照片、视频与 `<视频同名>.poster.jpg` 封面源素材共用同一层结构），构建期生成不提交的 `public/media/YYYY-MM-sequenceNN-相册名/` 派生资源。生成器按原图内容哈希与编码配置（含派生输出布局版本）缓存，写入实际尺寸、最大 WebP `src` 与 `srcSet`，以及相册元信息（`title`、`date`、`description`、可选 `opening`）到 `src/content/generated-photo-index.json`；原图不会进入 `dist`。
 - 视频在同一目录发布：源文件按内容哈希复制为 `<文件名>.<哈希12>.mp4`，目标存在即跳过复制；封面走与照片相同的 480/960/1600/2560 WebP 派生——有 `<视频同名>.poster.jpg` 就派生真实帧，没有则由构建期渲染一张中立占位底纹（16:9、`video-poster-placeholder-v1`，占位版本提升即重新生成），索引里始终写入 `poster`、`posterSrcSet` 与对应 `width`/`height`。构建期不转码、不抽帧、不引入 ffmpeg/ffprobe：只接受 `.mp4`，>100 MB 警告、>200 MB 失败。源→产物映射记录在 `.cache/media-variants/manifest.json` 的 `entries`（含 `${视频源路径}#poster` 占位条目）与 `videos` 段，用于清理旧产物。
 - 主题私有的首屏图、第二屏背景和音乐位于 `public/media/themes/<主题>/`，只由所属主题使用。
 - 内容配置只保存 `media/...` 相对路径。`content.mediaUrl()` 是图片、视频、视频封面和音乐的唯一 URL 入口：构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 Vite `BASE_URL`。它拒绝协议、绝对路径、反斜杠、查询、片段和目录穿越，并对每段路径编码。
