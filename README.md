@@ -197,7 +197,7 @@ cd native/android
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.1（`versionCode` 2），状态栏透明，网页背景延伸至屏幕顶部；顶部有渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
+`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.2（`versionCode` 3），桌面名称与相册图标为「乐悠时光」；状态栏透明，网页背景延伸至屏幕顶部，渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
 
 ```bash
 export WANGLEYOU_ANDROID_KEYSTORE=/absolute/private/path/family.jks
@@ -206,6 +206,7 @@ export WANGLEYOU_ANDROID_KEY_ALIAS='在本机设置'
 export WANGLEYOU_ANDROID_KEY_PASSWORD='在本机设置'
 cd native/android && ./gradlew :app:assembleRelease
 apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.2.apk
 ```
 
 不要把示例值当成真实密码，也不要把密码写进仓库。本机已生成的家庭签名材料位于被 Git 忽略的 `.private/android/family-release.jks` 与 `.private/android/signing.env`；请将两者加密备份到仓库和电脑之外，丢失后不能用同一身份更新已安装的 App。安装 APK 时，Android 8+ 需要在设备上为接收文件的应用临时允许“安装未知应用”；首次安装和后续更新必须使用同一私钥签名。Debug 版与家庭 Release 版签名不同，已安装 Debug 版时需先卸载，其本地数据会被清除。只通过家庭私下渠道传递 APK，安装后可关闭该来源的安装权限。

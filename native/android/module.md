@@ -10,7 +10,7 @@
 
 ## 公开接口与输入输出
 
-`./gradlew :app:assembleDebug` 输出可装到测试设备的 debug APK；配置 `WANGLEYOU_ANDROID_KEYSTORE`、`WANGLEYOU_ANDROID_STORE_PASSWORD`、`WANGLEYOU_ANDROID_KEY_ALIAS`、`WANGLEYOU_ANDROID_KEY_PASSWORD` 后 `:app:assembleRelease` 输出本机签名的家用 Release APK。输入固定生产 URL；修改时同步 iOS、需求与部署设置。
+`./gradlew :app:assembleDebug` 输出可装到测试设备的 debug APK；配置 `WANGLEYOU_ANDROID_KEYSTORE`、`WANGLEYOU_ANDROID_STORE_PASSWORD`、`WANGLEYOU_ANDROID_KEY_ALIAS`、`WANGLEYOU_ANDROID_KEY_PASSWORD` 后 `:app:assembleRelease` 输出本机签名的家用 Release APK。`python3 package_family_apk.py` 根据构建元数据生成 `乐悠时光-v<versionName>.apk` 交付副本。桌面应用标签为「乐悠时光」。输入固定生产 URL；修改时同步 iOS、需求与部署设置。
 
 ## 允许依赖
 
@@ -22,7 +22,7 @@ Activity 持有唯一 WebView、加载指示、故障面板与视频全屏自定
 
 ## 主要文件与扩展
 
-`MainActivity.java` 是容器逻辑；`AndroidManifest.xml` 声明入口、权限和方向；`app/build.gradle.kts` 固定 SDK 与签名输入；`gradle/wrapper` 锁定构建工具；`app_icon.xml` 为图标。
+`MainActivity.java` 是容器逻辑；`AndroidManifest.xml` 声明入口、权限、方向和应用标签；`app/build.gradle.kts` 固定 SDK、版本与签名输入；`package_family_apk.py` 生成交付文件名；`gradle/wrapper` 锁定构建工具；`res/drawable-nodpi/app_icon.png` 是用户选定的浅木底相册图标，`res/mipmap-anydpi-v26/ic_launcher.xml` 提供自适应桌面裁切。
 
 ## 验证方法
 

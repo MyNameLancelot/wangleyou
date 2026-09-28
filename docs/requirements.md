@@ -26,6 +26,7 @@
 
 ## 家庭原生 App
 
+- Android 安装后的桌面名称为「乐悠时光」，桌面图标使用用户选定的深紫红相册与浅木书桌底色，封面艺术字为「乐悠时光」。家庭交付 APK 文件名使用 `乐悠时光-v<versionName>.apk`。
 - iPhone、iPad 和 Android 使用独立安装的原生壳，默认加载 `https://mynamelancelot.github.io/wangleyou/`。安装包只含原生容器、图标与错误界面，不内置网站 HTML/JS/CSS、相册配置或媒体。站点与媒体仍按现有 Pages/CDN 发布。
 - 站内 Hash 导航留在 WebView；顶层 WebView 仅允许生产 origin 的 `/wangleyou/` 路径。用户点击的外部 HTTPS 链接交系统浏览器；其他 scheme 不执行。Android 系统返回先退出视频全屏、再关闭查看器、再返回 WebView 历史；iOS 支持 WebView 返回手势。
 - 原生容器展示页面加载进度，主页面断网、HTTP 错误或站点不可用时显示重试入口。保持现有网页查看器、照片与 MP4 视频能力，使用平台可用的全屏行为。Android 状态栏透明，页面背景延伸到系统时间和电量图标后方，交互内容避开屏幕开孔及其他系统栏。支持设备安全区域、旋转和 iPad 宽屏。

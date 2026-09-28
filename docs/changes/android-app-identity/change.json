@@ -1,0 +1,21 @@
+{
+  "mode": "full",
+  "summary": "将 Android 桌面应用名与家庭安装包文件名统一为乐悠时光，并选择新的应用图标。",
+  "reason": "用户已确认应用名称和 APK 文件命名格式，并要求制作多个图标候选。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "2026-09-28：用户确认桌面名「乐悠时光」、交付文件名「乐悠时光-vxxx.apk」；图标经三轮候选收敛为深紫红相册、封面艺术字「乐悠时光」、浅木书桌纹理底色。最终 PNG 已放入 Android 资源。",
+    "JDK 17、Android SDK 35 与缓存 Gradle 8.11.1 下执行 :app:assembleRelease --offline --no-daemon，通过 43 个任务；package_family_apk.py 输出乐悠时光-v1.0.2.apk。",
+    "apksigner verify 通过 v2 签名，证书 SHA-256 仍为 83701c5afbd6df1171e1595db96d3a3ee39786d373277e94398a727629135d4d；aapt badging 显示包名 com.mynamelancelot.wangleyou、versionCode 3、versionName 1.0.2、application-label 乐悠时光及图标资源。",
+    "Android API 34 模拟器从家庭签名 1.0.1 原位安装 1.0.2 成功；应用抽屉截图核对浅木底相册自适应图标。320×640 视口中的图标标签被系统启动器省略号截断，完整应用标签由 aapt 元数据确认；用户全面屏真机显示待验证。",
+    "扫码页已显示乐悠时光 1.0.2；带查询参数的 APK 下载响应使用 RFC 5987 的 UTF-8 filename* 指定乐悠时光-v1.0.2.apk，下载字节 SHA-256 与本机构建副本一致：c3024ecc9b7c01dc97a78b54a1ca2fbd44b93944868c2ed01519f72fa167726d。"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "paths": ["docs/requirements.md"], "reason": "记录 Android 桌面名称、家庭 APK 文件命名规则及图标验收。"},
+    "architecture": {"status": "none", "reason": "原生壳模块职责和依赖不变。"},
+    "modules": {"status": "updated", "paths": ["native/android/module.md"], "reason": "记录应用标签、图标和交付文件命名职责。"},
+    "decisions": {"status": "none", "reason": "不涉及新的架构决策。"},
+    "readme": {"status": "updated", "paths": ["README.md"], "reason": "更新下载与安装说明。"}
+  }
+}
