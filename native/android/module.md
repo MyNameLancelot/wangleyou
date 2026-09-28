@@ -2,7 +2,7 @@
 
 ## 目的与职责
 
-在 Android 中用系统 WebView 加载生产网站，管理系统安全区域、旋转、站内和外部顶层导航、返回键、加载/错误/重试与视频全屏。
+在 Android 中用系统 WebView 加载生产网站，管理透明状态栏和系统安全区域、旋转、站内和外部顶层导航、返回键、加载/错误/重试与视频全屏。
 
 ## 非职责
 
@@ -18,7 +18,7 @@
 
 ## 状态与资源生命周期
 
-Activity 持有唯一 WebView、加载指示、故障面板与视频全屏自定义 View；退出全屏释放 View 与回调，Activity 销毁时从父容器移除并 destroy WebView。仅主框架错误覆盖整屏，媒体子资源错误仍交网站处理。仅声明 INTERNET 权限，禁止明文流量。
+Activity 持有唯一 WebView、加载指示、故障面板与视频全屏自定义 View；WebView 绘制到透明状态栏后方，顶部渐隐暗色层保证白色系统图标可读且不拦截触摸，容器保留侧边和底部安全区，网页负责顶部交互的安全区；退出全屏释放 View 与回调并恢复状态栏布局，Activity 销毁时从父容器移除并 destroy WebView。仅主框架错误覆盖整屏，媒体子资源错误仍交网站处理。仅声明 INTERNET 权限，禁止明文流量。
 
 ## 主要文件与扩展
 
@@ -26,4 +26,4 @@ Activity 持有唯一 WebView、加载指示、故障面板与视频全屏自定
 
 ## 验证方法
 
-安装 JDK 17、Android SDK 35 和 Build Tools 35.0.0 后运行 `cd native/android && ./gradlew :app:assembleDebug`；用模拟器与真机分别检查导航、系统返回、断网恢复、照片、视频、全屏及横竖屏。签名 Release APK 用 `apksigner verify --verbose` 验证，并在家庭 Android 设备测试安装和更新。
+安装 JDK 17、Android SDK 35 和 Build Tools 35.0.0 后运行 `cd native/android && ./gradlew :app:assembleDebug`；用模拟器与真机分别检查透明状态栏、顶部安全区、导航、系统返回、断网恢复、照片、视频、全屏及横竖屏。签名 Release APK 用 `apksigner verify --verbose` 验证，并在家庭 Android 设备测试安装和更新。

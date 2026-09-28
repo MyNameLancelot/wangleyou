@@ -197,7 +197,7 @@ cd native/android
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`app-debug.apk` 由本机 debug key 签名，只供开发验证。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
+`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.1（`versionCode` 2），状态栏透明，网页背景延伸至屏幕顶部；顶部有渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
 
 ```bash
 export WANGLEYOU_ANDROID_KEYSTORE=/absolute/private/path/family.jks

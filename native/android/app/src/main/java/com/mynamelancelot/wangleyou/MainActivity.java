@@ -3,6 +3,7 @@ package com.mynamelancelot.wangleyou;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
@@ -24,10 +25,12 @@ public final class MainActivity extends Activity {
     private static final String SITE = "https://mynamelancelot.github.io/wangleyou/";
     private FrameLayout root;
     private WebView webView;
+    private View statusBarScrim;
     private ProgressBar progress;
     private LinearLayout errorPanel;
     private View fullscreenView;
     private WebChromeClient.CustomViewCallback fullscreenCallback;
+    private static final int NORMAL_SYSTEM_UI = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
 
     static boolean isSite(Uri uri) {
         String path = uri.getPath();
@@ -39,14 +42,20 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(7, 38, 52));
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.BLACK);
+        if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(false);
+        else getWindow().getDecorView().setSystemUiVisibility(NORMAL_SYSTEM_UI);
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.rgb(7, 38, 52));
         root.setOnApplyWindowInsetsListener((view, insets) -> {
-            if (Build.VERSION.SDK_INT >= 35 && fullscreenView == null) {
-                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-                root.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            if (Build.VERSION.SDK_INT >= 30 && fullscreenView == null) {
+                int safeTypes = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout();
+                android.graphics.Insets bars = insets.getInsets(safeTypes);
+                root.setPadding(bars.left, 0, bars.right, bars.bottom);
+                return new WindowInsets.Builder(insets)
+                        .setInsets(safeTypes, android.graphics.Insets.of(0, bars.top, 0, 0))
+                        .build();
             } else {
                 root.setPadding(0, 0, 0, 0);
             }
@@ -114,12 +123,18 @@ public final class MainActivity extends Activity {
                 fullscreenCallback = callback;
                 root.addView(view, new FrameLayout.LayoutParams(-1, -1));
                 webView.setVisibility(View.GONE);
+                statusBarScrim.setVisibility(View.GONE);
                 root.setPadding(0, 0, 0, 0);
                 getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
             }
             @Override public void onHideCustomView() { leaveFullscreen(); }
         });
         root.addView(webView, new FrameLayout.LayoutParams(-1, -1));
+        statusBarScrim = new View(this);
+        statusBarScrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] { 0x80000000, 0x00000000 }));
+        statusBarScrim.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        root.addView(statusBarScrim, new FrameLayout.LayoutParams(-1, (int) (72 * getResources().getDisplayMetrics().density), android.view.Gravity.TOP));
         progress = new ProgressBar(this);
         FrameLayout.LayoutParams progressLayout = new FrameLayout.LayoutParams(48, 48, android.view.Gravity.CENTER);
         root.addView(progress, progressLayout);
@@ -154,7 +169,8 @@ public final class MainActivity extends Activity {
         root.removeView(fullscreenView);
         fullscreenView = null;
         webView.setVisibility(View.VISIBLE);
-        getWindow().getDecorView().setSystemUiVisibility(0);
+        statusBarScrim.setVisibility(View.VISIBLE);
+        getWindow().getDecorView().setSystemUiVisibility(Build.VERSION.SDK_INT >= 30 ? 0 : NORMAL_SYSTEM_UI);
         root.requestApplyInsets();
         if (fullscreenCallback != null) fullscreenCallback.onCustomViewHidden();
         fullscreenCallback = null;
