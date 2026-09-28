@@ -31,7 +31,7 @@
 - 原生容器展示页面加载进度，主页面断网、HTTP 错误或站点不可用时显示重试入口。保持现有网页查看器、照片与 MP4 视频能力，使用平台可用的全屏行为。支持设备安全区域、旋转和 iPad 宽屏。
 - Android 只声明 INTERNET、禁用明文流量；iOS 保持 ATS 默认约束。无原生 JS 桥接、登录或离线媒体库。
 - 网站每次 main 更新照常检查和部署；原生构建仅由维护者手动触发或手动本地执行，不自动公开发布安装包。Android 交付本机签名的 Release APK；iOS 交付按已登记设备签名的 Ad Hoc IPA，签名材料与设备 ID 不入仓库。
-- Android Debug APK 与家庭密钥签名的 Release 构建已验证；iOS 源码和无凭据检查已验证但完整 Xcode 构建未执行。模拟器与真机验收以 [本次变更记录](changes/family-native-webview/tasks.md) 的实际证据为准，未通过前不视为完成设备交付。
+- Android Debug APK 与家庭密钥签名的 Release 构建已验证；iOS 源码和无凭据检查已验证，但用户决定暂缓 iOS 安装，完整 Xcode 构建、签名和设备验收尚未执行。模拟器与真机验收以 [本次变更记录](changes/family-native-webview/tasks.md) 的实际证据为准，未通过前不视为完成设备交付。
 
 ## 技术与部署约束
 

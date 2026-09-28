@@ -22,7 +22,8 @@
     "2026-09-28：生成仅保存在本机 .private/android/ 的家庭 PKCS12 密钥和凭据（gitignore 排除，文件权限 0600）；使用 JDK 17、SDK 35 与缓存 Gradle 8.11.1 离线执行 :app:assembleRelease 成功（43 个任务），输出 app-release.apk。apksigner verify 通过 v2 签名；证书 SHA-256 为 83701c5afbd6df1171e1595db96d3a3ee39786d373277e94398a727629135d4d。aapt 确认包名 com.mynamelancelot.wangleyou、版本 1.0.0、minSdk 26、targetSdk 35、仅 INTERNET 权限。",
     "2026-09-28：本机局域网扫码页显示签名 APK 下载入口；通过该 URL 回读的 APK SHA-256 与构建产物一致（5ea125e1c216c4e25fac9a1c571cdc1df1edafdc586954ee2fbef3a9107289e7）。Android 真机安装、更新与功能验收由用户执行，尚无结果。",
     "最终差异与 SDD 审查：git diff --check 无空白错误；npm run check:sdd -- --worktree --base origin/main 通过（43 个差异路径）；核对原生包只加载生产网站、签名材料与产物被排除、原生 CI 为手动触发且不上传安装包、需求/架构/模块/README 与任务状态一致。",
-    "2026-09-28：用户反馈“安卓没问题了”，记录为 Android 真机可用反馈；未提供设备型号、系统版本或首次安装、更新、断网、照片、视频、全屏的逐项结果，相关验收仍待补录。"
+    "2026-09-28：用户反馈“安卓没问题了”，记录为 Android 真机可用反馈；未提供设备型号、系统版本或首次安装、更新、断网、照片、视频、全屏的逐项结果，相关验收仍待补录。",
+    "2026-09-28：用户决定 iOS 安装先到此为止、不继续推进。当前只有源码和静态检查，本机缺完整 Xcode，未完成编译、签名、IPA 或设备验收。免费 Apple 账户的 Personal Team 仅适合短期本人设备测试，配置文件约 7 天过期；家庭长期 Ad Hoc 分发需 Apple Developer Program 会员（Apple 官方当前标价 99 美元/年，按注册地区结算）、登记设备和分发签名。iOS 任务保持未完成，待用户将来明确恢复。"
   ],
   "impacts": {
     "requirements": {"status": "updated", "paths": ["docs/requirements.md"], "reason": "增加 App 安装、在线加载、导航与故障恢复基线。"},

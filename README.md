@@ -6,7 +6,7 @@
 
 已实现首页、影像浏览（年份分组与类型筛选）、相册索引与详情（照片与视频混排、视频带播放角标）、手动照片查看与视频播放（全站共用查看器：`yet-another-react-lightbox` + Captions/Fullscreen/Slideshow/Thumbnails/Video/Zoom 插件，含原生控制条、键盘与触屏操作）、两套隔离主题（海边沙滩 / 旷野草原）切换与偏好记忆，以及内容校验、缩略图生成与视频按内容哈希发布。查看器不在进入时自动播放幻灯片，视频结束停留当前项。
 
-家庭设备原生 WebView 壳位于 `native/ios` 与 `native/android`，只加载线上网站；Android Debug APK 与家庭密钥签名的 Release 构建已通过，iOS 完整 Xcode 构建和设备验收仍待办。首页背景音乐由海边、草原各自的主题私有资产提供。海边与草原分别拥有完整的页面 UI、CSS、装饰和资产引用，只共享无 UI 的业务与交互契约；查看器是唯一的共用 UI（`src/media-viewer`），主题只挂载它、不能定制其样式或功能。后续页面与交互设计以用户口述和活动规格为准。
+家庭设备原生 WebView 壳位于 `native/ios` 与 `native/android`，只加载线上网站；Android Debug APK 与家庭密钥签名的 Release 构建已通过，iOS 安装已按用户决定暂缓，完整 Xcode 构建和设备验收仍待办。首页背景音乐由海边、草原各自的主题私有资产提供。海边与草原分别拥有完整的页面 UI、CSS、装饰和资产引用，只共享无 UI 的业务与交互契约；查看器是唯一的共用 UI（`src/media-viewer`），主题只挂载它、不能定制其样式或功能。后续页面与交互设计以用户口述和活动规格为准。
 
 仓库含 6 张本地演示照片、2 个非空相册及 1 个空相册。演示素材和日期不代表真实家庭记录，来源见 [素材说明](public/media/SOURCES.md)。
 
@@ -222,7 +222,7 @@ xcodebuild -project native/ios/WangLeYou.xcodeproj -scheme WangLeYou -configurat
 
 家庭设备 Ad Hoc 安装需要 Apple Developer Program 会员、匹配 `com.mynamelancelot.wangleyou` 的 App ID、iOS Distribution 签名证书及私钥、登记每部 iPhone/iPad 的设备标识、包含这些设备的 Ad Hoc provisioning profile。用 Xcode 的 Signing & Capabilities 选择团队并管理签名，选择 **Any iOS Device** 后 **Product → Archive → Distribute App → Ad Hoc/Custom** 导出 `.ipa`；在已登记设备上通过 Xcode Device Hub 或 Apple Configurator 安装，并启用 Developer Mode。Apple 对每个设备类别的年度登记数量有限制；新增设备后需更新描述文件。证书、描述文件、私钥和设备标识只在维护者本机与 Apple 开发者账户保管。
 
-本机缺少完整 Xcode 与 iOS 签名资料时，iOS 只能完成源码和无凭据检查；不能声称已生成可供家庭安装的 IPA。Android 家庭 Release APK 已签名并校验，但真机安装和功能验收仍待用户执行。iPhone、iPad、Android 模拟器与真机的站内导航、断网重试、照片查看、视频播放和全屏都需分别验证，结果写入 [本次变更记录](docs/changes/family-native-webview/tasks.md)。
+本机缺少完整 Xcode 与 iOS 签名资料，iOS 安装已按用户决定暂缓；当前只能确认源码和无凭据检查，尚无可供家庭安装的 IPA。免费 Apple 账户的 Personal Team 配置文件约 7 天过期，家庭长期 Ad Hoc 分发需 Apple Developer Program 会员及登记设备。Android 家庭 Release APK 已签名并校验，但真机安装和功能验收仍待用户执行。iPhone、iPad、Android 模拟器与真机的站内导航、断网重试、照片查看、视频播放和全屏都需分别验证，结果写入 [本次变更记录](docs/changes/family-native-webview/tasks.md)。
 
 官方依据：[Apple 登记设备分发](https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices)、[Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview)、[Android APK 签名](https://developer.android.com/studio/publish/app-signing)、[Android 私下分发](https://developer.android.com/distribute/marketing-tools/alternative-distribution)。
 
