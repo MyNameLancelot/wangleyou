@@ -15,19 +15,15 @@ import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 public final class MainActivity extends Activity {
     private static final String SITE = "https://mynamelancelot.github.io/wangleyou/";
     private FrameLayout root;
     private WebView webView;
     private View statusBarScrim;
-    private ProgressBar progress;
-    private LinearLayout errorPanel;
+    private StartupOverlay startupOverlay;
+    private boolean mainFrameError;
     private View fullscreenView;
     private WebChromeClient.CustomViewCallback fullscreenCallback;
     private static final int NORMAL_SYSTEM_UI = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
@@ -47,7 +43,7 @@ public final class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(false);
         else getWindow().getDecorView().setSystemUiVisibility(NORMAL_SYSTEM_UI);
         root = new FrameLayout(this);
-        root.setBackgroundColor(Color.rgb(7, 38, 52));
+        root.setBackgroundColor(0xfff7f5f0);
         root.setOnApplyWindowInsetsListener((view, insets) -> {
             if (Build.VERSION.SDK_INT >= 30 && fullscreenView == null) {
                 int safeTypes = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout();
@@ -82,7 +78,12 @@ public final class MainActivity extends Activity {
                 return true;
             }
             @Override public void onPageFinished(WebView view, String url) {
-                progress.setVisibility(View.GONE);
+                if (mainFrameError) return;
+                webView.setVisibility(View.VISIBLE);
+                startupOverlay.hideAfterLoad(() -> {
+                    statusBarScrim.setVisibility(View.VISIBLE);
+                    setLoadingStatusBar(false);
+                });
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) showError();
@@ -92,8 +93,10 @@ public final class MainActivity extends Activity {
             }
             @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 if (!isSite(Uri.parse(url))) { view.stopLoading(); showError(); return; }
-                errorPanel.setVisibility(View.GONE);
-                progress.setVisibility(View.VISIBLE);
+                mainFrameError = false;
+                startupOverlay.showLoading();
+                statusBarScrim.setVisibility(View.GONE);
+                setLoadingStatusBar(true);
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -130,38 +133,32 @@ public final class MainActivity extends Activity {
             @Override public void onHideCustomView() { leaveFullscreen(); }
         });
         root.addView(webView, new FrameLayout.LayoutParams(-1, -1));
+        webView.setVisibility(View.INVISIBLE);
         statusBarScrim = new View(this);
         statusBarScrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[] { 0x80000000, 0x00000000 }));
         statusBarScrim.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         root.addView(statusBarScrim, new FrameLayout.LayoutParams(-1, (int) (72 * getResources().getDisplayMetrics().density), android.view.Gravity.TOP));
-        progress = new ProgressBar(this);
-        FrameLayout.LayoutParams progressLayout = new FrameLayout.LayoutParams(48, 48, android.view.Gravity.CENTER);
-        root.addView(progress, progressLayout);
-        errorPanel = new LinearLayout(this);
-        errorPanel.setOrientation(LinearLayout.VERTICAL);
-        errorPanel.setGravity(android.view.Gravity.CENTER);
-        errorPanel.setBackgroundColor(Color.rgb(7, 38, 52));
-        TextView message = new TextView(this);
-        message.setText("网站暂时无法连接\n请检查网络后重试");
-        message.setTextColor(Color.WHITE);
-        message.setTextSize(18);
-        message.setGravity(android.view.Gravity.CENTER);
-        errorPanel.addView(message);
-        Button retry = new Button(this);
-        retry.setText("重新连接");
-        retry.setOnClickListener(v -> webView.loadUrl(SITE));
-        errorPanel.addView(retry);
-        errorPanel.setVisibility(View.GONE);
-        root.addView(errorPanel, new FrameLayout.LayoutParams(-1, -1));
+        statusBarScrim.setVisibility(View.GONE);
+        startupOverlay = new StartupOverlay(this, () -> webView.loadUrl(SITE));
+        root.addView(startupOverlay, new FrameLayout.LayoutParams(-1, -1));
+        setLoadingStatusBar(true);
         setContentView(root);
         if (state == null) webView.loadUrl(SITE);
         else webView.restoreState(state);
     }
 
     private void showError() {
-        progress.setVisibility(View.GONE);
-        errorPanel.setVisibility(View.VISIBLE);
+        mainFrameError = true;
+        startupOverlay.showError();
+        statusBarScrim.setVisibility(View.GONE);
+        setLoadingStatusBar(true);
+    }
+
+    private void setLoadingStatusBar(boolean loading) {
+        int flags = Build.VERSION.SDK_INT >= 30 ? 0 : NORMAL_SYSTEM_UI;
+        if (loading) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        getWindow().getDecorView().setSystemUiVisibility(flags);
     }
 
     private void leaveFullscreen() {
@@ -194,6 +191,7 @@ public final class MainActivity extends Activity {
 
     @Override protected void onDestroy() {
         leaveFullscreen();
+        startupOverlay.dispose();
         root.removeView(webView);
         webView.destroy();
         super.onDestroy();

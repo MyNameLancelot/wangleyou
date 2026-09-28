@@ -9,6 +9,7 @@ dist/
 coverage/
 .nyc_output/
 .playwright-cli/
+.superpowers/
 playwright-report/
 test-results/
 
