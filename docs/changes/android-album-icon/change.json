@@ -1,0 +1,22 @@
+{
+  "mode": "full",
+  "summary": "重设计 Android 桌面图标为无文字的翻开相册，并保证圆形裁切完整。",
+  "reason": "用户真机反馈旧图标裁切不完整、封面文字过重，选定 Visual Brainstorming Companion 的 B「翻开相册」。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "2026-09-28：用户在 Visual Brainstorming Companion 选定无文字的 B「翻开相册」，用于替换真机反馈裁切不完整、封面文字过重的旧图标。",
+    "将成稿主体缩入自适应图标安全区（按 66dp 安全圆测算并留余量）后替换 res/drawable-nodpi/app_icon.png；以脚本按 72dp 视口与圆形遮罩模拟渲染，相册、纸页与主要阴影均未出界。",
+    "Android API 34 模拟器桌面圆形裁切下相册完整、无文字，系统应用标签仍为「乐悠时光」。",
+    "aapt dump badging：versionCode 5、versionName 1.0.4、application-label「乐悠时光」、仅 INTERNET 权限。",
+    "家庭 APK：乐悠时光-v1.0.4.apk 经 apksigner 验证 v2 签名通过；本机下载页回读的 APK SHA-256 与构建产物一致（a73794b0dc2508174626deda5bca488062b62ff9855b3ceadd75c38cdd63e673）。",
+    "未验证范围：家庭 Android 真机上不同启动器与图标形状的实际裁切由用户确认；本次证据来自模拟器。"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "paths": ["docs/requirements.md"], "reason": "更新已确认的桌面图标基线。"},
+    "architecture": {"status": "none", "paths": [], "reason": "原生资源组织和容器架构不变。"},
+    "modules": {"status": "updated", "paths": ["native/android/module.md"], "reason": "更新图标资源描述。"},
+    "decisions": {"status": "none", "paths": [], "reason": "仍使用现有 Android 自适应图标机制。"},
+    "readme": {"status": "updated", "paths": ["README.md"], "reason": "更新家庭包版本和图标说明。"}
+  }
+}
