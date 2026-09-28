@@ -4,13 +4,8 @@ import {
   albumPhotoCount,
   albumTitle,
   firstPhoto,
-  routeDistMedia,
   setTheme,
 } from './support';
-
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
-});
 
 test('phone browse list opens the album and its viewer without horizontal overflow', async ({page}) => {
   await page.setViewportSize({width: 360, height: 800});

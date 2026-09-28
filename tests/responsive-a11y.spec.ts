@@ -4,13 +4,8 @@ import {
   albumTitle,
   enterAlbum,
   firstPhoto,
-  routeDistMedia,
   setTheme,
 } from './support';
-
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
-});
 
 test('responsive layout and real image loading',async({page},testInfo)=>{
   await page.goto('./');

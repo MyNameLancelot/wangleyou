@@ -5,7 +5,6 @@ import {
   firstPhoto,
   firstVideo,
   pressViewerKey,
-  routeDistMedia,
   setTheme,
   stepViewer,
   videoAlbumId,
@@ -13,10 +12,6 @@ import {
   viewerAt,
   viewerScrollLock,
 } from './support';
-
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
-});
 
 const currentSlide = (page: Parameters<typeof viewerAt>[0]) => page.locator('.yarl__slide_current');
 const currentVideo = (page: Parameters<typeof viewerAt>[0]) => currentSlide(page).locator('video');

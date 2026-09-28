@@ -1,12 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  routeDistMedia,
-  setTheme,
-} from './support';
-
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
-});
+import { setTheme } from './support';
 
 test('home memory arrows, hover pause and two-screen boundaries stay consistent', async ({page}) => {
   await page.setViewportSize({width:1440,height:900});

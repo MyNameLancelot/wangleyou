@@ -5,14 +5,9 @@ import {
   enterAlbum,
   firstPhoto,
   pressViewerKey,
-  routeDistMedia,
   setTheme,
   viewerAt,
 } from './support';
-
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
-});
 
 test('display text and images cannot be selected or natively dragged', async ({page}) => {
   await page.goto('./');
