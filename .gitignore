@@ -38,6 +38,22 @@ npm-debug.log*
 Thumbs.db
 Desktop.ini
 
+# Native build output and local signing material
+/.private/
+/native/android/.gradle/
+/native/android/local.properties
+/native/android/**/build/
+/native/ios/build/
+/native/ios/DerivedData/
+/native/ios/**/*.xcuserstate
+/native/ios/**/xcuserdata/
+*.jks
+*.keystore
+*.mobileprovision
+*.p12
+*.ipa
+*.apk
+
 # Build-time responsive WebP output; original media lives in media-source/<album>/.
 # Derived album folders are ignored by their YYYY-MM-sequenceNN naming pattern.
 /public/media/[0-9][0-9][0-9][0-9]-[0-9][0-9]-sequence*/

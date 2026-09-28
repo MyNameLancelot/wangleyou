@@ -1,0 +1,33 @@
+{
+  "mode": "full",
+  "summary": "增加仅供家庭设备私下安装的 iPhone、iPad、Android 远程网站 WebView 原生壳及独立打包流程。",
+  "reason": "用户要求保留 GitHub Pages 网站和现有媒体发布机制，同时提供独立安装包。",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "2026-09-24：git fetch origin main 后 HEAD、FETCH_HEAD、origin/main 同为 80a913d；工作区原先干净，新分支 feat/family-native-webview 从该提交创建。",
+    "生产 URL 核实：curl -IL https://mynamelancelot.github.io/wangleyou/ 返回 HTTP 200，首页 HTML 引用 /wangleyou/assets/；部署配置 SITE_BASE=/wangleyou/。",
+    "npm run check：SDD 结构、内容校验（7 个相册/34 个媒体）、TypeScript、ESLint 与 Vitest 13 文件/107 用例通过；首次沙箱内 tsx IPC EPERM 后按要求在沙箱外重跑通过。",
+    "npm run build：内容校验、tsc 与 Vite 生产构建通过。",
+    "npm run test:e2e：桌面/移动 Chrome 共 119 通过、9 跳过、0 失败；为网页浏览器验收，不代表原生 WebView 或真机。",
+    "iOS 静态检查：plutil -lint 工程与 Info.plist 通过，scheme/AndroidManifest XML 解析通过；swiftc -parse 两个 Swift 源文件通过；xcodebuild 因本机仅 Command Line Tools、无完整 Xcode 而未能编译。",
+    "Android Wrapper JAR SHA-256 与 Gradle 官方 8.11.1 校验值 2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046 一致。通过 SDKMAN 安装 Temurin JDK 17.0.20（随后恢复原 JDK 8 全局默认），临时安装 Android SDK Platform 35、Build Tools 35.0.0；JAVA_HOME 指向 JDK 17 的 ./gradlew :app:assembleDebug 成功（32 个任务，1m58s）。",
+    "Android debug APK：native/android/app/build/outputs/apk/debug/app-debug.apk 约 16 KB；unzip 内容只有 classes.dex、classes2.dex、AndroidManifest.xml、app_icon.xml 和资源/构建元数据，无网站 HTML/JS/CSS 或媒体；apksigner 验证 v2 签名通过；aapt badging 显示包名 com.mynamelancelot.wangleyou、minSdk 26、targetSdk 35、仅 INTERNET 权限。",
+    "Android Release 构建：首次 --offline 因 lint-gradle 尚未缓存失败，联网重试遇一次 Google Maven TLS bad_record_mac；再次重试 ./gradlew :app:assembleRelease 成功（42 个任务，2m）。生成 app-release-unsigned.apk 约 8.2 KB，apksigner verify 明确拒绝未签名包；家庭 Release APK 仍需维护者私有 keystore。",
+    "最初 adb devices -l 未发现连接设备；随后使用本地 API 34 模拟器完成 Android 行为验证。iPhone/iPad 模拟器和三端真机验证尚未执行；缺少完整 Xcode 与 iOS 签名资料，未生成可交付 IPA 或家庭 Release APK。"
+    ,
+    "Android API 34 模拟器（wly34，320×640，非真机）：安装 app-debug.apk 后核对首页→留影→相册→照片查看器→全屏，以及 2025 周岁相册视频查看器和视频原生控件/全屏；系统返回在照片与视频全屏中先退出全屏，再关闭查看器，随后返回站内历史。",
+    "Android 返回键修复：合成 Escape 和 portal.click 均不能关闭查看器；最终实现对当前 slide 目标派发 pointerdown/pointerup，模拟真实背景点击并经模拟器验证有效。此逻辑只在 WebView 判定查看器打开时使用，不影响站内业务状态。",
+    "Android 断网恢复：开启飞行模式并清除应用数据后启动显示原生“网站暂时无法连接 / 重新连接”；关闭飞行模式并点击重试后恢复网站。模拟器验证日期 2026-09-28。",
+    "2026-09-28：生成仅保存在本机 .private/android/ 的家庭 PKCS12 密钥和凭据（gitignore 排除，文件权限 0600）；使用 JDK 17、SDK 35 与缓存 Gradle 8.11.1 离线执行 :app:assembleRelease 成功（43 个任务），输出 app-release.apk。apksigner verify 通过 v2 签名；证书 SHA-256 为 83701c5afbd6df1171e1595db96d3a3ee39786d373277e94398a727629135d4d。aapt 确认包名 com.mynamelancelot.wangleyou、版本 1.0.0、minSdk 26、targetSdk 35、仅 INTERNET 权限。",
+    "2026-09-28：本机局域网扫码页显示签名 APK 下载入口；通过该 URL 回读的 APK SHA-256 与构建产物一致（5ea125e1c216c4e25fac9a1c571cdc1df1edafdc586954ee2fbef3a9107289e7）。Android 真机安装、更新与功能验收由用户执行，尚无结果。",
+    "最终差异与 SDD 审查：git diff --check 无空白错误；npm run check:sdd -- --worktree --base origin/main 通过（43 个差异路径）；核对原生包只加载生产网站、签名材料与产物被排除、原生 CI 为手动触发且不上传安装包、需求/架构/模块/README 与任务状态一致。"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "paths": ["docs/requirements.md"], "reason": "增加 App 安装、在线加载、导航与故障恢复基线。"},
+    "architecture": {"status": "updated", "paths": ["docs/architecture.md"], "reason": "增加独立原生壳边界和发布流程。"},
+    "modules": {"status": "updated", "paths": ["native/ios/module.md", "native/android/module.md", ".github/workflows/module.md"], "reason": "说明两个原生平台及 CI 的职责和资源生命周期。"},
+    "decisions": {"status": "updated", "paths": ["docs/decisions/0007-native-webview-shell.md", "docs/decisions/README.md"], "reason": "记录系统 WebView 与 Capacitor 等方案取舍。"},
+    "readme": {"status": "updated", "paths": ["README.md"], "reason": "补充环境版本、打包和私下安装步骤。"}
+  }
+}

@@ -4,6 +4,8 @@
 
 网站是部署在 GitHub Pages 的 React + TypeScript + Vite 静态应用。它提供两段首页、相册与全部影像浏览、媒体查看器、背景音乐，以及海边和草原两套隔离主题。媒体和内容配置均由仓库维护；没有后端、数据库、登录或运行时内容管理服务。
 
+`native/ios` 和 `native/android` 是独立的原生容器工程，运行时仅把现有 HTTPS 生产网站载入系统 WebView。原生包不含网站构建产物或媒体；Android 构建与家庭签名 APK 已验证，真机验收待办，iOS 构建和验收受完整 Xcode 与签名资料限制。
+
 产品行为见 [requirements.md](requirements.md)，开发与检查约定见 [AGENTS.md](../AGENTS.md) 和 [SDD 指南](sdd.md)。本文只描述当前模块边界和运行时归属。
 
 ## 模块
@@ -17,6 +19,8 @@
 | playback | 查看器会话和背景音乐的唯一业务状态所有者。 |
 | themes | 主题偏好与两个相互隔离的主题应用。 |
 | shared | 跨模块复用的无 UI 类型契约。 |
+| native/ios | iPhone/iPad 的 WKWebView、导航白名单、加载和错误状态及原生工程。 |
+| native/android | Android WebView、导航白名单、系统返回、视频全屏、加载和错误状态及 Gradle 工程。 |
 
 `app` 可以装配其他模块；业务模块不得反向依赖 `app`。主题只能使用其他模块的公开无 UI 入口，两个主题之间不得导入 JSX、CSS 或主题资产。模块内部文件不作为跨模块接口。
 
@@ -71,5 +75,6 @@
 - `src/main.tsx` → `src/app/index.ts`：应用入口；各模块 `index.ts` 是公开入口。
 - `npm run check`、`npm run build`、`npm run test:e2e`：本地验证入口。
 - `.github/workflows/check.yml`：push 和 PR 的检查；`.github/workflows/deploy.yml`：main 的 Pages 发布，详见 [工作流模块](../.github/workflows/module.md)。
+- `.github/workflows/native.yml`：仅手动执行原生无凭据构建，不上传安装包；Android 签名 APK 与 iOS Ad Hoc IPA 由维护者在本机签名并私下传递。
 
-查看器幻灯片只在用户点击工具栏按钮后运行；视频自然结束不自动推进。原生桥接不在当前交付范围；若实现，先更新需求、模块契约和相应验证。
+查看器幻灯片只在用户点击工具栏按钮后运行；视频自然结束不自动推进。原生壳不持有查看器业务状态。原生桥接不在当前交付范围；若实现，先更新需求、模块契约和相应验证。

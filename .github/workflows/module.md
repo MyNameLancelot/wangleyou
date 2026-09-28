@@ -2,12 +2,13 @@
 
 ## 目的与职责
 
-check.yml 验证内容、SDD、类型、lint、单元测试、构建和浏览器行为。deploy.yml 编排 main 的验证、构建和 Pages 发布。工作流不改变产品运行时功能，不管理用户域名、分支保护或环境审批规则。
+check.yml 验证内容、SDD、类型、lint、单元测试、构建和浏览器行为。deploy.yml 编排 main 的验证、构建和 Pages 发布。native.yml 仅手动验证 Android 和 iOS 原生壳构建，不上传安装包。工作流不改变产品运行时功能，不管理用户域名、分支保护或环境审批规则。
 
 ## 公开入口与输入输出
 
 - check.yml：push、pull_request、无参数 workflow_call。PR 读取事件的 base/head SHA 校验整个差异；其他事件执行 SDD 结构检查。输出任务结果，失败时上传浏览器诊断。
 - deploy.yml：main push、workflow_dispatch；手动运行也要求 refs/heads/main。validate 复用同一提交的 check.yml；build 成功上传 dist/ 对应的 github-pages artifact；deploy 输出真实 page_url，展示于 github-pages environment。
+- native.yml：仅 workflow_dispatch；Android 用 JDK 17/SDK 35 构建 debug APK，iOS 用 GitHub macOS runner 构建未签名模拟器 app；输出只有构建结果，不上传安装包、证书或设备资料。
 - 固定部署路径 /wangleyou/；更换仓库路径或根域名需要同步 SITE_BASE 和相关验证。
 
 ## 依赖与权限
@@ -22,6 +23,7 @@ check.yml 验证内容、SDD、类型、lint、单元测试、构建和浏览器
 
 - check.yml：唯一检查命令定义，可独立运行或复用。
 - deploy.yml：部署触发、依赖、权限、artifact 与环境。
+- native.yml：手动原生构建校验，与 Pages 发布解耦。
 - module.md：本契约。
 
 保留独立 push/PR 检查，因此 main 会同时触发检查工作流与部署内验证。这保持现有必需检查名称不变，接受重复验证开销。后续合并流程需单独评估状态检查名称与保护规则，不静默改变。新增验证优先加入 check.yml。
