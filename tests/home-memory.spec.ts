@@ -73,20 +73,13 @@ test('each turn removes a real right page and the final text page stops playback
   for (const remaining of [3, 2, 1]) {
     await page.getByRole('button', { name: '下一张照片' }).click();
     await expect(pages).toHaveCount(remaining);
-    if (remaining === 3) {
-      await page.waitForTimeout(330);
-      await page.screenshot({ path: '/private/tmp/book-turn-mid-desktop.png' });
-    }
     await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
   }
   await expect(page.getByTestId('home-memory-ending')).toContainText('想念的时候，随时回来看看');
-  await page.screenshot({ path: '/private/tmp/book-ending-desktop.png' });
   await expect(page.getByRole('button', { name: '主回忆播放已结束' })).toBeDisabled();
   await page.getByRole('button', { name: '上一张照片' }).click();
   await expect(page.getByTestId('home-memory-ending')).toBeVisible();
   await expect(page.getByTestId('home-memory-photo')).toHaveCount(0);
-  await page.waitForTimeout(330);
-  await page.screenshot({ path: '/private/tmp/book-turn-back-mid-desktop.png' });
   await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
   await expect(pages).toHaveCount(2);
   await expect(page.getByTestId('home-memory-photo')).toBeVisible();
@@ -104,15 +97,10 @@ test('mobile swipe reaches the ending page without restarting', async ({ page },
       element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [start], changedTouches: [start] }));
       element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [end] }));
     });
-    if (index === 0) {
-      await page.waitForTimeout(380);
-      await page.screenshot({ path: '/private/tmp/book-turn-mid-mobile.png', fullPage: true });
-    }
     await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
   }
   await expect(page.locator('[data-book-page]')).toHaveCount(1);
   await expect(page.getByTestId('home-memory-ending')).toBeVisible();
-  await page.screenshot({ path: '/private/tmp/book-ending-mobile.png', fullPage: true });
   await page.waitForTimeout(2300);
   await expect(page.getByTestId('home-memory-ending')).toBeVisible();
 });

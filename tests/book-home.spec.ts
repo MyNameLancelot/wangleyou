@@ -13,7 +13,6 @@ test('single book theme presents the approved home and keeps browsing available'
   const box = await photo.boundingBox();
   expect(box).not.toBeNull();
   expect((box?.width ?? 0) / (box?.height ?? 1)).toBeCloseTo(1.5, 1);
-  await page.screenshot({ path: `/private/tmp/book-home-${testInfo.project.name}.png`, fullPage: true });
   if (testInfo.project.name === 'mobile-chrome') {
     const titleLines = await home.locator('h1 span').evaluateAll(elements => elements.map(element => Math.round(element.getBoundingClientRect().top)));
     expect(titleLines).toHaveLength(2);
@@ -31,10 +30,5 @@ test('single book theme presents the approved home and keeps browsing available'
   await home.getByRole('link', { name: /浏览全部影像/ }).click();
   await expect(page).toHaveURL(/#\/browse$/);
   await expect(page.getByRole('heading', { name: '留影', level: 1 })).toBeVisible();
-  await page.screenshot({ path: `/private/tmp/book-browse-${testInfo.project.name}.png` });
-  if (testInfo.project.name === 'desktop-chrome') {
-    await page.setViewportSize({ width: 1920, height: 430 });
-    await page.screenshot({ path: '/private/tmp/book-browse-wide-chrome.png' });
-  }
   console.log(`${testInfo.project.name}: ${page.viewportSize()?.width}x${page.viewportSize()?.height}; ${page.context().browser()?.version()}`);
 });
