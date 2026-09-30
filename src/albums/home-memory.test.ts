@@ -16,6 +16,13 @@ describe('createHomeMemory', () => {
   it('wraps through explicitly ordered photos', () => {
     expect(stepHomeMemory({ ...createHomeMemory(photos), index: 2 }, 1).index).toBe(0)
   })
+  it('reaches one ending page after the photos and stops playing', () => {
+    const start = createHomeMemory(photos)
+    const ending = [1, 2, 3].reduce(memory => stepHomeMemory(memory, 1, false), start)
+    expect(ending).toMatchObject({ index: photos.length, playing: false })
+    expect(stepHomeMemory(ending, 1, false)).toEqual(ending)
+    expect(stepHomeMemory(ending, -1, false)).toMatchObject({ index: photos.length - 1, playing: false })
+  })
 })
 
 describe('createHomeMemoryIntervalController', () => {

@@ -1,0 +1,39 @@
+.home{min-height:100dvh;display:grid;place-items:center;padding:clamp(30px,5dvh,72px) clamp(20px,5vw,72px);background:radial-gradient(ellipse at 50% 25%,#f5ebd9 0,#e4d2b9 72%,#d5bba1 100%);color:#462c30}
+.book{position:relative;width:min(100%,950px);min-height:620px;padding:clamp(29px,4vw,46px) clamp(29px,5vw,68px) 38px clamp(42px,6vw,76px);border:1px solid #dfccb7;border-left:18px solid #802934;border-radius:6px 18px 18px 6px;background:radial-gradient(circle at 72% 27%,#fffdf6 0,#fff9ed 58%,#f4e9d8 100%);box-shadow:inset 7px 0 14px #6d293016,1px 2px 0 #fff4e0,8px 9px 0 #8a303b,16px 22px 40px #50302640}
+.book::after{content:"";position:absolute;left:12px;right:12px;bottom:8px;height:3px;border-radius:50%;background:#b39178;opacity:.35}
+.stitches{position:absolute;z-index:4;left:-13px;top:19%;bottom:19%;width:24px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.stitches i{position:relative;width:24px;height:29px}
+.stitches i::before,.stitches i::after{content:"";position:absolute;left:11px;top:0;width:2px;height:30px;border-radius:2px;background:#b58d69;box-shadow:1px 0 2px #452b1c80;transform:rotate(26deg)}
+.stitches i::after{transform:rotate(-26deg)}
+.heading{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+.heading h1{margin:0;font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(34px,4vw,54px);font-weight:500;line-height:1.18;letter-spacing:.015em}
+.heading h1 span{display:inline}
+.heading p{margin:12px 0 0;color:#977068;font-size:clamp(12px,1.15vw,15px);letter-spacing:.12em;line-height:1.5}
+.browse{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:2px;border-bottom:1px solid #a86b72;color:#7d2735;font-size:14px;text-decoration:none}
+.browse:hover{color:#a43c4b;border-color:currentColor}
+.browse:focus-visible,.browseMobile:focus-visible,.controls button:focus-visible,.sheetFront:focus-visible{outline:3px solid #a74450;outline-offset:4px}
+.memory{width:min(100%,640px);margin:38px auto 0}
+.stack{position:relative;isolation:isolate;width:calc(100% - 20px);aspect-ratio:3/2;touch-action:pan-y}
+.sheet{position:absolute;inset:0;display:block;width:100%;height:100%;padding:0;border:1px solid #e7d6c0;border-radius:2px;background:#fffaf0;box-shadow:0 9px 17px #5d42332b;aspect-ratio:3/2}
+.sheetUnder{z-index:0;transform:translate(calc(var(--depth)*3px),calc(var(--depth)*3px)) rotate(calc(.35deg + var(--depth)*.27deg));box-shadow:0 1px 0 #e3ccb5,3px 5px 9px #5d423325}
+.sheetFront{z-index:2;padding:1.6%;cursor:pointer;overflow:hidden;transform:rotate(.35deg);transform-origin:left center;box-shadow:0 12px 22px #5d42332d,2px 2px 0 #e8d5be}
+.photo{display:block;width:100%;height:100%;background:#e6d9c7}
+.photo img{display:block;width:100%;height:100%;object-fit:cover}
+.ending{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;cursor:default;background:radial-gradient(circle at 50% 42%,#fffdf6,#f8edda)}
+.ending p{margin:0;text-align:center;font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(18px,2.35vw,28px);line-height:1.9;letter-spacing:.08em;color:#64313a}
+.endingRule{width:64px;height:1px;background:#bc9d83}
+.endingMark{font-size:25px;line-height:1;color:#b58d69}
+.flip{position:absolute;inset:0;z-index:5;pointer-events:none;transform:rotate(.35deg);transform-origin:left center;overflow:hidden;border-radius:2px}
+.flip svg{display:block;overflow:hidden}
+.controls{display:flex;justify-content:center;align-items:center;gap:clamp(14px,3vw,42px);margin-top:35px}
+.controls button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:6px 8px;border:0;background:transparent;color:#7d2937;font:500 14px var(--font-body);cursor:pointer}
+.controls button:hover{color:#a74653}
+.controls button:disabled{opacity:.38;cursor:default}
+.controls svg{width:18px;height:18px}
+.empty{text-align:center;margin:80px auto 0;padding:35px;border:1px dashed #bba18b;color:#674c43}
+.empty h2{font-family:var(--font-title)}
+.empty a{color:#7d2937}
+.browseMobile{display:none}
+@media(max-width:700px){.home{padding:18px 16px 26px;align-items:center}.book{min-height:0;padding:30px 24px 42px 32px;border-left-width:12px;border-radius:4px 12px 12px 4px;box-shadow:inset 5px 0 10px #6d293016,5px 7px 0 #8a303b,10px 16px 28px #50302635}.stitches{left:-10px;top:19%;bottom:19%;width:20px}.stitches i{width:20px;height:22px}.stitches i::before,.stitches i::after{left:9px;height:23px;width:1.5px}.heading{display:block}.heading h1{max-width:12ch;font-size:clamp(29px,8vw,39px);line-height:1.16}.heading h1 span{display:block;white-space:nowrap}.heading p{margin-top:11px;font-size:12px;letter-spacing:.04em}.browse{display:none}.browseMobile{display:table;min-height:44px;margin:31px auto 0;padding:10px 0 4px;border-bottom:1px solid #a86b72;color:#7d2735;font-size:12px;text-decoration:none;white-space:nowrap}.memory{margin-top:clamp(38px,8dvh,70px);width:100%}.stack{width:calc(100% - 12px)}.sheetUnder{transform:translate(calc(var(--depth)*2px),calc(var(--depth)*2px)) rotate(calc(.35deg + var(--depth)*.22deg))}.ending p{font-size:clamp(12px,3.7vw,18px);line-height:1.9}.controls{display:none}.empty{margin:40px 0 30px}}
+@media(max-width:390px){.home{padding-inline:12px}.book{padding-left:28px;padding-right:19px}.heading h1{font-size:31px}.memory{margin-top:42px}}
+@media(prefers-reduced-motion:reduce){.flip{animation:none;display:none}.controls button,.browse{transition:none}}

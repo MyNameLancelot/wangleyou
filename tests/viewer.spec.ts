@@ -5,7 +5,7 @@ import {
   firstPhoto,
   firstVideo,
   pressViewerKey,
-  setTheme,
+  reloadBookPage,
   stepViewer,
   videoAlbumId,
   videoAlbumTitle,
@@ -247,13 +247,13 @@ test('viewer closes with Esc, close button and backdrop, then restores focus', a
   await expect(page.locator('body')).not.toHaveClass(/yarl__no_scroll/);
 });
 
-test('viewer is a shared component: identical structure and styling in both themes', async ({ page }) => {
+test('viewer stays a shared component with its own structure and styling', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`./#/albums/${albumId}`);
   const ringColors: string[] = [];
   const portalClasses: string[] = [];
-  for (const theme of ['beach', 'grassland'] as const) {
-    await setTheme(page, theme);
+  {
+    await reloadBookPage(page);
     await page.getByRole('button', { name: firstPhoto }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
@@ -286,10 +286,9 @@ test('viewer is a shared component: identical structure and styling in both them
     await pressViewerKey(page, 'Escape');
     await expect(dialog).toHaveCount(0);
   }
-  // 主题不可定制：两个主题下查看器根类名与焦点环完全一致
-  expect(portalClasses[0]).toBe(portalClasses[1]);
+  // 唯一主题只挂载共用查看器，不覆盖其根类名与白色焦点环
   expect(portalClasses[0]).toMatch(/viewer/);
-  expect(ringColors).toEqual(['rgb(255, 255, 255)', 'rgb(255, 255, 255)']);
+  expect(ringColors).toEqual(['rgb(255, 255, 255)']);
 });
 
 test('viewer enables the official plugin set: captions, fullscreen, slideshow, thumbnails, video, zoom', async ({ page }) => {
@@ -539,12 +538,9 @@ test('first and last items disable navigation instead of looping', async ({ page
 });
 
 test('opening a video never leaves a second audio source behind', async ({ page }) => {
-  // 首页背景音乐：相册页没有背景音乐控件，打开视频时不存在第二路音源
+  // 背景音乐当前不挂载，视频流程前后都不创建第二路音源
   await page.goto('./');
-  const audio = page.getByTestId('background-music');
-  const music = page.locator('[data-music-screen="hero"]');
-  if (await audio.evaluate(node => (node as HTMLAudioElement).paused)) await music.getByRole('button').click();
-  await expect.poll(() => audio.evaluate(node => (node as HTMLAudioElement).paused)).toBe(false);
+  await expect(page.locator('audio')).toHaveCount(0);
 
   await page.goto(`./#/albums/${videoAlbumId}`);
   await expect(page.locator('audio')).toHaveCount(0);
@@ -556,8 +552,8 @@ test('opening a video never leaves a second audio source behind', async ({ page 
   await expect(page.locator('video')).toHaveCount(0);
   await expect(page.locator('audio')).toHaveCount(0);
 
-  // 回到首页：仍按原规则由用户意图与首次手势决定，不出现重复音源
+  // 回到首页也不会重新挂载背景音乐
   await page.evaluate(() => { location.hash = '#/'; });
-  await expect(page.getByTestId('background-music')).toHaveCount(1);
-  await expect(page.locator('audio')).toHaveCount(1);
+  await expect(page.getByTestId('background-music')).toHaveCount(0);
+  await expect(page.locator('audio')).toHaveCount(0);
 });

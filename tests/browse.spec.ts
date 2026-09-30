@@ -5,7 +5,7 @@ import {
   albumPhotoCount,
   albumTitle,
   firstPhoto,
-  setTheme,
+  reloadBookPage,
   videoAlbumId,
 } from './support';
 
@@ -14,9 +14,9 @@ const albums = (JSON.parse(readFileSync('src/content/generated-photo-index.json'
   content: { albums: AlbumMeta[] };
 }).content.albums;
 
-/** 详情首屏引言取 opening，缺省回退到 description；两套主题必须一致。 */
-test('album detail shows the opening quote and falls back to the description in both themes', async ({ page }) => {
-  for (const theme of ['beach', 'grassland'] as const) {
+/** 详情首屏引言取 opening，缺省回退到 description。 */
+test('album detail shows the opening quote and falls back to the description', async ({ page }) => {
+   {
     for (const id of [videoAlbumId, albumId]) {
       const album = albums.find(item => item.id === id);
       expect(album, `生成索引缺少相册 ${id}`).toBeTruthy();
@@ -24,7 +24,7 @@ test('album detail shows the opening quote and falls back to the description in 
       expect(expected, `相册 ${id} 既没有 opening 也没有 description`).toBeTruthy();
 
       await page.goto(`./#/albums/${id}`);
-      await setTheme(page, theme);
+      await reloadBookPage(page);
       await expect(page.locator('[class*="detailHeroCopy"] blockquote')).toHaveText(expected as string);
     }
   }
@@ -76,9 +76,9 @@ test('phone browse album cards show only the album name with a text-hugging chip
   });
 
   await page.setViewportSize({width: 390, height: 844});
-  for (const theme of ['beach', 'grassland'] as const) {
+   {
     await page.goto('./#/browse');
-    await setTheme(page, theme);
+    await reloadBookPage(page);
     const phone = await measure();
     // 手机端只渲染相册名，说明文字不渲染
     expect(phone.textDisplay).toBe('none');
@@ -113,10 +113,10 @@ test('album detail hero shrinks to two thirds and shows at least four photos on 
     };
   });
 
-  for (const theme of ['beach', 'grassland'] as const) {
+   {
     await page.setViewportSize({width: 1440, height: 900});
     await page.goto(`./#/albums/${albumId}`);
-    await setTheme(page, theme);
+    await reloadBookPage(page);
     const desktop = await measure();
     expect(desktop.heroHeight).toBeGreaterThanOrEqual(360);
     expect(desktop.heroHeight).toBeLessThanOrEqual(400);
@@ -174,11 +174,11 @@ test('album masonry follows react-photo-album default column, spacing and sizes 
     { viewport: {width: 390, height: 844}, columns: 3, spacing: '10' },
   ];
 
-  for (const theme of ['beach', 'grassland'] as const) {
+  for (const theme of ['book'] as const) {
     for (const expectation of expectations) {
       await page.setViewportSize(expectation.viewport);
       await page.goto(`./#/albums/${albumId}`);
-      await setTheme(page, theme);
+      await reloadBookPage(page);
       const measured = await measure();
       expect(measured.columns, `${theme} ${expectation.viewport.width}px`).toBe(expectation.columns);
       expect(measured.spacing, `${theme} ${expectation.viewport.width}px`).toBe(expectation.spacing);
@@ -216,10 +216,10 @@ test('album detail photos use polaroid frames without inner strokes', async ({pa
     };
   });
 
-  for (const theme of ['beach', 'grassland'] as const) {
+  for (const theme of ['book'] as const) {
     await page.setViewportSize({width: 1440, height: 1000});
     await page.goto(`./#/albums/${albumId}`);
-    await setTheme(page, theme);
+    await reloadBookPage(page);
     const frame = await measure();
     expect(frame.padding, theme).toBe('8px');
     expect(frame.background, theme).toBe('rgb(255, 255, 255)');
@@ -326,12 +326,12 @@ test('year navigation and type filter work on the browse page', async ({page}) =
   await expect.poll(() => page.locator('#year-2028').evaluate(node => node.getBoundingClientRect().top)).toBeGreaterThanOrEqual(306);
 });
 
-test('browse album cards stack top covers with depth in both themes', async ({page}) => {
+test('browse album cards stack top covers with depth in the book theme', async ({page}) => {
   await page.setViewportSize({width: 1440, height: 1000});
   await page.goto('./#/browse');
 
-  for (const theme of ['beach', 'grassland'] as const) {
-    await setTheme(page, theme);
+   {
+    await reloadBookPage(page);
     const card = page.getByRole('link', {name: `查看相册：${albumTitle}`});
     const stack = card.locator('[data-browse-album-stack]');
     await expect(stack).toHaveAttribute('data-stack', '3');

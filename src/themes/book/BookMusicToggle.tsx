@@ -8,28 +8,27 @@ import {
 } from '../../playback';
 import type { BackgroundMusic } from '../../playback';
 import type { ThemeMusicCommands } from '../contracts';
-import styles from './BeachMusicToggle.module.css';
+import styles from './BookMusicToggle.module.css';
 
 /** 长按音乐按钮展开音量：触屏端没有 hover 时的入口。 */
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_SLOP_PX = 8;
 
 /**
- * 海边主题首页两屏的背景音乐入口。
- * 两个按钮共享本组件创建的唯一音频元素，播放意图与状态来自 playback 契约。
+ * 相册首页唯一的背景音乐入口，播放意图与状态来自 playback 契约。
  */
-export function BeachMusicToggle({ music, commands, blockedByVideo }: {
+export function BookMusicToggle({ music, commands, blockedByVideo }: {
   music: BackgroundMusic;
   commands: ThemeMusicCommands;
   blockedByVideo: boolean;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playRequestRef = useRef(0);
-  const controlRefs = useRef<Record<'hero' | 'memory', HTMLDivElement | null>>({ hero: null, memory: null });
+  const controlRef = useRef<HTMLDivElement | null>(null);
   const pressTimerRef = useRef<number | undefined>(undefined);
   const pressStartRef = useRef<{ x: number; y: number } | null>(null);
   const suppressClickRef = useRef(false);
-  const [pinnedScreen, setPinnedScreen] = useState<'hero' | 'memory' | null>(null);
+  const [volumePinned, setVolumePinned] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
     const audio = audioRef.current;
     if (!audio) return;
     // StrictMode 会重放 effect：清理后的同一 DOM 必须重新获得资源地址。
-    audio.src = mediaUrl('media/themes/beach/music.mp3');
+    audio.src = mediaUrl('media/themes/book/music.mp3');
     return () => {
       playRequestRef.current += 1;
       audio.pause();
@@ -77,7 +76,7 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
     const onGesture = (event: Event) => {
       if (music.resumeRequired) return;
       const target = event.target;
-      if (target instanceof Node && Object.values(controlRefs.current).some(node => node?.contains(target))) return;
+      if (target instanceof Node && controlRef.current?.contains(target)) return;
       audioPlay();
     };
     document.addEventListener('pointerdown', onGesture, true);
@@ -94,20 +93,20 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
 
   // 点击面板外或按 Esc 收起长按展开的音量面板
   useEffect(() => {
-    if (!pinnedScreen) return;
+    if (!volumePinned) return;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
-      if (target instanceof Node && controlRefs.current[pinnedScreen]?.contains(target)) return;
-      setPinnedScreen(null);
+      if (target instanceof Node && controlRef.current?.contains(target)) return;
+      setVolumePinned(false);
     };
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setPinnedScreen(null); };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setVolumePinned(false); };
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('pointerdown', onPointerDown, true);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [pinnedScreen]);
+  }, [volumePinned]);
 
   const clearPressTimer = () => {
     if (pressTimerRef.current === undefined) return;
@@ -115,7 +114,7 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
     pressTimerRef.current = undefined;
   };
   const playing = isBackgroundMusicPlaying(music);
-  const onButtonPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, screen: 'hero' | 'memory') => {
+  const onButtonPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     // 只有播放状态才提供长按展开音量；暂停时长按仍按普通点击处理
     if (!playing) return;
@@ -125,7 +124,7 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
     pressTimerRef.current = window.setTimeout(() => {
       pressTimerRef.current = undefined;
       suppressClickRef.current = true;
-      setPinnedScreen(screen);
+      setVolumePinned(true);
     }, LONG_PRESS_MS);
   };
   const onButtonPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -169,19 +168,19 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
     audioPlay();
   }, [shouldPlay, audioPlay, commands]);
 
-  const renderButton = (screen: 'hero' | 'memory') => <div
-    ref={node => { controlRefs.current[screen] = node; }}
-    className={`${styles.control} ${screen === 'memory' ? styles.memoryControl : ''}`}
-    data-testid={screen === 'hero' ? 'music-toggle' : undefined}
-    data-music-screen={screen}
+  const renderButton = () => <div
+    ref={controlRef}
+    className={styles.control}
+    data-testid="music-toggle"
+    data-music-screen="home"
     data-playing={playing}
-    data-volume-pinned={pinnedScreen === screen}
+    data-volume-pinned={volumePinned}
   >
     <button
       type="button"
       className={styles.button}
       onClick={onButtonClick}
-      onPointerDown={event => onButtonPointerDown(event, screen)}
+      onPointerDown={onButtonPointerDown}
       onPointerMove={onButtonPointerMove}
       onPointerUp={endPress}
       onPointerCancel={endPress}
@@ -196,7 +195,7 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
         </span>
       </span>
     </button>
-    <div className={styles.volume} data-testid={screen === 'hero' ? 'music-volume' : undefined} data-music-volume={screen} aria-hidden={!playing}>
+    <div className={styles.volume} data-testid="music-volume" data-music-volume="home" aria-hidden={!playing}>
       <input
         className={styles.slider}
         type="range"
@@ -217,12 +216,11 @@ export function BeachMusicToggle({ music, commands, blockedByVideo }: {
     <audio
       ref={audioRef}
       className={styles.audio}
-      src={mediaUrl('media/themes/beach/music.mp3')}
+      src={mediaUrl('media/themes/book/music.mp3')}
       loop
       preload="none"
       data-testid="background-music"
     />
-    {renderButton('hero')}
-    {renderButton('memory')}
+    {renderButton()}
   </div>;
 }

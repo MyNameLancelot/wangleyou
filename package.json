@@ -26,7 +26,6 @@
     "lucide-react": "^1.47.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-liquid-glass-svg": "^1.0.5",
     "react-photo-album": "^3.6.1",
     "yet-another-react-lightbox": "^3.32.2"
   },
