@@ -18,7 +18,7 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 public final class MainActivity extends Activity {
-    private static final String SITE = "https://mynamelancelot.github.io/wangleyou/";
+    private static final String SITE = "https://wangleyou.pages.dev/";
     private FrameLayout root;
     private WebView webView;
     private View statusBarScrim;
@@ -32,9 +32,9 @@ public final class MainActivity extends Activity {
     static boolean isSite(Uri uri) {
         String path = uri.getPath();
         return "https".equalsIgnoreCase(uri.getScheme())
-                && "mynamelancelot.github.io".equalsIgnoreCase(uri.getHost())
+                && "wangleyou.pages.dev".equalsIgnoreCase(uri.getHost())
                 && uri.getPort() == -1 && uri.getUserInfo() == null
-                && path != null && (path.equals("/wangleyou") || path.startsWith("/wangleyou/"));
+                && (path == null || path.isEmpty() || path.equals("/"));
     }
 
     @Override public void onCreate(Bundle state) {

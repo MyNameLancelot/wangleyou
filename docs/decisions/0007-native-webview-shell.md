@@ -15,11 +15,11 @@
 
 平台依据：[Apple WKWebView](https://developer.apple.com/documentation/webkit/wkwebview)、[Apple 内联媒体配置](https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/allowsinlinemediaplayback)、[Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview)、[Android Gradle Plugin 8.9 兼容表](https://developer.android.com/build/releases/agp-8-9-0-release-notes)、[Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html)。
 
-默认 URL 从 `.github/workflows/deploy.yml` 的 `/wangleyou/`、README 的 Pages 主机与 Vite base 共同核实，为 `https://mynamelancelot.github.io/wangleyou/`；2026-09-24 实际 HTTPS 请求返回 200，HTML 引用 `/wangleyou/assets/`。设备内加载仍待模拟器/真机验证。顶层导航只允许该 origin 的 `/wangleyou/` 路径；外部 HTTPS 用户链接交系统浏览器，拒绝其他 scheme。子资源按网站既有规则从 CDN 加载，不做原生地址替换。iOS 保持默认 ATS；Android 仅申请 INTERNET 并禁用明文流量。
+原生壳最初使用 `https://mynamelancelot.github.io/wangleyou/`。2026-09-30 用户部署并确认 Cloudflare Pages 镜像可用后，将默认 URL 改为 `https://wangleyou.pages.dev/`；该站点在根路径构建，顶层导航只允许其 HTTPS host 的根路径，Hash 导航仍留在 WebView。GitHub Pages 保留浏览器备用；外部 HTTPS 用户链接交系统浏览器，拒绝其他 scheme。子资源按网页 URL 加载，不做原生地址替换。iOS 保持默认 ATS；Android 仅申请 INTERNET 并禁用明文流量。
 
 ## 构建与分发
 
-原生 CI 仅 `workflow_dispatch`，只验证 unsigned iOS 模拟器构建和 Android debug APK，不上传安装包。家庭安装由维护者本机签名并私下传递。Android Release APK 由本地 keystore 签名；iOS Ad Hoc IPA 需要 Apple Developer Program、证书、App ID、登记设备及 provisioning profile。两套原生壳的版本由维护者显式提升。网站 main 更新仍走原 Pages 工作流。
+原生 CI 仅 `workflow_dispatch`，只验证 unsigned iOS 模拟器构建和 Android debug APK，不上传安装包。Android Release APK 由本地 keystore 签名；用户本次明确要求把 v1.0.10 上传公开 GitHub Release 并提供二维码，签名材料仍只留本机。iOS Ad Hoc IPA 需要 Apple Developer Program、证书、App ID、登记设备及 provisioning profile，当前未交付。网站 main 更新分别触发 GitHub Pages 工作流与 Cloudflare Pages Git 集成。
 
 分发依据：[Apple 登记设备分发](https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices)、[Android APK 签名](https://developer.android.com/studio/publish/app-signing)、[Android 非商店分发](https://developer.android.com/distribute/marketing-tools/alternative-distribution)。
 
