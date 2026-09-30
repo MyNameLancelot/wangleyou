@@ -1,0 +1,20 @@
+{
+  "mode": "light",
+  "summary": "修复 Android 系统返回键关闭影像查看器，并审查原生壳边界。",
+  "reason": "现有返回键查找了不存在的查看器根节点，未能恢复已规定的优先关闭行为。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "2026-09-28：Playwright 定向测试在桌面 Chrome 与手机 Chrome 视口均通过（2/2）；合成 Esc 关闭查看器后仍停留在相册详情。",
+    "2026-09-28：npm run check 通过，包含内容校验、TypeScript、ESLint、13 个 Vitest 文件/107 个用例；npm run check:sdd -- --worktree --base origin/main 与 git diff --check 通过。",
+    "2026-09-28：Android JDK 17、SDK 35 的 ./gradlew :app:assembleDebug 构建通过（32 个任务）；离线首次构建因缺少 Gradle Plugin 缓存失败，联网重试成功。",
+    "2026-09-28：静态审查 Android/iOS 原生壳的导航白名单、状态与资源生命周期；本次仅修复返回键缺陷。adb devices 未发现运行中的模拟器，未执行原生返回键设备验证。"
+  ],
+  "impacts": {
+    "requirements": {"status": "none", "reason": "恢复现有 A2 返回键行为，产品需求无变化。"},
+    "architecture": {"status": "none", "reason": "继续由网站 playback 持有查看器状态，原生壳只转发返回意图。"},
+    "modules": {"status": "none", "reason": "Android 模块职责和公开接口不变。"},
+    "decisions": {"status": "none", "reason": "不改变原生 WebView 方案。"},
+    "readme": {"status": "none", "reason": "构建和安装步骤不变。"}
+  }
+}

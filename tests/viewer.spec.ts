@@ -16,6 +16,21 @@ import {
 const currentSlide = (page: Parameters<typeof viewerAt>[0]) => page.locator('.yarl__slide_current');
 const currentVideo = (page: Parameters<typeof viewerAt>[0]) => currentSlide(page).locator('video');
 
+test('synthetic Escape from Android back closes the viewer without leaving the album', async ({ page }) => {
+  await page.goto(`./#/albums/${albumId}`);
+  await page.getByRole('button', { name: firstPhoto }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  const handled = await page.evaluate(() => {
+    const viewer = document.querySelector('.yarl__container');
+    if (!viewer) return false;
+    viewer.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    return true;
+  });
+  expect(handled).toBe(true);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`#/albums/${albumId}$`));
+});
+
 test('album grid shows the video thumbnail with a play badge next to the photos', async ({ page, isMobile }) => {
   await page.goto(`./#/albums/${videoAlbumId}`);
   await expect(page.getByRole('heading', { name: videoAlbumTitle, level: 1 })).toBeVisible();

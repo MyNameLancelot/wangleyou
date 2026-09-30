@@ -175,11 +175,11 @@ public final class MainActivity extends Activity {
 
     @Override public void onBackPressed() {
         if (fullscreenView != null) { leaveFullscreen(); return; }
-        webView.evaluateJavascript("Boolean(document.querySelector('.yarl__root'))", value -> {
+        // 把系统返回映射到查看器已有的 Esc 契约，关闭状态仍由网页 playback 持有。
+        webView.evaluateJavascript("(function(){var viewer=document.querySelector('.yarl__container'); if(!viewer) return false; viewer.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})); return true})()", value -> {
             if (isDestroyed()) return;
-            if ("true".equals(value)) {
-                webView.evaluateJavascript("var target=document.querySelector('.yarl__slide_current.yarl__slide, .yarl__slide_current .yarl__slide_wrapper'); if (target) { var r=target.getBoundingClientRect(); var o={bubbles:true,cancelable:true,composed:true,pointerId:1,pointerType:'touch',isPrimary:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2}; target.dispatchEvent(new PointerEvent('pointerdown',o)); target.dispatchEvent(new PointerEvent('pointerup',o)); }", null);
-            } else if (webView.canGoBack()) webView.goBack();
+            if ("true".equals(value)) return;
+            if (webView.canGoBack()) webView.goBack();
             else MainActivity.super.onBackPressed();
         });
     }
