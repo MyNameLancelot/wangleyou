@@ -4,7 +4,7 @@
 
 网站是部署在 GitHub Pages 的 React + TypeScript + Vite 静态应用。它提供两段首页、相册与全部影像浏览、媒体查看器、背景音乐，以及海边和草原两套隔离主题。媒体和内容配置均由仓库维护；没有后端、数据库、登录或运行时内容管理服务。
 
-`native/ios` 和 `native/android` 是独立的原生容器工程，运行时仅把现有 HTTPS 生产网站载入系统 WebView。原生包不含网站构建产物或媒体；Android 构建与家庭签名 APK 已验证，真机逐项验收待补录；iOS 构建和验收受完整 Xcode 与签名资料限制，用户已决定暂缓安装。
+`native/ios` 和 `native/android` 是独立的原生容器工程，运行时仅把现有 HTTPS 生产网站载入系统 WebView。原生包不含网站构建产物或家庭相册媒体；Android 包内有本地开屏视频，无首尾静帧。Android 构建与家庭签名 APK 已验证，真机逐项验收待补录；iOS 构建和验收受完整 Xcode 与签名资料限制，用户已决定暂缓安装。
 
 产品行为见 [requirements.md](requirements.md)，开发与检查约定见 [AGENTS.md](../AGENTS.md) 和 [SDD 指南](sdd.md)。本文只描述当前模块边界和运行时归属。
 

@@ -23,6 +23,7 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private View statusBarScrim;
     private StartupOverlay startupOverlay;
+    private boolean awaitingInitialPageStart = true;
     private boolean mainFrameError;
     private View fullscreenView;
     private WebChromeClient.CustomViewCallback fullscreenCallback;
@@ -94,7 +95,8 @@ public final class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 if (!isSite(Uri.parse(url))) { view.stopLoading(); showError(); return; }
                 mainFrameError = false;
-                startupOverlay.showLoading();
+                if (awaitingInitialPageStart) awaitingInitialPageStart = false;
+                else startupOverlay.showLoading();
                 statusBarScrim.setVisibility(View.GONE);
                 setLoadingStatusBar(true);
             }
@@ -187,6 +189,16 @@ public final class MainActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle out) {
         webView.saveState(out);
         super.onSaveInstanceState(out);
+    }
+
+    @Override protected void onPause() {
+        if (startupOverlay != null) startupOverlay.pausePlayback();
+        super.onPause();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (startupOverlay != null) startupOverlay.resumePlayback();
     }
 
     @Override protected void onDestroy() {

@@ -183,7 +183,7 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 ## 家庭设备原生 App
 
-`native/ios` 与 `native/android` 是可独立安装的原生工程，默认只加载生产网站 `https://mynamelancelot.github.io/wangleyou/`。这个地址由 Pages 仓库路径和现有部署配置核实；若更改站点域名或子路径，要同时更新两端 URL 与导航白名单。安装包只含系统 WebView 容器代码、图标、加载/错误界面，不包含 `dist/`、`media-source/`、`public/media/` 或相册配置。相册和媒体更新仍由 main 的网站部署生效，无需重打原生包。
+`native/ios` 与 `native/android` 是可独立安装的原生工程，默认只加载生产网站 `https://mynamelancelot.github.io/wangleyou/`。这个地址由 Pages 仓库路径和现有部署配置核实；若更改站点域名或子路径，要同时更新两端 URL 与导航白名单。安装包只含系统 WebView 容器代码、图标、Android 本地开屏视频与加载/错误界面，不包含 `dist/`、`media-source/`、`public/media/` 或相册配置。相册和媒体更新仍由 main 的网站部署生效，无需重打原生包。
 
 原生构建与网站部署分开。`.github/workflows/native.yml` 只能在 Actions 手动 **Run workflow**，运行 Android debug 与 iOS 无签名模拟器构建校验，不上传任何 APK/IPA。网站 main push 仍只执行原有检查与 Pages 部署。原生壳、图标、权限或原生配置变化时，维护者提升两端版本号并手动构建；需要新版本时也可手动构建。不要把签名文件、密码、设备 ID 或家庭安装包提交到仓库或上传公开 Release。
 
@@ -197,7 +197,7 @@ cd native/android
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.5（`versionCode` 6），桌面名称为「乐悠时光」，图标为奶油白底无文字翻开相册；系统启动和加载阶段使用奶油白相册翻开画面（封面摊到接近平、书脊直立），冷启动会完整播完翻开动作，右上角「跳过」按钮可立即进入，网页出现后状态栏透明，网页背景延伸至屏幕顶部，渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
+`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.9（`versionCode` 10），桌面名称为「乐悠时光」，图标为奶油白底无文字翻开相册；系统启动和加载阶段播放 APK 内的 1080×1920 相册翻开视频，全程由同一画面层中心裁切铺满，视频播完后网页若仍未就绪则保持视频尾帧，网页先就绪时可用右上角「跳过」立即进入。视频源文件位于 `native/android/app/src/main/res/raw/album_opening.mp4`，加载文案下方的光条往返运动，异常或关闭动画时使用奶油白背景与文字。网页出现后状态栏透明，网页背景延伸至屏幕顶部，渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
 
 ```bash
 export WANGLEYOU_ANDROID_KEYSTORE=/absolute/private/path/family.jks
@@ -206,7 +206,7 @@ export WANGLEYOU_ANDROID_KEY_ALIAS='在本机设置'
 export WANGLEYOU_ANDROID_KEY_PASSWORD='在本机设置'
 cd native/android && ./gradlew :app:assembleRelease
 apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
-python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.5.apk
+python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.9.apk
 ```
 
 不要把示例值当成真实密码，也不要把密码写进仓库。本机已生成的家庭签名材料位于被 Git 忽略的 `.private/android/family-release.jks` 与 `.private/android/signing.env`；请将两者加密备份到仓库和电脑之外，丢失后不能用同一身份更新已安装的 App。安装 APK 时，Android 8+ 需要在设备上为接收文件的应用临时允许“安装未知应用”；首次安装和后续更新必须使用同一私钥签名。Debug 版与家庭 Release 版签名不同，已安装 Debug 版时需先卸载，其本地数据会被清除。只通过家庭私下渠道传递 APK，安装后可关闭该来源的安装权限。

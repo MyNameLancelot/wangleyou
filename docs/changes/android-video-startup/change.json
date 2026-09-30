@@ -1,0 +1,51 @@
+{
+  "mode": "full",
+  "summary": "Android 视频开屏修复画面裁切、加载动效与首次网页回调导致的闪屏，并重新打包家庭 APK。",
+  "reason": "用户真机发现首次安装启动约 1 秒出现闪屏，代码检查确认首次 onPageStarted 重置了已经开始播放的视频。",
+  "behavior": true,
+  "architecture": false,
+  "verification": [
+    "选定 MP4 与 res/raw/album_opening.mp4 的 SHA-256 均为 8e7fc966e6a5c74db35ba7ccc22bc8f0d56e3a3b7c74398366d51008516cc14b；ffprobe 确认为 1080×1920、5.193548 秒、无音轨。",
+    "用户真机反馈上一版视频底色未铺满、首尾图片切换有缩放闪动；现改用 TextureView/MediaPlayer 同层中心裁切，APK 不含首尾静帧。修复后的画面仍待用户真机复验。",
+    "2026-09-30：JDK 17、Android SDK 35、Gradle 8.11.1 离线构建 :app:assembleDebug 和 :app:assembleRelease 成功，Release lintVital 通过。",
+    "apksigner：乐悠时光-v1.0.8.apk 使用 APK v2 签名且校验通过；aapt：versionCode 9、versionName 1.0.8；SHA-256 为 e627316b7541b8a0bb2b6687258a8d9d12e2211cd149ab9a17f9c8d5b6f2417f。",
+    "2026-09-30：v1.0.9 首次 onPageStarted 不再调用 showLoading，避免释放播放器并将画面透明度归零；后续加载仍重播。Debug/Release 离线构建和 Release lintVital 通过；apksigner v2 校验通过，aapt 确认为 versionCode 10、versionName 1.0.9；APK SHA-256 为 289fa81bdf590b0c60584f3050eff7e09123d21ec66c1e6ddad85ea7bc0b82b4。",
+    "2026-09-30：npm run check 通过（内容校验、TypeScript、ESLint、13 个 Vitest 文件/107 个用例）；定向 Playwright 查看器返回键测试在 mobile-chrome 通过；git diff --check 通过。",
+    "既有 Android API 34 模拟器验证仅覆盖早期 1.0.6 版本，不能证明当前视频裁切与加载光条效果；按用户要求，本版真机画面和覆盖安装由用户验收。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "paths": [
+        "docs/requirements.md"
+      ],
+      "reason": "更新 Android 视频开屏与加载光条行为。"
+    },
+    "architecture": {
+      "status": "updated",
+      "paths": [
+        "docs/architecture.md"
+      ],
+      "reason": "修正原生包不含媒体的表述，区分本地开屏视频与家庭相册媒体；模块边界不变。"
+    },
+    "modules": {
+      "status": "updated",
+      "paths": [
+        "native/android/module.md"
+      ],
+      "reason": "更新播放器和加载动画生命周期契约。"
+    },
+    "decisions": {
+      "status": "none",
+      "paths": [],
+      "reason": "使用 Android 平台播放器，不新增架构决策。"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": [
+        "README.md"
+      ],
+      "reason": "更新开屏说明、版本与安装包路径。"
+    }
+  }
+}
