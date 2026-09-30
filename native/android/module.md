@@ -10,7 +10,7 @@
 
 ## 公开接口与输入输出
 
-`./gradlew :app:assembleDebug` 输出可装到测试设备的 debug APK；配置 `WANGLEYOU_ANDROID_KEYSTORE`、`WANGLEYOU_ANDROID_STORE_PASSWORD`、`WANGLEYOU_ANDROID_KEY_ALIAS`、`WANGLEYOU_ANDROID_KEY_PASSWORD` 后 `:app:assembleRelease` 输出本机签名的家用 Release APK。`python3 package_family_apk.py` 根据构建元数据生成 `乐悠时光-v<versionName>.apk` 交付副本。桌面应用标签为「乐悠时光」。输入固定生产 URL；修改时同步 iOS、需求与部署设置。
+`./gradlew :app:assembleDebug` 输出可装到测试设备的 debug APK；配置 `WANGLEYOU_ANDROID_KEYSTORE`、`WANGLEYOU_ANDROID_STORE_PASSWORD`、`WANGLEYOU_ANDROID_KEY_ALIAS`、`WANGLEYOU_ANDROID_KEY_PASSWORD` 后 `:app:assembleRelease` 输出本机签名的家用 Release APK。`python3 package_family_apk.py` 根据构建元数据生成 `乐悠时光-v<versionName>.apk` 交付副本。桌面应用标签为「乐悠时光」。输入固定生产 URL `https://wangleyou.pages.dev/`；只允许该 HTTPS host 的根路径作为站内顶层页面，Hash 路由留在 WebView。修改时同步 iOS、需求与部署设置。
 
 ## 允许依赖
 

@@ -2,7 +2,7 @@ import UIKit
 import WebKit
 
 final class SiteViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
-    private static let siteURL = URL(string: "https://mynamelancelot.github.io/wangleyou/")!
+    private static let siteURL = URL(string: "https://wangleyou.pages.dev/")!
     private let progress = UIProgressView(progressViewStyle: .bar)
     private let errorPanel = UIStackView()
     private var webView: WKWebView!
@@ -78,10 +78,10 @@ final class SiteViewController: UIViewController, WKNavigationDelegate, WKUIDele
 
     private static func isSite(_ url: URL) -> Bool {
         url.scheme?.lowercased() == "https"
-            && url.host?.lowercased() == "mynamelancelot.github.io"
+            && url.host?.lowercased() == "wangleyou.pages.dev"
             && url.port == nil
             && url.user == nil
-            && (url.path == "/wangleyou" || url.path.hasPrefix("/wangleyou/"))
+            && (url.path.isEmpty || url.path == "/")
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,

@@ -10,7 +10,7 @@
 
 ## 公开接口与输入输出
 
-`WangLeYou.xcodeproj` / `WangLeYou` scheme 是构建入口；输入固定生产 URL `https://mynamelancelot.github.io/wangleyou/`，输出未签名模拟器 `.app` 或经维护者 Ad Hoc 签名的 `.ipa`。修改 URL 时必须同步 Android、需求与部署设置。
+`WangLeYou.xcodeproj` / `WangLeYou` scheme 是构建入口；输入固定生产 URL `https://wangleyou.pages.dev/`，仅允许该 HTTPS host 的根路径和站内 Hash 路由，输出未签名模拟器 `.app` 或经维护者 Ad Hoc 签名的 `.ipa`。修改 URL 时必须同步 Android、需求与部署设置。
 
 ## 允许依赖
 

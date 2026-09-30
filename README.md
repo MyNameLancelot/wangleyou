@@ -177,15 +177,15 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 普通 Git 推送会阻止超过 100 MiB 的单文件；添加媒体前先压缩并评估仓库总量，不把仓库当无限容量媒体存储。[GitHub 大文件说明](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
 
-媒体与页面同源，由 GitHub Pages 自带的边缘缓存分发（响应头含 `x-github-edge-region`，并支持 Range 请求），当前不接入额外 CDN；派生资源文件名带内容哈希，更新素材不会命中旧缓存。仓库型 CDN 的适用边界：jsDelivr 对 GitHub 来源限制单文件 20 MB，且只能提供已提交进仓库的文件。媒体托管何时需要重新评估、有哪两条候选路径，见 [总架构](docs/architecture.md)。
+Cloudflare Pages 已通过 Git 集成从 `main` 构建根路径站点 `https://wangleyou.pages.dev/`，构建环境设 `NODE_VERSION=24`、`SITE_BASE=/`、命令 `npm ci && npm run build`、输出目录 `dist`。GitHub Pages 的 `/wangleyou/` 地址保留为浏览器备用。两处当前都让媒体与页面同源；真实照片和视频的独立存储尚未实施。仓库型 CDN 只能提供已提交的文件，拿不到构建期派生资源。媒体托管触发条件与候选路径见 [总架构](docs/architecture.md)。
 
 配置依据：[GitHub 自定义 Pages 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)、[Vite 静态部署](https://vite.dev/guide/static-deploy#github-pages)。
 
 ## 家庭设备原生 App
 
-`native/ios` 与 `native/android` 是可独立安装的原生工程，默认只加载生产网站 `https://mynamelancelot.github.io/wangleyou/`。这个地址由 Pages 仓库路径和现有部署配置核实；若更改站点域名或子路径，要同时更新两端 URL 与导航白名单。安装包只含系统 WebView 容器代码、图标、Android 本地开屏视频与加载/错误界面，不包含 `dist/`、`media-source/`、`public/media/` 或相册配置。相册和媒体更新仍由 main 的网站部署生效，无需重打原生包。
+`native/ios` 与 `native/android` 是可独立安装的原生工程，默认只加载生产网站 `https://wangleyou.pages.dev/`。顶层站内页面限定为该 HTTPS host 的根路径，Hash 路由留在 WebView；GitHub Pages 保留浏览器备用。若更改站点域名或子路径，要同时更新两端 URL 与导航白名单。安装包只含系统 WebView 容器代码、图标、Android 本地开屏视频与加载/错误界面，不包含 `dist/`、`media-source/`、`public/media/` 或相册配置。相册和媒体更新仍由 main 的网站部署生效，无需重打原生包。
 
-原生构建与网站部署分开。`.github/workflows/native.yml` 只能在 Actions 手动 **Run workflow**，运行 Android debug 与 iOS 无签名模拟器构建校验，不上传任何 APK/IPA。网站 main push 仍只执行原有检查与 Pages 部署。原生壳、图标、权限或原生配置变化时，维护者提升两端版本号并手动构建；需要新版本时也可手动构建。不要把签名文件、密码、设备 ID 或家庭安装包提交到仓库或上传公开 Release。
+原生构建与网站部署分开。`.github/workflows/native.yml` 只能在 Actions 手动 **Run workflow**，运行 Android debug 与 iOS 无签名模拟器构建校验，不上传任何 APK/IPA。网站 main push 触发 GitHub Pages 工作流与 Cloudflare Pages Git 构建。原生壳、图标、权限或原生配置变化时，维护者提升版本号并手动构建。本次用户明确要求把 v1.0.10 签名 APK 上传公开 GitHub Release，供扫码下载；签名文件、密码与设备 ID 始终不得入仓库或上传。
 
 ### Android：本机 APK
 
@@ -197,7 +197,7 @@ cd native/android
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.9（`versionCode` 10），桌面名称为「乐悠时光」，图标为奶油白底无文字翻开相册；系统启动和加载阶段播放 APK 内的 1080×1920 相册翻开视频，全程由同一画面层中心裁切铺满，视频播完后网页若仍未就绪则保持视频尾帧，网页先就绪时可用右上角「跳过」立即进入。视频源文件位于 `native/android/app/src/main/res/raw/album_opening.mp4`，加载文案下方的光条往返运动，异常或关闭动画时使用奶油白背景与文字。网页出现后状态栏透明，网页背景延伸至屏幕顶部，渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
+`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.10（`versionCode` 11），桌面名称为「乐悠时光」，图标为奶油白底无文字翻开相册；系统启动和加载阶段播放 APK 内的 1080×1920 相册翻开视频，全程由同一画面层中心裁切铺满，视频播完后网页若仍未就绪则保持视频尾帧，网页先就绪时可用右上角「跳过」立即进入。视频源文件位于 `native/android/app/src/main/res/raw/album_opening.mp4`，加载文案下方的光条往返运动，异常或关闭动画时使用奶油白背景与文字。网页出现后状态栏透明，网页背景延伸至屏幕顶部，渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
 
 ```bash
 export WANGLEYOU_ANDROID_KEYSTORE=/absolute/private/path/family.jks
@@ -206,10 +206,10 @@ export WANGLEYOU_ANDROID_KEY_ALIAS='在本机设置'
 export WANGLEYOU_ANDROID_KEY_PASSWORD='在本机设置'
 cd native/android && ./gradlew :app:assembleRelease
 apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
-python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.9.apk
+python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.10.apk
 ```
 
-不要把示例值当成真实密码，也不要把密码写进仓库。本机已生成的家庭签名材料位于被 Git 忽略的 `.private/android/family-release.jks` 与 `.private/android/signing.env`；请将两者加密备份到仓库和电脑之外，丢失后不能用同一身份更新已安装的 App。安装 APK 时，Android 8+ 需要在设备上为接收文件的应用临时允许“安装未知应用”；首次安装和后续更新必须使用同一私钥签名。Debug 版与家庭 Release 版签名不同，已安装 Debug 版时需先卸载，其本地数据会被清除。只通过家庭私下渠道传递 APK，安装后可关闭该来源的安装权限。
+不要把示例值当成真实密码，也不要把密码写进仓库。本机已生成的家庭签名材料位于被 Git 忽略的 `.private/android/family-release.jks` 与 `.private/android/signing.env`；请将两者加密备份到仓库和电脑之外，丢失后不能用同一身份更新已安装的 App。安装 APK 时，Android 8+ 需要在设备上为接收文件的应用临时允许“安装未知应用”；首次安装和后续更新必须使用同一私钥签名。Debug 版与家庭 Release 版签名不同，已安装 Debug 版时需先卸载，其本地数据会被清除。v1.0.10 的 GitHub Release 链接公开，扫码下载可供家庭安装；在大陆网络仍需实际确认 GitHub 下载是否可达，安装后可关闭该来源的安装权限。
 
 截至 2026-09-24，[Android 开发者验证 FAQ](https://developer.android.com/developer-verification/guides/faq) 说明 2026-09-30 的首批执行不改变直接侧载安装；2027 年后的全球规则仍会演进。若未来设备要求开发者登记，可评估免费的[有限设备分发账户](https://developer.android.com/developer-verification/guides/limited-distribution)或按系统的高级安装流程操作；不把它误认为当前签名 APK 已完成设备登记。
 
@@ -223,7 +223,7 @@ xcodebuild -project native/ios/WangLeYou.xcodeproj -scheme WangLeYou -configurat
 
 家庭设备 Ad Hoc 安装需要 Apple Developer Program 会员、匹配 `com.mynamelancelot.wangleyou` 的 App ID、iOS Distribution 签名证书及私钥、登记每部 iPhone/iPad 的设备标识、包含这些设备的 Ad Hoc provisioning profile。用 Xcode 的 Signing & Capabilities 选择团队并管理签名，选择 **Any iOS Device** 后 **Product → Archive → Distribute App → Ad Hoc/Custom** 导出 `.ipa`；在已登记设备上通过 Xcode Device Hub 或 Apple Configurator 安装，并启用 Developer Mode。Apple 对每个设备类别的年度登记数量有限制；新增设备后需更新描述文件。证书、描述文件、私钥和设备标识只在维护者本机与 Apple 开发者账户保管。
 
-本机缺少完整 Xcode 与 iOS 签名资料，iOS 安装已按用户决定暂缓；当前只能确认源码和无凭据检查，尚无可供家庭安装的 IPA。免费 Apple 账户的 Personal Team 配置文件约 7 天过期，家庭长期 Ad Hoc 分发需 Apple Developer Program 会员及登记设备。Android 家庭 Release APK 已签名并校验，但真机安装和功能验收仍待用户执行。iPhone、iPad、Android 模拟器与真机的站内导航、断网重试、照片查看、视频播放和全屏都需分别验证，结果写入 [本次变更记录](docs/changes/family-native-webview/tasks.md)。
+本机缺少完整 Xcode 与 iOS 签名资料，iOS 安装已按用户决定暂缓；当前只能确认源码和无凭据检查，尚无可供家庭安装的 IPA。免费 Apple 账户的 Personal Team 配置文件约 7 天过期，家庭长期 Ad Hoc 分发需 Apple Developer Program 会员及登记设备。Android 家庭 Release APK 需签名与安装验证；真机安装和功能验收仍待用户执行。此站点切换的实际结果见 [本次变更记录](docs/changes/native-cloudflare-site/tasks.md)。
 
 官方依据：[Apple 登记设备分发](https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices)、[Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview)、[Android APK 签名](https://developer.android.com/studio/publish/app-signing)、[Android 私下分发](https://developer.android.com/distribute/marketing-tools/alternative-distribution)。
 
