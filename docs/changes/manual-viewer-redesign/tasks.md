@@ -6,7 +6,7 @@
 - [x] 以测试驱动方式收敛 playback 的连续播放契约，确保视频结束不推进。
 - [x] 移除 App 与主题契约中的连续播放命令。
 - [x] 独立重做 Beach 查看器 JSX/CSS、状态与手势。
-- [ ] 独立重做 Grassland 查看器 JSX/CSS、状态与手势。
+- [x] ~~独立重做 Grassland 查看器 JSX/CSS、状态与手势。~~ 已被后续决定取代：查看器改为全站共用的 `src/media-viewer`，主题只挂载同一个组件，不得各自实现或定制（见 `docs/requirements.md` 查看器条目与 `src/themes/module.md`）。
 - [x] 补充并更新单元与 Playwright 用例。
 - [x] 同步 requirements、architecture、app/playback/themes/content module.md 与 README。
 - [x] 执行 check、build、e2e 与 SDD 检查，记录实际浏览器/模拟器结果。

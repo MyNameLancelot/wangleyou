@@ -1,7 +1,5 @@
 import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
-import { extname, join } from 'node:path';
 
 export const albumId = '2024-05-sequence00';
 export const albumTitle = '破壳';
@@ -12,29 +10,6 @@ export const albumPhotoCount = 8;
 export const videoAlbumId = '2025-05-sequence00';
 export const videoAlbumTitle = '周岁';
 export const firstVideo = '播放视频：周岁 第 9 段';
-export const cdnMediaPrefix = 'https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/';
-
-const mediaTypes: Record<string, string> = { '.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.mp4': 'video/mp4' };
-
-/**
- * 构建产物仍保留 jsDelivr URL；E2E 从本次构建的 dist/ 提供同一媒体，
- * 使交互测试不依赖第三方 CDN 的网络可达性或缓存状态。
- * 视频需要按 Range 分片响应（与 Pages/jsDelivr 一致），否则浏览器视为不可拖动进度。
- */
-export async function routeDistMedia(page: Page) {
-  await page.route(`${cdnMediaPrefix}media/**`, async route => {
-    const pathname = decodeURIComponent(new URL(route.request().url()).pathname);
-    const mediaPath = pathname.replace('/gh/MyNameLancelot/wangleyou@main/public/', '');
-    const body = await readFile(join(process.cwd(), 'dist', mediaPath));
-    const headers = { 'Content-Type': mediaTypes[extname(mediaPath)] ?? 'application/octet-stream', 'Accept-Ranges': 'bytes' };
-    const match = /^bytes=(\d*)-(\d*)$/.exec(route.request().headers().range ?? '');
-    if (!match) return route.fulfill({ headers, body });
-    const start = match[1] ? Number(match[1]) : Math.max(0, body.length - Number(match[2]));
-    const end = match[1] && match[2] ? Math.min(Number(match[2]), body.length - 1) : body.length - 1;
-    if (start > end || start >= body.length) return route.fulfill({ status: 416, headers: { ...headers, 'Content-Range': `bytes */${body.length}` }, body: '' });
-    return route.fulfill({ status: 206, headers: { ...headers, 'Content-Range': `bytes ${start}-${end}/${body.length}`, 'Content-Length': String(end - start + 1) }, body: body.subarray(start, end + 1) });
-  });
-}
 
 /** 不涉及切换控件本身的用例，通过偏好存储直接选择目标主题。 */
 export async function setTheme(page: Page, theme: 'beach' | 'grassland') {

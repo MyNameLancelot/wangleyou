@@ -6,7 +6,7 @@
 
 已实现首页、影像浏览（年份分组与类型筛选）、相册索引与详情（照片与视频混排、视频带播放角标）、手动照片查看与视频播放（全站共用查看器：`yet-another-react-lightbox` + Captions/Fullscreen/Slideshow/Thumbnails/Video/Zoom 插件，含原生控制条、键盘与触屏操作）、两套隔离主题（海边沙滩 / 旷野草原）切换与偏好记忆，以及内容校验、缩略图生成与视频按内容哈希发布。查看器不在进入时自动播放幻灯片，视频结束停留当前项。
 
-App 套壳属于后续里程碑。首页背景音乐由海边、草原各自的主题私有资产提供。海边与草原分别拥有完整的页面 UI、CSS、装饰和资产引用，只共享无 UI 的业务与交互契约；查看器是唯一的共用 UI（`src/media-viewer`），主题只挂载它、不能定制其样式或功能。后续页面与交互设计以用户口述和活动规格为准。
+家庭设备原生 WebView 壳位于 `native/ios` 与 `native/android`，只加载线上网站；Android Debug APK 与家庭密钥签名的 Release 构建已通过，iOS 安装已按用户决定暂缓，完整 Xcode 构建和设备验收仍待办。首页背景音乐由海边、草原各自的主题私有资产提供。海边与草原分别拥有完整的页面 UI、CSS、装饰和资产引用，只共享无 UI 的业务与交互契约；查看器是唯一的共用 UI（`src/media-viewer`），主题只挂载它、不能定制其样式或功能。后续页面与交互设计以用户口述和活动规格为准。
 
 仓库含 6 张本地演示照片、2 个非空相册及 1 个空相册。演示素材和日期不代表真实家庭记录，来源见 [素材说明](public/media/SOURCES.md)。
 
@@ -117,11 +117,11 @@ npm run compress:photos -- ~/Pictures/trip --dry-run     # 只扫描并打印计
 npm run dev:lan        # 终端会打印 Network: http://<电脑内网IP>:5173/wangleyou/
 ```
 
-手机浏览器打开该 Network 地址即可（媒体由开发服务器直接提供，不需要先把素材推到远端）。注意：生产构建的媒体前缀是 jsDelivr 上的 `@main`，因此在改动发布前不要用 `npm run preview` 的手机结果判断新素材。
+手机浏览器打开该 Network 地址即可（媒体由开发服务器直接提供，不需要先把素材推到远端）。生产构建与 `npm run preview` 使用同一份 `dist/` 和同一个媒体前缀，本地预览看到的素材就是线上素材；线上只会在改动合并到 main 后重新构建。
 
-平台能力差异：Android Chrome 支持元素级全屏，图片与视频都能进系统全屏；iPhone Safari 不提供任意元素的全屏 API（只有 `<video>` 能全屏），此时查看器不渲染全屏按钮，影像仍是覆盖视口的黑色沉浸层，想连浏览器地址栏一起隐藏需要“添加到主屏幕”（standalone）或未来的 WebView 套壳。
+平台能力差异：Android Chrome 支持元素级全屏，图片与视频都能进系统全屏；iPhone Safari 不提供任意元素的全屏 API（只有 `<video>` 能全屏），此时查看器不渲染全屏按钮，影像仍是覆盖视口的黑色沉浸层。原生壳无浏览器地址栏；实际全屏能力仍以设备 WebView 为准。
 
-格式与三端：发布形态只有一种——H.264 + AAC 的 MP4 + faststart。桌面浏览器、移动端浏览器与未来的 WebView 套壳共用同一份视频，不按端生成不同格式；`playsinline` 保证移动端内联播放，弱网优化也是补同一格式的更低码率/分辨率变体，而不是换 WebM/HEVC（那会带来越来越多的兼容分支与额外编码成本）。
+格式与三端：发布形态只有一种——H.264 + AAC 的 MP4 + faststart。桌面浏览器、移动端浏览器与原生 WebView 壳共用同一份视频，不按端生成不同格式；`playsinline` 保证移动端内联播放，弱网优化也是补同一格式的更低码率/分辨率变体，而不是换 WebM/HEVC（那会带来越来越多的兼容分支与额外编码成本）。
 
 体积基线：单个视频 >100 MB 打印警告，>200 MB 构建失败；添加大视频前先评估仓库和 Pages 限制，GitHub 普通推送本身阻止超过 100 MiB 的单文件。
 
@@ -138,13 +138,13 @@ SITE_BASE=/another-repo/ npm run preview
 
 用户主页或自定义域名根目录使用 `SITE_BASE=/`。构建与预览应使用相同 base。
 
-媒体前缀独立于页面 base。受版本控制的 `.env.production` 让生产构建使用 `https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/`，因此 `media/<相册目录>/a.jpg` 会请求 jsDelivr 中同一仓库 main 分支的 `public/media/<相册目录>/a.jpg`。不要在 JSON 或主题代码写完整 CDN URL；需要临时替换版本或镜像时，在构建命令覆盖：
+媒体前缀独立于页面 base，由构建期 `VITE_MEDIA_BASE_URL` 决定，未设置时回退页面 base。受版本控制的 `.env.production` 当前不设置该变量，因此生产构建里 `media/<相册目录>/a.jpg` 解析为 `https://mynamelancelot.github.io/wangleyou/media/<相册目录>/a.jpg`，媒体与页面同源。派生 WebP 与视频产物在构建期生成、不提交仓库，所以只读取 Git 仓库文件的 CDN（例如 jsDelivr 的 `gh/<owner>/<repo>@<ref>` 形式）不能作为媒体前缀。不要在 JSON 或主题代码写完整 URL；需要临时指向镜像或其他来源时，在构建命令覆盖：
 
 ```bash
-VITE_MEDIA_BASE_URL=https://cdn.jsdelivr.net/gh/MyNameLancelot/wangleyou@main/public/ npm run build
+VITE_MEDIA_BASE_URL=https://media.example.com/ npm run build
 ```
 
-本地 `npm run dev` 未设置该变量时继续从 Vite `BASE_URL` 加载仓库内媒体。该变量只影响图片、视频、视频封面、主题图和背景音乐，不影响 `/wangleyou/`、页面入口或 `#/...` 路由。
+本地 `npm run dev` 未设置该变量时继续从 Vite `BASE_URL` 加载仓库内媒体。该变量只影响图片、视频、视频封面、主题图和背景音乐，不影响 `/wangleyou/`、页面入口或 `#/...` 路由。当前媒体托管结论、升级触发条件与两条候选路径见 [总架构](docs/architecture.md)。
 
 ### 首次部署
 
@@ -171,13 +171,61 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 ### 状态与容量
 
-仓库已提供部署配置和本地验证；本次配置阶段没有执行远端工作流，首次线上部署及 HTTPS 访问尚待提交合并后验证。职责见 [工作流模块](.github/workflows/module.md)。
+部署已执行：2026-09-24 核实的线上地址为 `https://mynamelancelot.github.io/wangleyou/`，HTTPS 返回 200。职责见 [工作流模块](.github/workflows/module.md)。
 
 截至 2026-09-16，GitHub Pages 发布站点最大 1 GB，源仓库建议不超过 1 GB，每月带宽软限制 100 GB，单次 Pages 部署超过 10 分钟会超时；自定义 Actions 不受默认每小时 10 次构建软限制约束。[GitHub Pages 限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
 
 普通 Git 推送会阻止超过 100 MiB 的单文件；添加媒体前先压缩并评估仓库总量，不把仓库当无限容量媒体存储。[GitHub 大文件说明](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
 
+媒体与页面同源，由 GitHub Pages 自带的边缘缓存分发（响应头含 `x-github-edge-region`，并支持 Range 请求），当前不接入额外 CDN；派生资源文件名带内容哈希，更新素材不会命中旧缓存。仓库型 CDN 的适用边界：jsDelivr 对 GitHub 来源限制单文件 20 MB，且只能提供已提交进仓库的文件。媒体托管何时需要重新评估、有哪两条候选路径，见 [总架构](docs/architecture.md)。
+
 配置依据：[GitHub 自定义 Pages 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)、[Vite 静态部署](https://vite.dev/guide/static-deploy#github-pages)。
+
+## 家庭设备原生 App
+
+`native/ios` 与 `native/android` 是可独立安装的原生工程，默认只加载生产网站 `https://mynamelancelot.github.io/wangleyou/`。这个地址由 Pages 仓库路径和现有部署配置核实；若更改站点域名或子路径，要同时更新两端 URL 与导航白名单。安装包只含系统 WebView 容器代码、图标、Android 本地开屏视频与加载/错误界面，不包含 `dist/`、`media-source/`、`public/media/` 或相册配置。相册和媒体更新仍由 main 的网站部署生效，无需重打原生包。
+
+原生构建与网站部署分开。`.github/workflows/native.yml` 只能在 Actions 手动 **Run workflow**，运行 Android debug 与 iOS 无签名模拟器构建校验，不上传任何 APK/IPA。网站 main push 仍只执行原有检查与 Pages 部署。原生壳、图标、权限或原生配置变化时，维护者提升两端版本号并手动构建；需要新版本时也可手动构建。不要把签名文件、密码、设备 ID 或家庭安装包提交到仓库或上传公开 Release。
+
+### Android：本机 APK
+
+需要 JDK 17、Android SDK Platform 35、Build Tools 35.0.0。若使用 SDKMAN，可在构建终端执行 `sdk use java 17.0.20-tem`；不要让项目继承 JDK 8 或 25。Gradle Wrapper 固定 8.11.1，Android Gradle Plugin 固定 8.9.2；首次构建需要从官方仓库下载依赖。调试安装：
+
+```bash
+cd native/android
+./gradlew :app:assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 家庭 Release 版本为 1.0.9（`versionCode` 10），桌面名称为「乐悠时光」，图标为奶油白底无文字翻开相册；系统启动和加载阶段播放 APK 内的 1080×1920 相册翻开视频，全程由同一画面层中心裁切铺满，视频播完后网页若仍未就绪则保持视频尾帧，网页先就绪时可用右上角「跳过」立即进入。视频源文件位于 `native/android/app/src/main/res/raw/album_opening.mp4`，加载文案下方的光条往返运动，异常或关闭动画时使用奶油白背景与文字。网页出现后状态栏透明，网页背景延伸至屏幕顶部，渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
+
+```bash
+export WANGLEYOU_ANDROID_KEYSTORE=/absolute/private/path/family.jks
+export WANGLEYOU_ANDROID_STORE_PASSWORD='在本机设置'
+export WANGLEYOU_ANDROID_KEY_ALIAS='在本机设置'
+export WANGLEYOU_ANDROID_KEY_PASSWORD='在本机设置'
+cd native/android && ./gradlew :app:assembleRelease
+apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.9.apk
+```
+
+不要把示例值当成真实密码，也不要把密码写进仓库。本机已生成的家庭签名材料位于被 Git 忽略的 `.private/android/family-release.jks` 与 `.private/android/signing.env`；请将两者加密备份到仓库和电脑之外，丢失后不能用同一身份更新已安装的 App。安装 APK 时，Android 8+ 需要在设备上为接收文件的应用临时允许“安装未知应用”；首次安装和后续更新必须使用同一私钥签名。Debug 版与家庭 Release 版签名不同，已安装 Debug 版时需先卸载，其本地数据会被清除。只通过家庭私下渠道传递 APK，安装后可关闭该来源的安装权限。
+
+截至 2026-09-24，[Android 开发者验证 FAQ](https://developer.android.com/developer-verification/guides/faq) 说明 2026-09-30 的首批执行不改变直接侧载安装；2027 年后的全球规则仍会演进。若未来设备要求开发者登记，可评估免费的[有限设备分发账户](https://developer.android.com/developer-verification/guides/limited-distribution)或按系统的高级安装流程操作；不把它误认为当前签名 APK 已完成设备登记。
+
+### iPhone / iPad：本机 IPA
+
+需要完整 Xcode（仅 Command Line Tools 不够）。先打开 `native/ios/WangLeYou.xcodeproj`，选 `WangLeYou` scheme，在 iPhone 和 iPad 模拟器运行；命令行无签名构建：
+
+```bash
+xcodebuild -project native/ios/WangLeYou.xcodeproj -scheme WangLeYou -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+```
+
+家庭设备 Ad Hoc 安装需要 Apple Developer Program 会员、匹配 `com.mynamelancelot.wangleyou` 的 App ID、iOS Distribution 签名证书及私钥、登记每部 iPhone/iPad 的设备标识、包含这些设备的 Ad Hoc provisioning profile。用 Xcode 的 Signing & Capabilities 选择团队并管理签名，选择 **Any iOS Device** 后 **Product → Archive → Distribute App → Ad Hoc/Custom** 导出 `.ipa`；在已登记设备上通过 Xcode Device Hub 或 Apple Configurator 安装，并启用 Developer Mode。Apple 对每个设备类别的年度登记数量有限制；新增设备后需更新描述文件。证书、描述文件、私钥和设备标识只在维护者本机与 Apple 开发者账户保管。
+
+本机缺少完整 Xcode 与 iOS 签名资料，iOS 安装已按用户决定暂缓；当前只能确认源码和无凭据检查，尚无可供家庭安装的 IPA。免费 Apple 账户的 Personal Team 配置文件约 7 天过期，家庭长期 Ad Hoc 分发需 Apple Developer Program 会员及登记设备。Android 家庭 Release APK 已签名并校验，但真机安装和功能验收仍待用户执行。iPhone、iPad、Android 模拟器与真机的站内导航、断网重试、照片查看、视频播放和全屏都需分别验证，结果写入 [本次变更记录](docs/changes/family-native-webview/tasks.md)。
+
+官方依据：[Apple 登记设备分发](https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices)、[Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview)、[Android APK 签名](https://developer.android.com/studio/publish/app-signing)、[Android 私下分发](https://developer.android.com/distribute/marketing-tools/alternative-distribution)。
 
 ## 工程与 SDD
 
@@ -196,6 +244,8 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 | src/shared | 跨模块无 UI 类型契约（当前：路由形状） |
 | scripts | 内容文件校验、缩略图与视频封面生成、视频按内容哈希发布与发布图片压缩 |
 | tests | 浏览器验收 |
+| native/ios | iPhone/iPad WKWebView 原生壳与 Xcode 工程 |
+| native/android | Android WebView 原生壳与 Gradle 工程 |
 
 每个实际模块包含 module.md。新增功能按“spec → plan → tasks → 实现 → 验证 → 同步架构”推进。
 
@@ -203,7 +253,7 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 新增主题须建立独立目录，完整实现首页、悬浮主题开关、浏览、相册、CSS、装饰和资产引用；不得导入其他主题或共享 React UI。站点不提供常驻全局顶部导航，内容入口和返回链接由各主题页面独立维护。主题只共享 content、playback、albums、routing 的无 UI 类型与纯交互契约，以及 `media-viewer` 的共用查看器（只挂载，不定制）。视觉特效优先评估轻量既有库，并记录体积、依赖、许可与兼容回退。当前治理决策见 [ADR 0003](docs/decisions/0003-retire-penpot-design-governance.md)。
 
-未来 WebView 通过独立适配边界接入。当前无原生 SDK、桥接或离线缓存；移动模拟测试不能代表 iOS、Android 真机或套壳验证。全屏等功能按浏览器能力降级。
+原生 WebView 壳通过独立工程接入。当前无 JS 桥接或离线缓存；移动浏览器视口模拟不能代表 iOS、Android 真机或套壳验证。全屏等功能按系统 WebView 能力降级。
 
 ## SDD 维护检查
 

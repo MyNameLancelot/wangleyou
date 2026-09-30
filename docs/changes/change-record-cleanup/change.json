@@ -1,0 +1,22 @@
+{
+  "mode": "light",
+  "summary": "整理历史变更记录：回补已完成变更的任务状态，标注被后续决定取代的条目，并补齐 redesign-album-detail 缺失的文档同步与端到端断言。",
+  "reason": "用户要求整理长期未更新的历史变更记录。核对发现多数目录只是任务状态未回补，另有一处（相册详情 opening 引言）确实缺少文档同步与测试覆盖。",
+  "behavior": false,
+  "architecture": false,
+  "verification": [
+    "逐目录核对基线证据：`react-photo-album` 已安装并在两套主题接入、`scripts/generate-media.ts` 与派生忽略规则存在、CI 缓存键包含媒体源与脚本、媒体目录已去掉 photos 中间层、`src/app/global.css` 含 `:focus:not(:focus-visible)` 规则、`src/media-viewer` 为全站共用查看器。",
+    "redesign-album-detail 的缺口已补：`opening` 渲染规则写入 requirements、architecture、content/module.md 与 themes/module.md；`tests/browse.spec.ts` 新增引言/回退与无效相册两条用例。",
+    "npm run check：13 个测试文件、107 个用例通过（2026-09-28）。",
+    "npm run build：内容校验、类型检查与 Vite 静态构建通过（2026-09-28）。",
+    "npx playwright test tests/browse.spec.ts -g \"opening quote|unknown album id\"：desktop-chrome 与 mobile-chrome 共 4 用例通过。",
+    "仍保持未完成：Android 与 iOS 真机验收、family-native-webview 的逐项真机结果（用户执行中/已暂缓）。"
+  ],
+  "impacts": {
+    "requirements": {"status": "none", "paths": [], "reason": "本次只整理记录；requirements 的 opening 规则由 redesign-album-detail 同步。"},
+    "architecture": {"status": "none", "paths": [], "reason": "同上，由 redesign-album-detail 同步。"},
+    "modules": {"status": "none", "paths": [], "reason": "模块契约内容由 redesign-album-detail 同步，本次未新增契约。"},
+    "decisions": {"status": "none", "paths": [], "reason": "未改变架构决策。"},
+    "readme": {"status": "none", "paths": [], "reason": "使用与构建方式未变。"}
+  }
+}

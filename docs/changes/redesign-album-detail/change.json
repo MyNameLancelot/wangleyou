@@ -7,30 +7,37 @@
   "verification": [
     "规格、计划、任务与声明已完成一致性审阅；git diff --check 通过",
     "npm run typecheck：通过",
-    "npm test：12 个测试文件、88 个用例通过",
-    "npm run build：内容校验、类型检查和 Vite 静态构建通过",
-    "npm run test:e2e：Playwright 86 个测试执行通过（其中平台相关用例按现有配置跳过）"
+    "npm test：13 个测试文件、107 个用例通过（2026-09-28 复跑）",
+    "npm run build：内容校验、类型检查和 Vite 静态构建通过（2026-09-28 复跑）",
+    "npm run test:e2e：Playwright 86 个测试执行通过（其中平台相关用例按现有配置跳过）",
+    "2026-09-28 记录整理：核对发现 implementation 已完成但两项未收尾——两套主题已渲染引言（`album.opening || album.description`），但需求、架构与 content/themes 模块文档缺少该字段说明，端到端也没有断言。本次补齐 `docs/requirements.md`、`docs/architecture.md`、`src/content/module.md`、`src/themes/module.md` 的 opening 规则，并在 `tests/browse.spec.ts` 增加两条用例：详情引言与 description 回退（两套主题）、无效相册 ID 的返回入口。",
+    "2026-09-28 补充用例结果：`npx playwright test tests/browse.spec.ts -g \"opening quote|unknown album id\"` 在 desktop-chrome 与 mobile-chrome 共 4 用例通过；用例跑在 `scripts/serve-built.mjs` 提供的静态产物上。"
   ],
   "impacts": {
     "requirements": {
-      "status": "none",
-      "reason": "实施尚未开始；完成后将同步详情页布局、状态与 opening 内容维护规则。"
+      "status": "updated",
+      "paths": ["docs/requirements.md"],
+      "reason": "补充详情首屏副标题与引言的两层文案规则、opening 缺省回退及 1–20 字符约束。"
     },
     "architecture": {
-      "status": "none",
-      "reason": "实施尚未开始；完成后将记录内容索引新增字段，并确认路由与 playback 边界不变。"
+      "status": "updated",
+      "paths": ["docs/architecture.md"],
+      "reason": "补充内容索引写入相册元信息（含可选 opening）。"
     },
     "modules": {
-      "status": "none",
-      "reason": "实施尚未开始；完成后将同步内容校验契约和主题详情页职责。"
+      "status": "updated",
+      "paths": ["src/content/module.md", "src/themes/module.md"],
+      "reason": "同步 opening 的校验上限、索引字段与两套主题一致的渲染回退规则。"
     },
     "decisions": {
       "status": "none",
+      "paths": [],
       "reason": "复用既有 React、CSS 和图片状态实现，未新增依赖或架构决策。"
     },
     "readme": {
       "status": "none",
-      "reason": "本次不改变本地命令、部署方式或相册目录基本维护步骤。"
+      "paths": [],
+      "reason": "运行与构建方式未变。"
     }
   }
 }

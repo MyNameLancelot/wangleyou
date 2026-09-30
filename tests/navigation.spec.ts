@@ -5,17 +5,12 @@ import {
   albumTitle,
   enterAlbum,
   firstPhoto,
-  routeDistMedia,
   setTheme,
   pressViewerKey,
   stepViewer,
   viewerScrollLock,
   viewerAt,
 } from './support';
-
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
-});
 
 test('homepage, album, original photo, keyboard and focus restoration', async ({page, isMobile}) => {
   const errors:string[]=[]; page.on('pageerror',error=>errors.push(error.message));

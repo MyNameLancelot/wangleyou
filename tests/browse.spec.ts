@@ -1,15 +1,43 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import {
   albumId,
   albumPhotoCount,
   albumTitle,
   firstPhoto,
-  routeDistMedia,
   setTheme,
+  videoAlbumId,
 } from './support';
 
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
+type AlbumMeta = { id: string; opening?: string; description?: string };
+const albums = (JSON.parse(readFileSync('src/content/generated-photo-index.json', 'utf8')) as {
+  content: { albums: AlbumMeta[] };
+}).content.albums;
+
+/** 详情首屏引言取 opening，缺省回退到 description；两套主题必须一致。 */
+test('album detail shows the opening quote and falls back to the description in both themes', async ({ page }) => {
+  for (const theme of ['beach', 'grassland'] as const) {
+    for (const id of [videoAlbumId, albumId]) {
+      const album = albums.find(item => item.id === id);
+      expect(album, `生成索引缺少相册 ${id}`).toBeTruthy();
+      const expected = album?.opening ?? album?.description;
+      expect(expected, `相册 ${id} 既没有 opening 也没有 description`).toBeTruthy();
+
+      await page.goto(`./#/albums/${id}`);
+      await setTheme(page, theme);
+      await expect(page.locator('[class*="detailHeroCopy"] blockquote')).toHaveText(expected as string);
+    }
+  }
+});
+
+/** 无效相册 ID 是详情页特有的失败状态，必须给出返回入口。 */
+test('unknown album id shows the not-found detail state with a way back', async ({ page }) => {
+  await page.goto('./#/albums/does-not-exist');
+  await expect(page.getByRole('heading', { name: '没有找到这个相册' })).toBeVisible();
+  const back = page.getByRole('link', { name: '回到首页' });
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page.locator('main')).toBeVisible();
 });
 
 test('phone browse list opens the album and its viewer without horizontal overflow', async ({page}) => {

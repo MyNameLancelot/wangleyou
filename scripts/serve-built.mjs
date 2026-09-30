@@ -9,7 +9,8 @@ const base = process.env.SITE_BASE || '/wangleyou/';
 if (!base.startsWith('/') || !base.endsWith('/')) throw new Error('SITE_BASE must start and end with /');
 const root = await realpath('dist');
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.md':'text/plain; charset=utf-8','.mp4':'video/mp4'};
-// 视频进度与结束行为只有在支持 Range 的服务下才可验证；GitHub Pages 与 jsDelivr 都支持。
+// 视频进度与结束行为只有在支持 Range 的服务下才可验证；GitHub Pages 与这个测试服务器都返回 Range，
+// 因此媒体与页面同源后，E2E 不需要再拦截第三方 CDN。
 const parseRange = (header, size) => {
   const match = /^bytes=(\d*)-(\d*)$/.exec(header || '');
   if (!match || (!match[1] && !match[2])) return null;

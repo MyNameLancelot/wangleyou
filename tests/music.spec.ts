@@ -1,11 +1,4 @@
 import { test, expect } from '@playwright/test';
-import {
-  routeDistMedia,
-} from './support';
-
-test.beforeEach(async ({ page }) => {
-  await routeDistMedia(page);
-});
 
 test('theme switch and background music controls coexist without overlap', async ({page}, testInfo) => {
   const viewport = testInfo.project.name === 'mobile-chrome' ? {width: 360, height: 800} : {width: 1440, height: 900};
