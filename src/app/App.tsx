@@ -20,13 +20,10 @@ import {
   writeBackgroundMusicPreference,
 } from '../playback';
 import type { BackgroundMusic, BackgroundMusicPreference, Session } from '../playback';
-import { applyTheme, nextTheme, readTheme } from '../themes';
-import type { ThemeMusicCommands, ThemeName } from '../themes';
+import type { ThemeMusicCommands } from '../themes';
 import type { MediaViewerCommands } from '../media-viewer';
-import '../themes';
 import { parseRoute } from './router';
-import { BeachApp, GrasslandApp } from '../themes';
-import type { ThemeApp } from '../themes';
+import { BookApp } from '../themes';
 import './global.css';
 
 // 某些浏览器策略会在访问属性时抛错，而不只是 getItem/setItem 抛错。
@@ -37,7 +34,6 @@ function musicStorage(): Storage | null {
 export function App() {
   const [route, setRoute] = useState(() => parseRoute(window.location.hash));
   const [session, setSession] = useState<Session | null>(null);
-  const [theme, setTheme] = useState<ThemeName>(() => readTheme());
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   // 播放意图与音量本地缓存：显式切换才写存储，刷新后恢复用户偏好（浏览器拦截时首次交互恢复）。
   const [music, setMusic] = useState<BackgroundMusic>(() => {
@@ -94,7 +90,6 @@ export function App() {
     applySession(openSession(target.media, id));
   }, [applySession]);
 
-  const switchTheme = useCallback(() => setTheme(current => applyTheme(nextTheme(current))), []);
 
   const commands = useMemo<MediaViewerCommands>(() => ({
     stepTo: index => applySession(stepSessionTo(sessionRef.current, index)),
@@ -129,7 +124,5 @@ export function App() {
     resume: () => setMusic(clearBackgroundMusicResume),
   }), []);
 
-  const ThemePage: ThemeApp = theme === 'beach' ? BeachApp : GrasslandApp;
-
-  return <ThemePage route={route} content={content} homeMemory={homeMemory} session={session} commands={commands} music={music} musicCommands={musicCommands} onOpen={open} onSwitchTheme={switchTheme} online={online} contentErrorMessage={contentErrorMessage} />;
+  return <BookApp route={route} content={content} homeMemory={homeMemory} session={session} commands={commands} music={music} musicCommands={musicCommands} onOpen={open} online={online} contentErrorMessage={contentErrorMessage} />;
 }

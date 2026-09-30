@@ -1,0 +1,26 @@
+{
+  "mode": "full",
+  "summary": "将双主题双屏首页改为唯一的线缝相册主题与单页回忆播放首页",
+  "reason": "用户确认 Android 相册开屏衍生的 A1 草案，并要求单一主题、3:2 横向照片、等大层叠内页、线缝装订及更细腻的组件实现",
+  "behavior": true,
+  "architecture": true,
+  "verification": [
+    "2026-09-30：用户在 Visual Brainstorming Companion 确认 A1 居中书页、等大层叠内页、3:2 横向照片、线缝书脊、无句号文案和手机手滑，并授权实施",
+    "Node 24.18.0：npm run check 通过，12 个测试文件、101 个单元测试通过；npm run build 通过，内容校验为 7 个相册与 34 个媒体",
+    "Chromium 154.0.8037.58：1440×1000 桌面和 360×800 手机视口的 62 项端到端用例全部通过；另增翻页覆盖层生命周期用例定向运行 5 项通过、1 项按手机项目跳过；覆盖首页、主回忆手滑与暂停、留影、相册、视频、共用查看器和 /wangleyou/ 子路径；桌面及手机首页与留影截图已人工检查，截图只在本地临时目录",
+    "2026-09-30 用户修订：照片数加一张纸页，逐页减少、文字末页不循环、反向翻页、照片随纸页倾斜、手机标题分行，并停用音乐 UI 与播放；Node 24.18.0 检查通过，12 文件 102 项单元测试通过，静态构建通过",
+    "Chromium 154.0.8037.58：1440×1000 和 360×800 视口完整端到端共 66 项通过、4 项按项目跳过；验证实际页数递减、桌面回翻、手机手滑至末页、自动播放停在末页、无背景音频，以及 /wangleyou/ 子路径；桌面翻页中途、桌面和手机末页及首页截图已人工检查，截图只在本地临时目录",
+    "翻页动效重做：以原生 SVG 曲线卷页替换整页刚性旋转，前后方向共用几何，动画帧在卸载时取消，落定后重新开始 2 秒停留；Node 24.18.0 check 与 build 通过（102 单元测试）；Chromium 154.0.8037.58 的 1440×1000、360×800 相关端到端 17 项通过、5 项按项目跳过，另一次手机过程截图用例通过；检查了卷页边界、回翻底页、末页停止、路由卸载与 /wangleyou/ 子路径，桌面和手机过程截图已人工核对",
+    "留影头图修正：原 RGB 方形 PNG 的浅底与米黄页面底色不同，使用 darken 合成让浅底融入背景；Node 24.18.0 静态构建通过，Chromium 154.0.8037.58 在 1440×1000、1920×430 和 360×800 视口截图核对无可见方形接缝，首页至留影页的 2 项端到端用例通过",
+    "提交前最终验证：恢复留影列表既有布局后，Node 24.18.0 的 npm run check 和 npm run build 通过，12 个测试文件、102 个单元测试通过；Chromium 154.0.8037.58 的 npm run test:e2e 在桌面 1920×430 与手机 360×800 视口共 67 项通过、5 项按项目跳过，包含留影列表、首页翻页、媒体查看器和 /wangleyou/ 子路径",
+    "npm run check:sdd -- --worktree --base origin/main 通过；git diff --check 通过；代码审查确认无主题切换入口、运行时偏好写入、旧主题引用或查看器主题覆盖",
+    "Android 和 iOS 真机未在本次验证；原生容器及其图标未修改"
+  ],
+  "impacts": {
+    "requirements": {"status": "updated", "paths": ["docs/requirements.md"], "reason": "同步单页首页、唯一主题、手机手滑与 3:2 裁切"},
+    "architecture": {"status": "updated", "paths": ["docs/architecture.md"], "reason": "同步单主题装配与翻页资源生命周期"},
+    "modules": {"status": "updated", "paths": ["src/app/module.md", "src/themes/module.md", "src/albums/module.md"], "reason": "更新单主题接口与首页状态生命周期"},
+    "decisions": {"status": "updated", "paths": ["docs/decisions/0004-isolated-theme-apps.md"], "reason": "标记双主题决策由本次单主题设计取代"},
+    "readme": {"status": "updated", "paths": ["README.md"], "reason": "同步单主题与首页使用说明，并移除未使用的液态玻璃依赖"}
+  }
+}

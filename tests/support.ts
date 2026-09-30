@@ -11,11 +11,9 @@ export const videoAlbumId = '2025-05-sequence00';
 export const videoAlbumTitle = '周岁';
 export const firstVideo = '播放视频：周岁 第 9 段';
 
-/** 不涉及切换控件本身的用例，通过偏好存储直接选择目标主题。 */
-export async function setTheme(page: Page, theme: 'beach' | 'grassland') {
-  await page.evaluate(name => localStorage.setItem('wangleyou.theme', name), theme);
+/** 历史内容与查看器用例共用的唯一主题入口。 */
+export async function reloadBookPage(page: Page) {
   await page.reload();
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
 }
 
 export async function enterAlbum(page: Page) {

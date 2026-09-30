@@ -4,9 +4,9 @@
 
 ## 当前版本
 
-已实现首页、影像浏览（年份分组与类型筛选）、相册索引与详情（照片与视频混排、视频带播放角标）、手动照片查看与视频播放（全站共用查看器：`yet-another-react-lightbox` + Captions/Fullscreen/Slideshow/Thumbnails/Video/Zoom 插件，含原生控制条、键盘与触屏操作）、两套隔离主题（海边沙滩 / 旷野草原）切换与偏好记忆，以及内容校验、缩略图生成与视频按内容哈希发布。查看器不在进入时自动播放幻灯片，视频结束停留当前项。
+已实现首页、影像浏览（年份分组与类型筛选）、相册索引与详情（照片与视频混排、视频带播放角标）、手动照片查看与视频播放（全站共用查看器：`yet-another-react-lightbox` + Captions/Fullscreen/Slideshow/Thumbnails/Video/Zoom 插件，含原生控制条、键盘与触屏操作）、唯一线缝相册主题，以及内容校验、缩略图生成与视频按内容哈希发布。查看器不在进入时自动播放幻灯片，视频结束停留当前项。
 
-家庭设备原生 WebView 壳位于 `native/ios` 与 `native/android`，只加载线上网站；Android Debug APK 与家庭密钥签名的 Release 构建已通过，iOS 安装已按用户决定暂缓，完整 Xcode 构建和设备验收仍待办。首页背景音乐由海边、草原各自的主题私有资产提供。海边与草原分别拥有完整的页面 UI、CSS、装饰和资产引用，只共享无 UI 的业务与交互契约；查看器是唯一的共用 UI（`src/media-viewer`），主题只挂载它、不能定制其样式或功能。后续页面与交互设计以用户口述和活动规格为准。
+家庭设备原生 WebView 壳位于 `native/ios` 与 `native/android`，只加载线上网站；Android Debug APK 与家庭密钥签名的 Release 构建已通过，iOS 安装已按用户决定暂缓，完整 Xcode 构建和设备验收仍待办。首页主回忆按主回忆照片数加一张文字收束页翻阅，使用局限于内页范围的柔和卷页，到末页停止；手机标题分两行。背景音乐资产与代码能力保留在 `public/media/themes/book/` 和 playback，但当前不显示入口，也不挂载音频或播放。唯一相册主题维护页面 UI、CSS、装饰和资产引用；查看器是独立的共用 UI（`src/media-viewer`），主题只挂载它、不能定制其样式或功能。后续页面与交互设计以用户口述和活动规格为准。
 
 仓库含 6 张本地演示照片、2 个非空相册及 1 个空相册。演示素材和日期不代表真实家庭记录，来源见 [素材说明](public/media/SOURCES.md)。
 
@@ -77,7 +77,7 @@ npm run dev
 - 路径相对 public，例如 `media/photo.jpg`。不写 `/wangleyou/` 或 `public/` 前缀，不写外部 URL、查询参数、反斜杠或 `../`。路径由应用的统一媒体 resolver 加前缀。
 - 相册封面取展示顺序的前三张可用缩略图（视频用派生封面）；可选尺寸必须为正整数。
 - 显式引用文件不存在、配置格式错误、重复 ID 会使校验和构建失败，并指出字段位置。视频还要求 `.mp4` 扩展名与单个文件不超过 200 MB（超过 100 MB 打印警告）；封面源素材可以缺，缺失时构建期生成占位封面。运行时网络失败由查看器给出默认错误状态，用户可手动切换或关闭后重新打开。
-- 背景音乐不进入相册内容配置；主题私有资产（首屏图、第二屏背景、背景音乐）统一放在 `public/media/themes/<主题>/`，由对应主题代码引用，来源未确认前仅用于非商业占位。替换真实音乐时同步主题组件、素材说明和许可确认。
+- 背景音乐不进入相册内容配置；相册主题资产（浏览头图、保留但停用的背景音乐）放在 `public/media/themes/book/`。当前站点不播放背景音乐。重新启用或替换真实音乐时同步主题组件、素材说明和许可确认。
 
 ### 压缩发布大图
 
@@ -236,11 +236,10 @@ xcodebuild -project native/ios/WangLeYou.xcodeproj -scheme WangLeYou -configurat
 | src/app | 应用入口、路由、装配 |
 | src/content | 配置、模型、校验与排序 |
 | src/media-viewer | 全站共用媒体查看器（lightbox 受控渲染与命令转发） |
-| src/albums | 首页两屏与主回忆的无 UI 交互契约 |
+| src/albums | 首页主回忆与横向手势的无 UI 交互契约 |
 | src/playback | 照片队列与唯一索引状态 |
-| src/themes/beach | 海边主题完整站点 UI、CSS、装饰与资产引用 |
-| src/themes/grassland | 草原主题完整站点 UI、CSS、装饰与资产引用 |
-| src/themes | 主题选择、偏好与无 UI 装配契约 |
+| src/themes/book | 唯一相册主题的页面 UI、CSS、装饰与资产引用 |
+| src/themes | 主题装配契约 |
 | src/shared | 跨模块无 UI 类型契约（当前：路由形状） |
 | scripts | 内容文件校验、缩略图与视频封面生成、视频按内容哈希发布与发布图片压缩 |
 | tests | 浏览器验收 |
@@ -251,7 +250,7 @@ xcodebuild -project native/ios/WangLeYou.xcodeproj -scheme WangLeYou -configurat
 
 页面、主题与交互变化以用户口述为准；新增或改变用户可见交互时，使用 full 流程并在规格中记录可验证的要求。详细规则见 [SDD 维护指南](docs/sdd.md)。
 
-新增主题须建立独立目录，完整实现首页、悬浮主题开关、浏览、相册、CSS、装饰和资产引用；不得导入其他主题或共享 React UI。站点不提供常驻全局顶部导航，内容入口和返回链接由各主题页面独立维护。主题只共享 content、playback、albums、routing 的无 UI 类型与纯交互契约，以及 `media-viewer` 的共用查看器（只挂载，不定制）。视觉特效优先评估轻量既有库，并记录体积、依赖、许可与兼容回退。当前治理决策见 [ADR 0003](docs/decisions/0003-retire-penpot-design-governance.md)。
+当前只有一套相册主题，页面内无主题切换。主题通过 content、playback、albums、routing 的公开无 UI 契约协作，仅挂载共用 `media-viewer`，不定制其样式与功能。视觉特效优先评估平台能力和既有轻量库，并记录兼容回退。当前治理决策见 [ADR 0003](docs/decisions/0003-retire-penpot-design-governance.md)。
 
 原生 WebView 壳通过独立工程接入。当前无 JS 桥接或离线缓存；移动浏览器视口模拟不能代表 iOS、Android 真机或套壳验证。全屏等功能按系统 WebView 能力降级。
 

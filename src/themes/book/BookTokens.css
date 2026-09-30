@@ -1,4 +1,4 @@
-[data-theme='grassland'] {
+:root {
   color-scheme: light;
 
   /* 字体：typography Token */
@@ -65,45 +65,25 @@
   --media-viewer-control-opacity: 0.9;
   --media-viewer-text-muted: rgb(255 255 255 / 72%);
 
-  /* 海边沙滩主题（默认外观） */
-  --color-background-canvas: #fbf7ee;
-  --color-background-surface: #ffffff;
-  --color-background-subtle: #daf2f1;
-  --color-text-primary: #153a45;
-  --color-text-secondary: #49656b;
-  --color-action-primary: #087e8b;
-  --color-action-primary-hover: #076d79;
-  --color-action-primary-pressed: #065760;
-  --color-action-primary-selected: #075d68;
-  --color-action-primary-disabled: #a7b6b8;
-  --color-action-on-primary: #ffffff;
-  --color-action-accent: #e88e69;
-  --color-border-default: #d8e5e1;
-  --color-border-strong: #73898f;
+  /* 线缝相册主题（唯一外观） */
+  --color-background-canvas: #f8f0e3;
+  --color-background-surface: #fffaf0;
+  --color-background-subtle: #eee0cb;
+  --color-text-primary: #432e30;
+  --color-text-secondary: #785f5b;
+  --color-action-primary: #842d3b;
+  --color-action-primary-hover: #a3414f;
+  --color-action-primary-pressed: #6c2431;
+  --color-action-primary-selected: #6c2431;
+  --color-action-primary-disabled: #c3aea9;
+  --color-action-on-primary: #fffaf0;
+  --color-action-accent: #c39870;
+  --color-border-default: #dccab6;
+  --color-border-strong: #9a756a;
   --color-media-overlay: #07131fcc;
   --color-media-control: #0b2730e6;
-  --color-focus-ring: #d96044;
-  --color-focus-ring-inverse: #ffffff;
+  --color-focus-ring: #a33d4a;
+  --color-focus-ring-inverse: #fffaf0;
   --color-state-error: #a94736;
-  --color-state-success: #24775f;
-  --color-background-canvas: #f7f8f0;
-  --color-background-surface: #ffffff;
-  --color-background-subtle: #e4f0e2;
-  --color-text-primary: #253a36;
-  --color-text-secondary: #5a6b62;
-  --color-action-primary: #3d765c;
-  --color-action-primary-hover: #376a53;
-  --color-action-primary-pressed: #32614b;
-  --color-action-primary-selected: #34654f;
-  --color-action-primary-disabled: #a9b5ac;
-  --color-action-on-primary: #ffffff;
-  --color-action-accent: #d8a852;
-  --color-border-default: #dce7d9;
-  --color-border-strong: #7c8986;
-  --color-media-overlay: #081913cc;
-  --color-media-control: #18342de6;
-  --color-focus-ring: #a85637;
-  --color-focus-ring-inverse: #ffffff;
-  --color-state-error: #a94736;
-  --color-state-success: #36765b;
+  --color-state-success: #517653;
 }

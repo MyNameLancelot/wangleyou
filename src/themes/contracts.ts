@@ -18,7 +18,6 @@ export interface ThemeAppProps {
   music: BackgroundMusic;
   musicCommands: ThemeMusicCommands;
   onOpen(album: Album, id: string): void;
-  onSwitchTheme(): void;
   online: boolean;
   contentErrorMessage: string | null;
 }

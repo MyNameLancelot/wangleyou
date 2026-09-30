@@ -165,7 +165,8 @@ export function stepHomeMemory(memory: HomeMemory, delta: HomeDirection, loop = 
   }
 
   if (!loop) {
-    return { ...memory, index: Math.min(Math.max(memory.index, 0), memory.items.length - 1) }
+    const index = Math.min(Math.max(nextIndex, 0), memory.items.length)
+    return { ...memory, index, playing: index === memory.items.length ? false : memory.playing }
   }
 
   return { ...memory, index: nextIndex < 0 ? memory.items.length - 1 : 0 }
