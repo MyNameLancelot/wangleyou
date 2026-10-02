@@ -21,7 +21,12 @@ export function checkVideoSize(size: number, location: string, path: string): Vi
 
 export async function validateFiles(configPath: string, publicDir: string) {
   const raw = JSON.parse(await readFile(configPath, 'utf8'));
-  const parsed = validateContent(raw.content ?? raw);
+  return validatePublishedContent(raw.content ?? raw, publicDir);
+}
+
+/** 校验已派生的内存索引，成功后才允许发布。 */
+export async function validatePublishedContent(input: unknown, publicDir: string) {
+  const parsed = validateContent(input);
   const root = await realpath(publicDir);
   const refs: { path: string; location: string }[] = [];
   parsed.albums.forEach((album, ai) => {

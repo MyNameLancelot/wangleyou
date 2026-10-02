@@ -28,7 +28,7 @@ const stemOf = (file: string) => file.slice(0, file.length - extname(file).lengt
 const isImage = (file: string) => IMAGE_EXTENSIONS.has(extname(file).toLowerCase()) && !POSTER_SOURCE.test(file)
 const isVideo = (file: string) => VIDEO_EXTENSIONS.has(extname(file).toLowerCase())
 /** 封面源素材对应的视频名，用于把封面绑定到真实视频。 */
-const posterOwner = (file: string) => `${POSTER_SOURCE.exec(file)?.[1] ?? stemOf(file)}.mp4`
+const posterStem = (file: string) => POSTER_SOURCE.exec(file)![1]
 
 /** 媒体顺序由构建期决定：topNN 文件优先（N 升序），其余按文件名自然序；照片与视频共用同一条规则。 */
 function orderMedia(files: string[]): string[] {
@@ -104,7 +104,7 @@ async function readJson(path: string): Promise<unknown> {
   }
 }
 
-export async function generatePhotoIndex(photosDir: string, outputPath: string): Promise<{ content: SiteContent; homeMemory: Photo[] }> {
+export async function readPhotoIndex(photosDir: string): Promise<{ content: SiteContent; homeMemory: Photo[] }> {
   const entries = await readdir(photosDir, { withFileTypes: true })
   const albums: Array<{ album: Album; order: string }> = []
 
@@ -119,11 +119,21 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
     if (unsupported.length) {
       throw new Error(`${entry.name}/${unsupported[0]}: 视频只接受 H.264 + AAC 的 .mp4；请先离线转码（例如 ffmpeg -c:v libx264 -crf 23 -movflags +faststart）再入库`)
     }
-    const posters = new Map(names.filter(file => POSTER_SOURCE.test(file)).map(file => [posterOwner(file), file]))
-    for (const [owner, poster] of posters) {
-      if (!names.includes(owner)) throw new Error(`${entry.name}/${poster}: 找不到同名的视频源文件 ${owner}；封面源素材必须与视频同名`)
-    }
     const videos = names.filter(isVideo).sort(natural.compare)
+    const videoByStem = new Map<string, string>()
+    for (const video of videos) {
+      const stem = stemOf(video)
+      if (videoByStem.has(stem)) throw new Error(`${entry.name}/${video}: 同名视频扩展名歧义`)
+      videoByStem.set(stem, video)
+    }
+    const posters = new Map<string, string>()
+    for (const poster of names.filter(file => POSTER_SOURCE.test(file)).sort(natural.compare)) {
+      const stem = posterStem(poster)
+      const owner = videoByStem.get(stem)
+      if (!owner) throw new Error(`${entry.name}/${poster}: 找不到同名的视频源文件 ${stem}.mp4；封面源素材必须与视频同名`)
+      if (posters.has(owner)) throw new Error(`${entry.name}/${poster}: ${owner} 重复封面：${posters.get(owner)}；每个视频只能有一个封面源素材`)
+      posters.set(owner, poster)
+    }
     const images = names.filter(isImage).sort(natural.compare)
     const captions = captionMap(details.captions, [...images, ...videos])
     const media: Media[] = orderMedia([...images, ...videos]).map(file => {
@@ -153,9 +163,15 @@ export async function generatePhotoIndex(photosDir: string, outputPath: string):
   const homeMemory = validateHomeMemory(await readJson(join(photosDir, 'home-memory.json')))
   const knownPhotos = new Set(content.albums.flatMap(album => album.media).filter((media): media is Photo => media.type === 'photo').map(photo => photo.src))
   homeMemory.forEach((photo, index) => { if (!knownPhotos.has(photo.src)) throw new Error(`home-memory[${index}].src: 必须引用相册目录中的照片`) })
-  await mkdir(join(outputPath, '..'), { recursive: true })
-  await writeFile(outputPath, `${JSON.stringify({ content, homeMemory }, null, 2)}\n`)
   return { content, homeMemory }
+}
+
+/** 兼容目录索引 CLI；媒体派生器只消费内存扫描结果，不提前发布原图索引。 */
+export async function generatePhotoIndex(photosDir: string, outputPath: string): Promise<{ content: SiteContent; homeMemory: Photo[] }> {
+  const generated = await readPhotoIndex(photosDir)
+  await mkdir(join(outputPath, '..'), { recursive: true })
+  await writeFile(outputPath, `${JSON.stringify(generated, null, 2)}\n`)
+  return generated
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -14,7 +14,7 @@
 
 ## 文件与扩展
 
-check.ts 提供纯函数 validateSnapshot、validateModules；cli.ts 负责 Git 和退出码；check.test.ts 与 git.test.ts 覆盖规则及临时 Git 仓库场景。新增 src 模块必须更新依赖白名单，保持有向无环关系；路径别名/非字面量动态导入暂不支持自动依赖解析，采用前必须扩展检查。
+check.ts 提供纯函数 validateSnapshot、validateModules；cli.ts 负责 Git 和退出码；check.test.ts 与 git.test.ts 覆盖规则及临时 Git 仓库场景。主题隔离按 src/themes 下实际目录识别，覆盖 book 与未来主题的静态/字面量动态 import、require 及重导出；direct contracts.ts 与本主题内部引用允许。新增 src 模块必须更新依赖白名单，保持有向无环关系；路径别名/非字面量动态导入暂不支持自动依赖解析，采用前必须扩展检查。
 
 ## 验证
 

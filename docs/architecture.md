@@ -1,80 +1,77 @@
 # 总架构
 
-## 当前状态
+本文描述当前系统组织、依赖方向和状态归属；产品行为见 [需求基线](requirements.md)，操作命令见 [README](../README.md)，开发规则见 [AGENTS](../AGENTS.md) 与 [SDD 指南](sdd.md)。
 
-网站是部署在 Cloudflare Pages 与 GitHub Pages 的 React + TypeScript + Vite 静态应用。它提供线缝相册单页首页、相册与全部影像浏览、媒体查看器，以及唯一相册主题；背景音乐能力保留但当前停用。媒体和内容配置均由仓库维护；没有后端、数据库、登录或运行时内容管理服务。
+## 系统边界与状态
 
-`native/ios` 和 `native/android` 是独立的原生容器工程，运行时仅把现有 HTTPS 生产网站载入系统 WebView。原生包不含网站构建产物或家庭相册媒体；Android 包内有本地开屏视频，无首尾静帧。Android 构建与家庭签名 APK 已验证，真机逐项验收待补录；iOS 构建和验收受完整 Xcode 与签名资料限制，用户已决定暂缓安装。
+网站是 React + TypeScript + Vite 静态应用，发布到 Cloudflare Pages 根路径与 GitHub Pages `/wangleyou/`。源码、内容配置和原始素材由仓库维护，运行时没有后端、数据库、登录或在线内容管理服务。
 
-产品行为见 [requirements.md](requirements.md)，开发与检查约定见 [AGENTS.md](../AGENTS.md) 和 [SDD 指南](sdd.md)。本文只描述当前模块边界和运行时归属。
+唯一主题为 `src/themes/book`，包含线缝相册首页、留影、相册索引与详情。`media-viewer` 是独立共用查看器，主题仅挂载。背景音乐的状态、组件和资产仍在，但当前不挂载音频 UI 或 audio 元素。
 
-## 模块
+`native/ios` 和 `native/android` 是独立系统 WebView 工程，加载 Cloudflare 生产网站；包内不含网站产物或家庭媒体，Android 另带本地开屏视频。Android 构建和模拟器有历史证据，v1.0.11 已获用户真机试用通过反馈，设备与专项矩阵未逐项记录；iOS 完整 Xcode 构建、签名和设备验收未完成，已按用户决定暂缓。已合并的原生实施记录已退役；未验证范围与 iOS 暂缓状态见 [原生交付状态](requirements.md#交付状态与验收)。
 
-| 模块 | 职责 |
-| --- | --- |
-| app | 应用入口、Hash 路由、模块装配和全局生命周期。 |
-| albums | 首页主回忆、横向手势与计时器的无 UI 交互契约。 |
-| content | 内容模型、排序、校验、生成索引及媒体 URL 解析。 |
-| media-viewer | 全站共用的媒体查看器：受控渲染 lightbox、把库事件翻译成 playback 命令；样式与功能不可按主题定制。 |
-| playback | 查看器会话和背景音乐的唯一业务状态所有者。 |
-| themes | 唯一相册主题应用及其页面 UI、样式和静态资产。 |
-| shared | 跨模块复用的无 UI 类型契约。 |
-| native/ios | iPhone/iPad 的 WKWebView、导航白名单、加载和错误状态及原生工程。 |
-| native/android | Android WebView、导航白名单、系统返回、视频全屏、加载和错误状态及 Gradle 工程。 |
+## 模块与依赖
 
-`app` 可以装配其他模块；业务模块不得反向依赖 `app`。主题只能使用其他模块的公开入口；除共用 media-viewer 外，主题 UI 均位于 book 目录。模块内部文件不作为跨模块接口。
+| 模块与详细契约 | 职责 | 允许的跨模块依赖 |
+| --- | --- | --- |
+| [app](../src/app/module.md) | Hash 路由、装配、标题/网络状态、会话与音乐状态实例 | albums、content、playback、themes、media-viewer、shared |
+| [albums](../src/albums/module.md) | 首页主回忆队列、手势、计时器的无 UI 契约 | content |
+| [content](../src/content/module.md) | 内容类型与校验、索引消费、媒体 URL | 无（结构检查允许 shared） |
+| [playback](../src/playback/module.md) | 查看器和保留音乐能力的纯业务状态机 | content、shared |
+| [media-viewer](../src/media-viewer/module.md) | 受控 lightbox、媒体 DOM、事件转命令、焦点与滚动锁 | content、playback、shared |
+| [themes](../src/themes/module.md) | book 页面、样式、装饰和资产，挂载查看器 | content、albums、playback、media-viewer、shared |
+| [shared](../src/shared/module.md) | 跨模块无 UI 类型，当前为 Route | 无 |
+| [native/ios](../native/ios/module.md) | WKWebView、导航限制、加载/错误与 Xcode 工程 | 系统平台；运行时加载网站 |
+| [native/android](../native/android/module.md) | WebView、返回/全屏、开屏、安全区与 Gradle 工程 | 系统平台；运行时加载网站 |
 
-## 内容与媒体
+`src/main.tsx` 经 `src/app/index.ts` 启动应用。跨模块只使用 `index.ts` 公开入口，业务模块不反向依赖 app，禁止循环和跨模块内部引用。shared 不承载业务流程。页面 UI、CSS 和主题资产归 book；查看器样式与功能归 media-viewer，主题不得覆盖或复制。详细输入输出和主要文件由各 module.md 维护。
 
-- 相册原始素材位于 `media-source/YYYY-MM-sequenceNN-相册名/`（照片、视频与 `<视频同名>.poster.jpg` 封面源素材共用同一层结构），构建期生成不提交的 `public/media/YYYY-MM-sequenceNN-相册名/` 派生资源。生成器按原图内容哈希与编码配置（含派生输出布局版本）缓存，写入实际尺寸、最大 WebP `src` 与 `srcSet`，以及相册元信息（`title`、`date`、`description`、可选 `opening`）到 `src/content/generated-photo-index.json`；原图不会进入 `dist`。
-- 视频在同一目录发布：源文件按内容哈希复制为 `<文件名>.<哈希12>.mp4`，目标存在即跳过复制；封面走与照片相同的 480/960/1600/2560 WebP 派生——有 `<视频同名>.poster.jpg` 就派生真实帧，没有则由构建期渲染一张中立占位底纹（16:9、`video-poster-placeholder-v1`，占位版本提升即重新生成），索引里始终写入 `poster`、`posterSrcSet` 与对应 `width`/`height`。构建期不转码、不抽帧、不引入 ffmpeg/ffprobe：只接受 `.mp4`，>100 MB 警告、>200 MB 失败。源→产物映射记录在 `.cache/media-variants/manifest.json` 的 `entries`（含 `${视频源路径}#poster` 占位条目）与 `videos` 段，用于清理旧产物。
-- 相册主题的浏览头图与保留的背景音乐资产位于 `public/media/themes/book/`；当前只引用浏览头图，不加载音乐。
-- 内容配置只保存 `media/...` 相对路径。`content.mediaUrl()` 是图片、视频、视频封面和音乐的唯一 URL 入口：构建期优先使用 `VITE_MEDIA_BASE_URL`，未设置时回退 Vite `BASE_URL`。它拒绝协议、绝对路径、反斜杠、查询、片段和目录穿越，并对每段路径编码。
-- 路由继续使用 Hash。GitHub Pages 构建的页面 base 是 `/wangleyou/`，Cloudflare Pages 构建通过 `SITE_BASE=/` 使用根路径。两处生产构建都不设置 `VITE_MEDIA_BASE_URL`，媒体与页面同源；该变量保留给未来媒体托管迁移。
+## 内容管线与路径
 
-构建前的 `scripts/generate-photo-index.ts`（扫描目录并生成含视频的内容索引）、`scripts/generate-media.ts`（派生 WebP 与按内容哈希发布视频）和 `scripts/validate-content.ts`（校验配置、发布资源存在性、视频扩展名与体积基线）共同构成内容管线。运行时网络错误由页面内反馈处理，不让应用白屏。
+| 层 | 位置 | 归属 |
+| --- | --- | --- |
+| 源素材与配置 | `media-source/YYYY-MM-sequenceNN-相册名/`、`media-source/home-memory.json` | 提交仓库，不作为站点资源发布 |
+| 派生媒体 | 同名 `public/media/<相册目录>/` | 构建生成，不提交 Git |
+| 生成内容 | `src/content/generated-photo-index.json`（包含 content 与 homeMemory） | 生成器维护，不手写 |
+| 派生缓存 | `.cache/media-variants/manifest.json` 与派生文件 | 本地/CI 复用，可从源素材重建 |
+| 主题资产 | `public/media/themes/book/` | 主题静态资产，不进入相册配置 |
 
-## 媒体托管与演进
+照片、视频和封面源图在相册目录同一层。`scripts/generate-media.ts` 先消费内存目录扫描结果，再派生和校验媒体；缓存与索引完整暂存后以索引作为最后提交点，提交失败恢复旧缓存，成功后才清理旧产物；`scripts/generate-photo-index.ts` 解析目录、meta、寄语和显式主回忆，`scripts/validate-content.ts` 检查发布文件与视频体积。构建和开发均先运行该管线。
 
-当前两个站点的媒体与页面分别同源；原生壳只加载 Cloudflare Pages 根路径，GitHub Pages 保留浏览器备用。2026-09-30 已核对 Cloudflare 首页、JS、CSS 与主题图片返回 HTTP 200。真实相册媒体另存储的方案尚未实施，现阶段仍随两处 `dist/` 发布。
+- 相册索引按目录年月/序号降序；留影页另按年份降序、同年月份/序号升序分组。媒体统一按 `topNN` 编号优先、其余文件名自然序排序；运行时不重新排序媒体。首页使用单独的显式数组。内容字段和错误规则见需求与 content 契约。
+- sharp 按源内容哈希、编码配置和输出布局版本增量生成 480/960/1600/2560 宽 WebP（不放大、清 EXIF，源宽不足 480px 时保留源宽候选），索引写实际尺寸、最大候选 `src` 与 `srcSet`。原图不进入 dist；缓存结构、路径和尺寸须校验，生成目录拒绝链接逃逸，各项编码/复制临时文件后替换，失败不沿输出链接改写源素材。旧产物只按可信清单在发布成功后清理；派生或提交失败只回收本轮新建文件，不删除已有发布文件。
+- MP4 按内容哈希复制为 `<文件名>.<哈希12>.mp4`，存在则跳过。可选同名封面源图走同一 WebP 派生器；缺失则用 sharp 生成版本化 16:9 中立占位封面。索引始终含 `poster`、`posterSrcSet` 和封面尺寸；清单的 `entries`（占位封面带 `#poster` 键）和 `videos` 管理失效产物。
+- 构建不解码/抽帧/转码视频，不引入 ffmpeg/ffprobe；离线 MP4 形态及 100/200 MB 校验阈值见需求与 README。源图/视频字节变化后须清理旧哈希产物。
+- 相册详情采用 `react-photo-album` Masonry，列数、间距和 `sizes` 使用默认计算，`padding={8}` 参与相框列宽计算；主题不自行覆盖 sizes。
 
-派生 WebP 与视频产物在构建期生成、不提交仓库，只读取 Git 仓库文件的 CDN（例如 jsDelivr 的 `gh/<owner>/<repo>@<ref>` 形式）拿不到这些文件，也受 GitHub 来源单文件 20 MB 限制，因此不作为媒体前缀。
+`content.mediaUrl()` 是所有图片、视频、封面和音乐的唯一媒体 URL 入口：优先构建期 `VITE_MEDIA_BASE_URL`，未设置则用 Vite `BASE_URL`；校验安全相对路径并逐段编码。主题不得自行拼接 CDN。当前两处生产构建不设媒体前缀，媒体分别与站点同源。
 
-媒体托管升级是未决事项，尚未实施；满足任一触发条件时重新评估，取得用户确认后再实施：
-
-- 派生媒体与站点总量超过约 500 MB，或仓库逼近 1 GB 推荐上限。
-- 月度流量接近 GitHub Pages 的 100 GB 软限制。
-- 需要发布超过 100 MiB 的视频（普通 Git 推送会阻止这种文件）。
-
-候选路径：
-
-1. 保留现有两处 Pages 静态部署及同源媒体，在免费限额内继续使用。
-2. 把媒体迁到对象存储（例如 Cloudflare R2 免费额度为 10 GB-month 存储、每月 100 万次 Class A 与 1000 万次 Class B 操作，出站流量不计费），绑定自定义域后由构建或维护者上传，并把 `VITE_MEDIA_BASE_URL` 指向该域；需要同时确认 CORS、Range 与原生壳的子资源加载。
-
-两条路径都引入站外服务，实施前必须按 [requirements.md](requirements.md) 的技术与部署约束取得用户明确同意，并补齐新的决策记录与验证方式。
+页面 base 由 `SITE_BASE` 配置，GitHub 为 `/wangleyou/`，Cloudflare 为 `/`；路由使用 Hash，媒体前缀不改变页面 base 或路由。静态路径/刷新/子路径必须在构建产物中验证。
 
 ## 状态与资源生命周期
 
-`App` 唯一持有 playback 会话并把命令交给主题，主题只负责在会话存在时挂载共用查看器。查看器归 `media-viewer` 模块：受控渲染 `open`/`index`，把库的 `view` 事件翻译成 `stepSessionTo`，把原生 video 事件翻译成状态、进度与结束命令，并按 `intent` 在打开视频时尝试播放；它负责 DOM、焦点恢复、滚动锁与媒体元素，关闭、路由变化或卸载时解绑 video 监听并释放媒体元素。查看器不保存索引副本，主题不得覆盖其样式或功能，也不得复制第二份实现。`playback` 负责当前媒体、用户播放意图、实际状态与进度；视频结束停留当前项，只有用户命令可以推进队列，旧媒体的异步事件不得回写新会话。
+| 所有者 | 状态/资源 | 失效与清理 |
+| --- | --- | --- |
+| app | 路由、online、Session 与 BackgroundMusic 实例，hash/网络监听 | 改路由关闭 Session，卸载解绑监听；状态转换交 playback |
+| playback | 当前媒体、队列、意图、实际状态/进度、可见性/待主动恢复、音乐偏好及临时暂停 | 同步纯函数，无 DOM/计时器；视频结束不推进，旧回调来源须匹配当前会话 |
+| media-viewer / lightbox 库 | 受控 open/index、portal、video、焦点、inert、滚动锁与插件计时 | 观察当前 DOM 身份，延迟挂载和同项替换重绑；换项解绑 video 监听并失效旧播放请求；卸载释放 DOM/媒体、恢复滚动和焦点；Slideshow 计时由插件管理 |
+| book 首页 / albums 控制器 | 局部纸页、用户暂停、交互/可见性、翻页帧与 interval | 条件失效清 interval，回前台不自动恢复；翻页锁重入，完成提交索引，卸载取消动画帧 |
+| book 音频组件（停用） | 若挂载才创建 audio 和监听 | 当前不挂载；重新启用先确认交互与音乐协调 |
+| 原生容器 | WebView、加载/错误状态、Android 视频纹理/播放器、加载光条 | 按平台生命周期暂停/释放，网站业务会话仍归网页 |
 
-共用查看器自带键盘契约：库把其余页面标记为 inert，焦点越过最后一个控件会落到浏览器 chrome 上使按键失效，因此它在边界把 Tab 回绕到查看器内部；Esc、方向键、首尾禁用（不循环）、缩略图带与触摸滑动沿用库默认行为，焦点环固定为白色、不随主题变化。
+App 向查看器提供命令，主题在 Session 存在时挂载共用组件。查看器的 `view` 事件转 `stepSessionTo`，原生 video 的播放/等待/进度/结束/错误事件转 playback 命令，播放请求被拒时回报其发起队列与索引。hidden 通过插件 ref 暂停幻灯片，并使旧视频播放请求失效；回前台由 Session 的 resumeRequired 保持暂停，主动原生播放或可见时换项再继续。查看器不复制业务索引；局部缩略图/全屏 UI 状态不属于 playback。
 
-首页主回忆是 book 页面短生命周期状态：照片数加一张收束页形成非循环队列；页面可见、仍有下一页且未被用户或交互状态暂停时计时，到末页停止。每翻一页，右侧实体页层数随进度变化；翻页期间锁定重复动作，PageTurn 完成后通知首页提交回翻索引并释放锁，卸载时取消动画帧。页面隐藏、打开查看器或卸载时清理 interval。它不改变查看器会话。
+共用查看器使用 Captions、Fullscreen、Slideshow、Thumbnails、Video、Zoom。非循环、背景关闭、工具栏裁剪、寄语与缩略图收起条、全屏和 Tab 回绕契约详见 media-viewer；其焦点环固定白色，不读取主题变量。插件幻灯片需用户显式启动，视频 ended 不推进。首页翻页由 SVG 曲线/裁切/渐变及 requestAnimationFrame 实现，与查看器会话独立。
 
-背景音乐的意图、实际状态、音量和“回前台待恢复”状态属于 playback；book 保留音频组件及资产，但当前不挂载，因此无音乐入口或 audio DOM，也不会尝试播放。共用查看器仍按自身生命周期清理视频、监听器与计时器。
+原生壳仅允许 Cloudflare HTTPS 根路径作为顶层页面，Hash 导航留在 WebView，外部 HTTPS 用户链接交系统浏览器；媒体子资源按页面地址加载，不做原生 URL 替换，无 JS 桥接。返回、加载失败与开屏生命周期由原生 module.md 维护。
 
-## 主题与样式
+## 构建、部署与演进
 
-`src/themes/book` 是唯一主题，沿用 Android 酒红相册开屏与图标的奶油纸页、酒红封边和线缝装订。首页展示横向 3:2 层叠内页，照片随页轻微倾斜；桌面有明确控制，手机标题分行，以左右手滑和点击照片操作。主题局部 PageTurn 使用 SVG 曲线、裁切和渐变表现内页范围内的卷页，正反向共用同一几何轨迹，减少动态效果下直接切换。装饰均不拦截操作。主题切换状态、入口与偏好存储均已移除。
+- 工程基础与 Hash 路由依据 [ADR 0001](decisions/0001-frontend-foundation.md)；当前技术取舍索引见 [decisions](decisions/README.md)。
+- [网站工作流](../.github/workflows/module.md)：`check.yml` 校验 push/PR；`deploy.yml` 从 main 部署 GitHub Pages；Cloudflare Git 集成也从 main 构建。原生 `native.yml` 仅手动执行无凭据构建，不上传安装包。
+- 原生签名包由维护者本机生成，分发需用户授权；v1.0.10 稳定家庭包与 v1.0.11 家庭签名测试包的交付地址和安装步骤由 README 维护。v1.0.11 测试包来自本地工作区，含错误遮罩可访问性修复；原生修复源码由本次 PR 提供，网页修复未部署。iOS 尚无 IPA，不把源码或静态检查当作设备交付。
+- 通常运行 `npm run check`、`npm run build`、相关 `npm run test:e2e`；按实际影响选择，SDD 差异检查不能替代行为验收。
 
-浏览、相册页面复用现有内容和交互契约，但使用 book 的配色、字体和资产。共用查看器保持独立，主题仅挂载，不能覆盖其样式或复制实现。音乐状态能力仍由 playback 保留，但当前 UI 不使用。
+媒体存储迁移尚未实施。以下是本项目重新评估的触发条件：派生产物约超过 500 MB、仓库逼近 1 GB、流量接近实际托管额度，或需要入库超过普通 Git 单文件上限的视频。触发时核实平台当前限制、测量实际规模，再由用户决定继续现有同源 Pages，或迁往对象存储并设置媒体前缀；不得把服务历史免费额度当成长期保证。
 
-## 工具与部署
-
-- [前端基础决策](decisions/0001-frontend-foundation.md)：技术栈和静态路径策略。
-- `src/main.tsx` → `src/app/index.ts`：应用入口；各模块 `index.ts` 是公开入口。
-- `npm run check`、`npm run build`、`npm run test:e2e`：本地验证入口。
-- `.github/workflows/check.yml`：push 和 PR 的检查；`.github/workflows/deploy.yml`：main 的 Pages 发布，详见 [工作流模块](../.github/workflows/module.md)。
-- `.github/workflows/native.yml`：仅手动执行原生无凭据构建，不上传安装包；Android 签名 APK 由维护者在本机生成。本次 v1.0.10 由用户明确要求上传公开 GitHub Release；iOS Ad Hoc IPA 未交付。
-
-查看器幻灯片只在用户点击工具栏按钮后运行；视频自然结束不自动推进。原生壳不持有查看器业务状态。原生桥接不在当前交付范围；若实现，先更新需求、模块契约和相应验证。
+派生资源不提交 Git，因此只读取 Git 文件的 CDN 无法提供完整发布资源，不适合作为当前媒体前缀。若迁移对象存储，须先确认费用、上传归属、CORS、Range、缓存和 WebView 子资源验证，形成新的 ADR。原生桥接、离线媒体库及重新启用音乐均不预建空模块，获得明确需求后再演进。

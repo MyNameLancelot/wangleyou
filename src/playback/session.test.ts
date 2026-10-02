@@ -10,6 +10,8 @@ import {
   setIntent,
   setProgress,
   setStatus,
+  setSessionVisibility,
+  shouldPlaySession,
   stepSession,
   stepSessionTo,
 } from './index';
@@ -26,6 +28,27 @@ const mixed: Media[] = [
 ];
 
 describe('播放会话', () => {
+  it('隐藏暂停保留意图与当前项，回前台必须主动继续', () => {
+    const playing = setProgress(setStatus(openSession(mixed, 'v1'), 'playing'), .3, 20)!;
+    const hidden = setSessionVisibility(playing, false)!;
+    expect(hidden).toMatchObject({ intent: 'playing', status: 'paused', index: 0, progress: .3, visible: false, resumeRequired: true });
+    expect(playing.visible).toBe(true);
+    expect(shouldPlaySession(hidden)).toBe(false);
+    const returned = setSessionVisibility(hidden, true)!;
+    expect(shouldPlaySession(returned)).toBe(false);
+    expect(shouldPlaySession(setIntent(returned, 'playing')!)).toBe(true);
+  });
+
+  it('用户暂停不被后台或前台切换清除，隐藏换项不能启动视频', () => {
+    const paused = setIntent(openSession(mixed, 'v1'), 'paused')!;
+    const returned = setSessionVisibility(setSessionVisibility(paused, false), true)!;
+    expect(returned).toMatchObject({ intent: 'paused', resumeRequired: false });
+    expect(shouldPlaySession(returned)).toBe(false);
+    const switched = stepSessionTo(setSessionVisibility(openSession(mixed, 'p1'), false), 2)!;
+    expect(switched).toMatchObject({ intent: 'playing', status: 'paused', visible: false, resumeRequired: true });
+    expect(shouldPlaySession(setIntent(switched, 'playing')!)).toBe(false);
+    expect(setSessionVisibility(null, false)).toBeNull();
+  });
   it('未知媒体或空队列返回 null', () => {
     expect(openSession(photos, 'missing')).toBeNull();
     expect(openSession([], 'p1')).toBeNull();

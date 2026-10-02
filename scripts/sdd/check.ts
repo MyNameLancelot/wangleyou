@@ -63,6 +63,7 @@ const allowed: Record<string, string[]> = {
 };
 export function validateModules(files: Map<string, string>): string[] {
   const errors: string[] = [];
+  const themeNames = new Set([...files.keys()].map(p => /^src\/themes\/([^/]+)\//.exec(p)?.[1]).filter(Boolean));
   for (const [p, content] of files) {
     if (!/^src\/[^/]+\/.+\.[cm]?[jt]sx?$/.test(p)) continue;
     const owner = p.split('/')[1];
@@ -78,9 +79,9 @@ export function validateModules(files: Map<string, string>): string[] {
         if (spec.startsWith('.')) {
           const target = path.posix.normalize(path.posix.join(path.posix.dirname(p), spec));
           const parts = target.split('/');
-          const theme = /^src\/themes\/(beach|grassland)\//.exec(p)?.[1];
-          const targetTheme = /^src\/themes\/(beach|grassland)(?:\/|$)/.exec(target)?.[1];
-          if (theme && targetTheme && targetTheme !== theme) errors.push(`${p}: 主题 ${theme} 不得依赖主题 ${targetTheme}`);
+          const theme = /^src\/themes\/([^/]+)\//.exec(p)?.[1];
+          const targetTheme = /^src\/themes\/([^/]+)(?:\/|$)/.exec(target)?.[1];
+          if (theme && targetTheme && themeNames.has(targetTheme) && targetTheme !== theme) errors.push(`${p}: 主题 ${theme} 不得依赖主题 ${targetTheme}`);
           if (parts[0] === 'src' && parts[1] !== owner) {
             const other = parts[1];
             if (!allowed[owner].includes(other)) errors.push(`${p}: 不允许依赖 ${other}`);

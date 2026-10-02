@@ -13,6 +13,7 @@ import {
 } from '../../albums';
 import { PhotoImage } from './PhotoImage';
 import { PageTurn } from './PageTurn';
+import { homePhotoSizes, responsiveSrcSet } from './images';
 import styles from './ThemeHome.module.css';
 
 function reducedMotion() {
@@ -26,7 +27,7 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
   const [focused, setFocused] = useState(false);
   const [interactionOverride, setInteractionOverride] = useState(false);
   const [visible, setVisible] = useState(() => document.visibilityState !== 'hidden');
-  const [resumeRequired, setResumeRequired] = useState(false);
+  const [resumeRequired, setResumeRequired] = useState(() => document.visibilityState === 'hidden' && memory.length > 0);
   const [flip, setFlip] = useState<{ src: string | null; direction: -1 | 1; targetIndex: number } | null>(null);
   const stateRef = useRef(state);
   const flipLockedRef = useRef(false);
@@ -34,10 +35,13 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const suppressClickUntilRef = useRef(0);
+  const photoElementRef = useRef<HTMLButtonElement | null>(null);
+  const selectedSourcesRef = useRef(new Map<string, string>());
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => {
     flipLockedRef.current = false;
+    selectedSourcesRef.current.clear();
     setFlip(null);
     setState(createHomeMemory(memory));
   }, [memory]);
@@ -50,13 +54,15 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
     if (direction < 0) intervalRef.current?.sync(false);
     else intervalRef.current?.restart();
     const turningPhoto = direction === 1 ? current.items[current.index] : current.items[next.index];
+    const selected = photoElementRef.current?.querySelector('img')?.currentSrc;
+    if (selected && current.items[current.index]) selectedSourcesRef.current.set(current.items[current.index].id, selected);
     if (direction > 0 || reducedMotion()) {
       stateRef.current = next;
       setState(next);
     }
     if (!reducedMotion()) {
       flipLockedRef.current = true;
-      setFlip({ src: turningPhoto ? mediaUrl(turningPhoto.src) : null, direction, targetIndex: next.index });
+      setFlip({ src: turningPhoto ? selectedSourcesRef.current.get(turningPhoto.id) ?? null : null, direction, targetIndex: next.index });
     } else {
       setFlip(null);
     }
@@ -99,9 +105,10 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
   const toggle = () => {
     if (performance.now() < suppressClickUntilRef.current || flipLockedRef.current) return;
     if (state.index === state.items.length) return;
+    const playing = resumeRequired ? true : !state.playing;
     setResumeRequired(false);
-    setInteractionOverride(!state.playing && (hovered || focused));
-    setState(previous => setHomeMemoryPlaying(previous, !previous.playing));
+    setInteractionOverride(playing && (hovered || focused));
+    setState(previous => setHomeMemoryPlaying(previous, playing));
   };
   const swipe = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
     if (!start) return;
@@ -130,6 +137,7 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
   const current = state.items[state.index];
   const ending = state.items.length > 0 && state.index === state.items.length;
   const rightPageCount = state.items.length + 1 - state.index;
+  const playing = state.playing && !resumeRequired;
   return <section className={styles.home} aria-labelledby="home-title" data-testid="book-home">
     <div className={styles.book}>
       <div className={styles.stitches} aria-hidden="true">{Array.from({ length: 7 }, (_, index) => <i key={index} />)}</div>
@@ -143,9 +151,9 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
             const depth = rightPageCount - 1 - index;
             return <div key={depth} className={`${styles.sheet} ${styles.sheetUnder}`} style={{ '--depth': depth } as CSSProperties} aria-hidden="true" data-book-page="under" />;
           })}
-          {current ? <button type="button" className={`${styles.sheet} ${styles.sheetFront}`} onClick={toggle} aria-label={`${state.playing ? '暂停' : '继续'}主回忆自动播放：${current.description || current.id}`} data-testid="home-memory-photo" data-book-page="front">
-            <PhotoImage className={styles.photo} src={mediaUrl(current.src)} alt={current.alt || current.description || '主回忆照片'} eager draggable={false} />
-          </button> : <div className={`${styles.sheet} ${styles.sheetFront} ${styles.ending}`} role="status" aria-live="polite" data-testid="home-memory-ending" data-book-page="front"><span className={styles.endingRule} aria-hidden="true" /><p>翻到这里，先把书轻轻合上<br />这些日子没有走远<br />想念的时候，随时回来看看</p><span className={styles.endingMark} aria-hidden="true">❦</span></div>}
+          {current ? <button ref={photoElementRef} type="button" className={`${styles.sheet} ${styles.sheetFront}`} onClick={toggle} aria-label={`${playing ? '暂停' : '继续'}主回忆自动播放：${current.description || current.id}`} data-testid="home-memory-photo" data-book-page="front">
+            <PhotoImage className={styles.photo} src={mediaUrl(current.src)} srcSet={responsiveSrcSet(current)} sizes={homePhotoSizes} alt={current.alt || current.description || '主回忆照片'} eager draggable={false} />
+          </button> : <div className={`${styles.sheet} ${styles.sheetFront} ${styles.ending}`} data-testid="home-memory-ending" data-book-page="front"><span className={styles.endingRule} aria-hidden="true" /><p>翻到这里，先把书轻轻合上<br />这些日子没有走远<br />想念的时候，随时回来看看</p><span className={styles.endingMark} aria-hidden="true">❦</span></div>}
           {flip && <PageTurn src={flip.src} direction={flip.direction} onComplete={() => {
             if (flip.direction < 0) {
               const next = { ...stateRef.current, index: flip.targetIndex };
@@ -158,7 +166,7 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
         </div>
         <div className={styles.controls}>
           <button type="button" onClick={() => step(-1)} disabled={state.index === 0} aria-label="上一张照片"><ChevronLeft aria-hidden="true" />上一页</button>
-          <button type="button" onClick={toggle} disabled={ending} aria-label={ending ? '主回忆播放已结束' : state.playing ? '暂停主回忆自动播放' : '继续主回忆自动播放'}>{state.playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}{ending ? '已读完' : state.playing ? '暂停' : '播放'}</button>
+          <button type="button" onClick={toggle} disabled={ending} aria-label={ending ? '主回忆播放已结束' : playing ? '暂停主回忆自动播放' : '继续主回忆自动播放'}>{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}{ending ? '已读完' : playing ? '暂停' : '播放'}</button>
           <button type="button" onClick={() => step(1)} disabled={ending} aria-label="下一张照片">下一页<ChevronRight aria-hidden="true" /></button>
         </div>
       </div> : <div className={styles.empty}><h2>回忆还在准备中</h2><p>添加主回忆照片后，就能从这里翻阅</p></div>}

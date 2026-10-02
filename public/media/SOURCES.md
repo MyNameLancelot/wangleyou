@@ -4,16 +4,16 @@
 
 来源：Pexels，2026-09-15 下载。适用 [Pexels License](https://www.pexels.com/license/)：允许免费使用和修改；不得出售未经修改的副本、暗示背书或重新分发为竞争素材服务。以原许可完整条款为准。
 
-| 发布文件 | 原始照片页面 | 下载资源 |
+| 当前源文件（media-source 下） | 原始照片页面 | 下载资源 |
 | --- | --- | --- |
-| seaside.jpg | https://www.pexels.com/photo/457882/ | https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg |
-| forest.jpg | https://www.pexels.com/photo/1179229/ | https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg |
-| lake.jpg | https://www.pexels.com/photo/2662116/ | https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg |
-| flowers.jpg | https://www.pexels.com/photo/1172849/ | https://images.pexels.com/photos/1172849/pexels-photo-1172849.jpeg |
-| leaves.jpg | https://www.pexels.com/photo/807598/ | https://images.pexels.com/photos/807598/pexels-photo-807598.jpeg |
-| picnic.jpg | https://www.pexels.com/photo/102104/ | https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg |
+| 2024-05-sequence00-破壳/top01.jpg | https://www.pexels.com/photo/457882/ | https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg |
+| 2024-05-sequence00-破壳/002.jpg | https://www.pexels.com/photo/1179229/ | https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg |
+| 2024-08-sequence01-百日/top01.jpg | https://www.pexels.com/photo/2662116/ | https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg |
+| 2024-08-sequence01-百日/002.jpg | https://www.pexels.com/photo/1172849/ | https://images.pexels.com/photos/1172849/pexels-photo-1172849.jpeg |
+| 2025-05-sequence00-周岁/009.jpg | https://www.pexels.com/photo/807598/ | https://images.pexels.com/photos/807598/pexels-photo-807598.jpeg |
+| 2025-05-sequence00-周岁/002.jpg | https://www.pexels.com/photo/102104/ | https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg |
 
-下载时使用 Pexels 图像服务压缩至宽度 1600px；thumbs 下的派生 WebP 由本项目脚本生成，最长边 640px，不放大。素材替换时同步更新来源信息。
+下载时使用 Pexels 图像服务压缩至宽度 1600px；源文件位于 media-source；派生 WebP 位于同名 public/media 相册目录，宽度从 480/960/1600/2560 取不超过源宽的候选，不足480px则保留源宽。旧 thumbs 目录已经退役。素材替换时同步更新来源信息。
 
 ## 相册测试图来源（第二批）
 
@@ -21,7 +21,7 @@
 
 来源：Lorem Picsum（`https://picsum.photos`，图片由 Unsplash 提供），适用 [Unsplash License](https://unsplash.com/license)：允许免费使用与修改，不得原样转售或用于训练竞品服务。下表列出每张图的作者与 Unsplash 原始页面；下载后经本项目 `npm run compress:photos` 统一为 JPEG（长边 1600px、质量 82、剥离元数据）。
 
-| 发布文件 | 作者 | 原始照片页面 |
+| 当前源文件（media-source 下） | 作者 | 原始照片页面 |
 | --- | --- | --- |
 | 2024-05-sequence00-破壳/003.jpg | Jon Eckert | [Unsplash](https://unsplash.com/photos/umLpP7uCZs0) |
 | 2024-05-sequence00-破壳/004.jpg | Rula Sibai | [Unsplash](https://unsplash.com/photos/qVj3KuEikvg) |
@@ -58,23 +58,16 @@
 
 演示视频没有对白，也不再使用字幕文件：画面说明改用相册 `meta.json` 的 `photos_meta.captions`（可按文件名登记照片或视频）。替换真实家庭视频时同步更新本文件、封面源素材与许可说明；封面抽帧是维护者的离线一步，构建期不做抽帧、不依赖 ffmpeg。若某个视频没有提供封面源素材，构建期会生成一张中立的占位封面（深色底纹、16:9）；缩略图正中的 ▶ 播放标识由页面按媒体类型叠加，不写进封面资源。
 
-## 主题背景插画
+## 当前主题资产
 
-| 发布文件 | 来源 | 说明 |
-| --- | --- | --- |
-| themes/beach/home-hero.webp | 用户提供的海滩图，经局部图像修复去除沙地石粒后重采样与 WebP 编码 | 2560×1440；非原始素材，用于首页海滩首屏 |
-| themes/beach/home-memory.webp | 从用户提供原图的底部连续沙滩带截取参考，经 OpenAI 图像生成工具向下扩展并去除石粒；最终只保留扩展区域，并以等比例中心裁切重采样 | 2560×1440，海边主题首页第二屏背景；不属于相册内容 |
-| themes/grassland/home-hero.webp | 本项目原创设计素材 | 同上（约 101 KB） |
-
-`themes/grassland/home-hero.webp` 为本项目原创演示插画，不含真实家庭影像或第三方品牌元素；`themes/beach/home-hero.webp` 与 `themes/beach/home-memory.webp` 为用户提供并经处理的非原始素材。替换为实拍素材时同步更新本文件与许可说明。
-
-主题私有资源按主题分目录存放；相册派生资源按相册目录直接位于 `public/media/<相册目录>/`（与源素材 `media-source/<相册目录>/` 层级一致），包括照片派生 WebP、视频封面派生 WebP 与按内容哈希发布的 MP4；不再有 `public/media/video/` 之类的手工发布目录。
-
-## 演示背景音乐
-
-| 发布文件 | 当前状态 |
+| 发布文件（public/media 下） | 已知来源与状态 |
 | --- | --- |
-| themes/beach/music.mp3 | 来源和许可未登记；当前仅作为非商业演示占位，正式发布或商用前必须替换或确认授权。 |
-| themes/grassland/music.mp3 | 同上。 |
+| themes/book/album-hero.png | 线缝相册主题提交 594e4e0 加入的原头图；仓库未登记原始制作来源及许可，仍待维护者核对，不能套用旧主题来源说明。 |
+| themes/book/album-hero.webp | 从上述 PNG 原尺寸 1254×1254 无损编码；解码 RGBA 字节相同，颜色、透明通道和裁切不变。当前头图使用 WebP，PNG 保留便于比较。 |
+| themes/book/music.mp3 | 当前保留但停用，不挂载 audio；来源和许可未登记，重新启用或正式使用前需要确认授权或替换。 |
 
-这两个音频已重编码为 96 kbps mono。替换为真实家庭音乐时同步更新本文件、许可说明与主题组件引用。
+当前仅 book 主题；已退役的 beach/grassland 资产说明不适用于这些文件。主题资源不属于相册素材。照片、视频封面与 MP4 派生产物同层位于 public/media/<相册目录>/，没有 thumbs 或手工 video 发布目录。
+
+## 其他演示图的追溯状态
+
+上表保留已登记的 Pexels/Picsum 来源；后续演示目录中重复或新增的照片，应以源文件及 Git 历史核对，不将相册日期当拍摄时间，不依据相似画面推断作者或许可。来源/使用条件未确认的文件继续待维护者补齐登记。

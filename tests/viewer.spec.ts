@@ -16,6 +16,77 @@ import {
 const currentSlide = (page: Parameters<typeof viewerAt>[0]) => page.locator('.yarl__slide_current');
 const currentVideo = (page: Parameters<typeof viewerAt>[0]) => currentSlide(page).locator('video');
 
+test('video and caption still bind when the portal arrives after the former scan deadline', async ({ page }) => {
+  await page.addInitScript(() => {
+    const append = Node.prototype.appendChild;
+    Node.prototype.appendChild = function <T extends Node>(node: T): T {
+      if (this === document.body && node instanceof HTMLElement && node.classList.contains('yarl__portal')) {
+        setTimeout(() => append.call(this, node), 5500);
+        return node;
+      }
+      return append.call(this, node) as T;
+    };
+  });
+  await page.goto(`./#/albums/${videoAlbumId}`);
+  await page.getByRole('button', { name: firstVideo }).click();
+  const video = currentVideo(page);
+  await expect(video).toBeVisible();
+  await expect.poll(() => video.evaluate(node => !(node as HTMLVideoElement).paused)).toBe(true);
+  await pressViewerKey(page, 'Escape');
+  await expect(page.locator('.yarl__portal')).toHaveCount(0);
+  await page.getByRole('button', { name: '查看照片：周岁 第 1 张' }).click();
+  await expect(currentSlide(page).locator('img')).toBeVisible();
+  await expect.poll(() => page.locator('.yarl__portal').evaluate(node => parseFloat(node.style.getPropertyValue('--viewer-caption-max-width')))).toBeGreaterThan(0);
+  await pressViewerKey(page, 'Escape');
+  await expect(page.locator('.yarl__portal')).toHaveCount(0);
+});
+
+test('same-item video replacement detaches the old element and binds the new one', async ({ page }) => {
+  await page.goto(`./#/albums/${videoAlbumId}`);
+  await page.getByRole('button', { name: firstVideo }).click();
+  const video = currentVideo(page);
+  await expect.poll(() => video.evaluate(node => !(node as HTMLVideoElement).paused)).toBe(true);
+  await video.evaluate(node => {
+    const previous = node as HTMLVideoElement;
+    const next = previous.cloneNode(true) as HTMLVideoElement;
+    previous.replaceWith(next);
+    previous.dispatchEvent(new Event('error')); // MutationObserver 尚未重绑时的旧元素事件也失效。
+    (window as unknown as { replacedVideo: HTMLVideoElement }).replacedVideo = previous;
+  });
+  await expect.poll(() => video.evaluate(node => !(node as HTMLVideoElement).paused)).toBe(true);
+  expect(await page.evaluate(() => (window as unknown as { replacedVideo: HTMLVideoElement }).replacedVideo.paused)).toBe(true);
+  // 旧元素的迟到事件不能把当前会话改成暂停。
+  await page.evaluate(() => (window as unknown as { replacedVideo: HTMLVideoElement }).replacedVideo.dispatchEvent(new Event('pause')));
+  await expect.poll(() => video.evaluate(node => !(node as HTMLVideoElement).paused)).toBe(true);
+  await video.evaluate(node => (node as HTMLVideoElement).pause());
+  await page.waitForTimeout(100);
+  await video.evaluate(node => node.replaceWith(node.cloneNode(true)));
+  await page.waitForTimeout(500);
+  expect(await video.evaluate(node => (node as HTMLVideoElement).paused)).toBe(true);
+  await pressViewerKey(page, 'Escape');
+  await expect(page.locator('video')).toHaveCount(0);
+});
+
+test('caption rebinds to a replacement image and clears on close', async ({ page }) => {
+  await page.goto(`./#/albums/${videoAlbumId}`);
+  await page.getByRole('button', { name: '查看照片：周岁 第 1 张' }).click();
+  const image = currentSlide(page).locator('img');
+  await expect(image).toBeVisible();
+  await expect.poll(() => page.locator('.yarl__portal').evaluate(node => node.style.getPropertyValue('--viewer-caption-max-width'))).not.toBe('');
+  await page.waitForTimeout(500); // 让初始加载/布局回调结束，替换后必须由新绑定通知。
+  await image.evaluate(node => {
+    const next = node.cloneNode(true) as HTMLImageElement;
+    next.style.width = '60px';
+    next.style.height = '120px';
+    node.replaceWith(next);
+  });
+  await expect.poll(() => page.locator('.yarl__portal').evaluate(node => parseFloat(node.style.getPropertyValue('--viewer-caption-max-width')))).toBeLessThanOrEqual(45);
+  await image.evaluate(node => { node.style.width = '80px'; });
+  await expect.poll(() => page.locator('.yarl__portal').evaluate(node => parseFloat(node.style.getPropertyValue('--viewer-caption-max-width')))).toBeGreaterThan(45);
+  await pressViewerKey(page, 'Escape');
+  await expect(page.locator('.yarl__portal')).toHaveCount(0);
+});
+
 test('synthetic Escape from Android back closes the viewer without leaving the album', async ({ page }) => {
   await page.goto(`./#/albums/${albumId}`);
   await page.getByRole('button', { name: firstPhoto }).click();
@@ -557,3 +628,172 @@ test('opening a video never leaves a second audio source behind', async ({ page 
   await expect(page.getByTestId('background-music')).toHaveCount(0);
   await expect(page.locator('audio')).toHaveCount(0);
 });
+
+
+// 这里只覆盖应用收到的合成可见性事件；真实标签/原生后台另外记录。
+async function syntheticVisibility(page: Parameters<typeof viewerAt>[0], hidden: boolean) {
+  await page.evaluate(hidden => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => hidden ? 'hidden' : 'visible' });
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+}
+
+test('synthetic hidden pauses the slideshow and foreground waits for active play', async ({ page }) => {
+  await page.goto(`./#/albums/${albumId}`);
+  await page.getByRole('button', { name: firstPhoto }).click();
+  await page.getByRole('button', { name: '播放幻灯片' }).click();
+  await expect(page.getByRole('button', { name: '暂停幻灯片' })).toBeVisible();
+  await syntheticVisibility(page, true);
+  await expect(page.getByRole('button', { name: '播放幻灯片' })).toBeVisible();
+  const label = await currentSlide(page).getAttribute('aria-label');
+  await page.waitForTimeout(3200);
+  await expect(currentSlide(page)).toHaveAttribute('aria-label', label!);
+  await syntheticVisibility(page, false);
+  await page.waitForTimeout(3200);
+  await expect(currentSlide(page)).toHaveAttribute('aria-label', label!);
+  await page.getByRole('button', { name: '播放幻灯片' }).click();
+  await expect.poll(() => currentSlide(page).getAttribute('aria-label')).not.toBe(label);
+});
+
+test('synthetic hidden pauses video and hidden mount waits for native active play', async ({ page }) => {
+  await page.goto(`./#/albums/${videoAlbumId}`);
+  const trigger = page.getByRole('button', { name: firstVideo });
+  await trigger.click();
+  await expect.poll(() => currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(false);
+  await syntheticVisibility(page, true);
+  await expect.poll(() => currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(true);
+  const time = await currentVideo(page).evaluate(node => (node as HTMLVideoElement).currentTime);
+  await syntheticVisibility(page, false);
+  await page.waitForTimeout(700);
+  expect(await currentVideo(page).evaluate(node => (node as HTMLVideoElement).currentTime)).toBe(time);
+  await currentVideo(page).evaluate(node => (node as HTMLVideoElement).play());
+  await expect.poll(() => currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(false);
+  await currentVideo(page).evaluate(node => (node as HTMLVideoElement).pause());
+  await syntheticVisibility(page, true);
+  await syntheticVisibility(page, false);
+  await page.waitForTimeout(300);
+  expect(await currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await syntheticVisibility(page, true);
+  await trigger.click();
+  await expect(currentVideo(page)).toBeVisible();
+  expect(await currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(true);
+  await syntheticVisibility(page, false);
+  await page.waitForTimeout(400);
+  expect(await currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(true);
+  await currentVideo(page).evaluate(node => (node as HTMLVideoElement).play());
+  await expect.poll(() => currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(false);
+});
+
+for (const outcome of ['resolve', 'reject'] as const) {
+  test(`late autoplay ${outcome} cannot resume hidden video or overwrite a reopened session`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const original = HTMLMediaElement.prototype.play;
+      let held = false;
+      HTMLMediaElement.prototype.play = function () {
+        if (held || !this.closest('.yarl__slide_current')) return original.call(this);
+        held = true;
+        return new Promise<void>((resolve, reject) => {
+          (window as unknown as { releaseHeldPlay: (reject: boolean) => void }).releaseHeldPlay = fail => {
+            if (fail) reject(new DOMException('synthetic delayed autoplay denial', 'NotAllowedError'));
+            else original.call(this).then(resolve, reject);
+          };
+        });
+      };
+    });
+    await page.goto(`./#/albums/${videoAlbumId}`);
+    const trigger = page.getByRole('button', { name: firstVideo });
+    await trigger.click();
+    await expect(currentVideo(page)).toBeVisible();
+    await expect.poll(() => page.evaluate(() => typeof (window as unknown as { releaseHeldPlay?: unknown }).releaseHeldPlay)).toBe('function');
+    await syntheticVisibility(page, true);
+    await syntheticVisibility(page, false);
+    await page.evaluate(fail => (window as unknown as { releaseHeldPlay: (fail: boolean) => void }).releaseHeldPlay(fail), outcome === 'reject');
+    await page.waitForTimeout(500);
+    expect(await currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await trigger.click();
+    await expect.poll(() => currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(false);
+  });
+}
+
+test('raw forward and reverse Tab remain inside and raw Escape restores the trigger', async ({ page }) => {
+  await page.goto(`./#/albums/${albumId}`);
+  const trigger = page.getByRole('button', { name: firstPhoto });
+  await trigger.click();
+  await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest('.yarl__portal'))).toBe(true);
+  for (const key of ['Tab', 'Shift+Tab']) {
+    for (let index = 0; index < 16; index += 1) {
+      await page.keyboard.press(key);
+      expect(await page.evaluate(() => !!document.activeElement?.closest('.yarl__portal'))).toBe(true);
+    }
+  }
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test('caption stays inside a short viewport and a synthetic narrow image after layout changes', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 300 });
+  await page.goto(`./#/albums/${videoAlbumId}`);
+  await page.getByRole('button', { name: '查看照片：周岁 第 1 张' }).click();
+  const caption = currentSlide(page).locator('.yarl__slide_captions_container');
+  await expect(caption).toBeVisible();
+  // Zoom 升级响应式候选时会保留旧图；操作已加载的影像，避开并存的加载图层。
+  const image = currentSlide(page).locator('img:not(.yarl__slide_image_loading)');
+  await expect(image).toBeVisible();
+  const inside = () => currentSlide(page).evaluate(node => {
+    const image = node.querySelector('img:not(.yarl__slide_image_loading)')!.getBoundingClientRect();
+    const caption = node.querySelector('.yarl__slide_captions_container')!.getBoundingClientRect();
+    return caption.left >= image.left - 1 && caption.top >= image.top - 1 && caption.right <= image.right + 1 && caption.bottom <= image.bottom + 1 && caption.height <= image.height * .4 + 1;
+  });
+  await expect.poll(inside).toBe(true);
+  await page.getByRole('button', { name: '收起缩略图' }).click();
+  await expect.poll(inside).toBe(true);
+  await image.evaluate(node => { node.style.width = '60px'; node.style.height = '150px'; });
+  await caption.locator('.yarl__slide_description').evaluate(node => { node.textContent = '窄竖图的长寄语'.repeat(20); });
+  await expect.poll(inside).toBe(true);
+  await image.evaluate(node => { node.style.removeProperty('width'); node.style.removeProperty('height'); });
+  await page.setViewportSize({ width: 820, height: 700 });
+  await image.dblclick();
+  await page.waitForTimeout(650);
+  await expect.poll(inside).toBe(true);
+});
+
+
+for (const outcome of ['resolve', 'reject'] as const) {
+  test(`a closed autoplay ${outcome} cannot affect a newly opened video`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const original = HTMLMediaElement.prototype.play;
+      let held = false;
+      HTMLMediaElement.prototype.play = function () {
+        if (held || !this.closest('.yarl__slide_current')) return original.call(this);
+        held = true;
+        return new Promise<void>((resolve, reject) => {
+          (window as unknown as { releaseClosedPlay: (reject: boolean) => void }).releaseClosedPlay = fail => {
+            if (fail) reject(new DOMException('synthetic delayed autoplay denial', 'NotAllowedError'));
+            else original.call(this).then(resolve, reject);
+          };
+        });
+      };
+    });
+    await page.goto(`./#/albums/${videoAlbumId}`);
+    const trigger = page.getByRole('button', { name: firstVideo });
+    await trigger.click();
+    await expect(currentVideo(page)).toBeVisible();
+    await expect.poll(() => page.evaluate(() => typeof (window as unknown as { releaseClosedPlay?: unknown }).releaseClosedPlay)).toBe('function');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await trigger.click();
+    await expect.poll(() => currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(false);
+    await page.evaluate(fail => (window as unknown as { releaseClosedPlay: (fail: boolean) => void }).releaseClosedPlay(fail), outcome === 'reject');
+    await page.waitForTimeout(300);
+    expect(await currentVideo(page).evaluate(node => (node as HTMLVideoElement).paused)).toBe(false);
+    await page.evaluate(() => { location.hash = '#/'; });
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('video')).toHaveCount(0);
+  });
+}

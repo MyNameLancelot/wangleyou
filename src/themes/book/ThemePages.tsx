@@ -2,23 +2,23 @@ import { useMemo, useState } from 'react';
 import { Play } from 'lucide-react';
 import { MasonryPhotoAlbum } from 'react-photo-album';
 import 'react-photo-album/masonry.css';
-import type { Album, Media, Photo, SiteContent, Video } from '../../content';
+import type { Album, Media, SiteContent, Video } from '../../content';
 import { mediaUrl } from '../../content';
 import { PhotoImage } from './PhotoImage';
 import { reducedMotion } from './browser';
+import { albumCoverSizes, responsiveSrcSet } from './images';
+import type { ImageSource } from './images';
 import styles from './ThemePages.module.css';
 
 export type OpenMedia = (album: Album, id: string) => void;
 type Filter = 'all' | 'photo' | 'video';
 type TileVariant = 'wide' | 'tall' | 'masonry';
-type ImageSource = Pick<Photo, 'src' | 'srcSet'>;
 
 const dateText = (date?: string) => (date ? date.replaceAll('-', '.') : '待续');
 const isVideo = (media: Media): media is Video => media.type === 'video';
 const durationText = (seconds?: number) => (seconds && seconds > 0 ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : '');
 const thumbnailOf = (media: Media) => (isVideo(media) ? media.poster : undefined) || (media.type === 'photo' ? media.src : undefined);
 const imageSourceOf = (media: Media): ImageSource | undefined => media.type === 'photo' ? media : { src: media.poster, srcSet: media.posterSrcSet };
-const responsiveSrcSet = (source: ImageSource) => source.srcSet?.map(candidate => `${mediaUrl(candidate.src)} ${candidate.width}w`).join(', ');
 const browseCoverSizes = '(max-width: 600px) calc((100vw - 72px) / 2), (max-width: 900px) calc((100vw - 80px) / 2), 300px';
 /** 照片没有单独文案时，用相册名与序号兜底，保证每个缩略图都有可读的可访问名称。 */
 const mediaLabel = (album: Album, media: Media) => {
@@ -71,7 +71,16 @@ function AlbumTile({ album }: { album: Album }) {
 }
 
 /** 相册封面最多三张：排序后的第一张完整显示，其余两张向右上错位只露出边缘。 */
-const albumStack = (album: Album): string[] => [...new Set([album.cover, ...album.media.map(thumbnailOf)].filter((src): src is string => Boolean(src)))].slice(0, 3);
+const albumStack = (album: Album): ImageSource[] => {
+  const sources = album.media.map(imageSourceOf).filter((source): source is ImageSource => Boolean(source));
+  const cover = album.cover ? sources.find(source => source.src === album.cover) ?? { src: album.cover } : undefined;
+  const seen = new Set<string>();
+  return [cover, ...sources].filter((source): source is ImageSource => Boolean(source)).filter(source => {
+    if (seen.has(source.src)) return false;
+    seen.add(source.src);
+    return true;
+  }).slice(0, 3);
+};
 
 function AlbumCard({ album }: { album: Album }) {
   const stack = albumStack(album);
@@ -81,8 +90,8 @@ function AlbumCard({ album }: { album: Album }) {
     <div className={styles.cover} data-stack={stack.length}>
       {front
         ? <>
-          {behind.map((src, index) => <span key={src} className={`${styles.coverLayer} ${index === 0 ? styles.coverLayerMid : styles.coverLayerBack}`}><PhotoImage src={mediaUrl(src)} alt="" /></span>)}
-          <span className={`${styles.coverLayer} ${styles.coverLayerFront}`}><PhotoImage src={mediaUrl(front)} alt="" /></span>
+          {behind.map((source, index) => <span key={source.src} className={`${styles.coverLayer} ${index === 0 ? styles.coverLayerMid : styles.coverLayerBack}`}><PhotoImage src={mediaUrl(source.src)} srcSet={responsiveSrcSet(source)} sizes={albumCoverSizes} alt="" /></span>)}
+          <span className={`${styles.coverLayer} ${styles.coverLayerFront}`}><PhotoImage src={mediaUrl(front.src)} srcSet={responsiveSrcSet(front)} sizes={albumCoverSizes} alt="" /></span>
         </>
         : <div className={styles.emptyCover}><span aria-hidden="true">＋</span><p>留给下一段故事</p></div>}
       <span className={styles.count}>{album.media.length ? `${album.media.length} 个瞬间` : '等待新故事'}</span>

@@ -6,7 +6,7 @@
 
 ## 职责
 
-`book/` 实现首页、留影、相册索引与详情、照片加载状态、字体和样式。首页从 content 接收显式主回忆队列，通过 albums 的纯契约处理手势、非循环末页和计时器；按进度渲染照片数加一的纸页，最后一页是文字。音乐组件保留但当前不挂载。浏览与相册继续使用 content 的排序与媒体路径。会话存在时只挂载全站共用的 `media-viewer`。
+`book/` 实现首页、留影、相册索引与详情、照片加载状态、字体和样式。首页从 content 接收显式主回忆队列，通过 albums 的纯契约处理手势、非循环末页和计时器；按进度渲染照片数加一的纸页，最后一页是文字且不创建自动 live 播报。首页待恢复时控件显示继续，一次点击继续；独立用户暂停不因前台恢复而改变。音乐组件保留但当前不挂载。浏览与相册继续使用 content 的排序与媒体路径。会话存在时只挂载全站共用的 `media-viewer`。
 
 ## 非职责
 
@@ -26,7 +26,7 @@ BookApp 按路由挂载页面：首页主回忆局部持有当前纸页、自动
 
 ## 主要文件
 
-`book/BookApp.tsx` 路由页面装配；`book/ThemeHome.tsx` 与 `ThemeHome.module.css` 为线缝首页，`book/PageTurn.tsx` 为局部卷页与动画帧生命周期；`book/ThemePages.tsx` 与 `ThemePages.module.css` 为内容页；`book/BookMusicToggle.tsx` 为保留但未挂载的音乐能力；`book/BookTokens.css` 为唯一主题 token；`contracts.ts` 为装配契约。
+`book/BookApp.tsx` 路由页面装配；`book/ThemeHome.tsx` 与 `ThemeHome.module.css` 为线缝首页，`book/PageTurn.tsx` 为局部卷页与动画帧生命周期；`book/ThemePages.tsx` 与 `ThemePages.module.css` 为内容页；`book/BookMusicToggle.tsx` 为保留但未挂载的音乐能力；`book/images.ts` 复用首页/索引的响应式候选及 sizes，PageTurn 使用已显示候选避免额外请求最大图；`book/BookTokens.css` 为唯一主题 token；`contracts.ts` 为装配契约。
 
 ## 扩展与验证
 
