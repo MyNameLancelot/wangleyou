@@ -18,11 +18,11 @@ index.ts 导出 App；router.ts 的 parseRoute 为模块内部纯函数。
 
 ## 允许依赖
 
-content、playback、themes。
+content、playback、themes、media-viewer、shared 的公开入口。
 
 ## 状态与资源生命周期
 
-App 持有 route、唯一 Session、保留的背景音乐状态；hashchange 关闭会话并回顶。音乐意图和音量逻辑仍可供未来调用，但当前主题不挂载音乐组件，不创建 audio、按钮或自动播放。背景音乐意图和音量仅在用户显式切换或调整时写入偏好，初始化时读回；页面隐藏造成的待恢复状态只由 `setBackgroundMusicVisibility` 表达，不写偏好。获取 localStorage 属性以及读写失败均静默降级。已移除上次播放记录与“继续浏览”。监听 online/offline，卸载时移除所有监听。
+App 持有 route、唯一 Session、保留的背景音乐状态；查看器的 reportIntent/reportVisibility 经 playback 纯函数转换，打开会话时初始化真实文档可见性。hashchange 关闭会话并回顶。音乐意图和音量逻辑仍可供未来调用，但当前主题不挂载音乐组件，不创建 audio、按钮或自动播放。背景音乐意图和音量仅在用户显式切换或调整时写入偏好，初始化时读回；页面隐藏造成的待恢复状态只由 `setBackgroundMusicVisibility` 表达，不写偏好。获取 localStorage 属性以及读写失败均静默降级。已移除上次播放记录与“继续浏览”。监听 online/offline，卸载时移除所有监听。
 
 ## 主要文件
 
@@ -30,4 +30,4 @@ App.tsx 应用装配；router.ts 路由解析；global.css 基础样式、焦点
 
 ## 扩展与验证
 
-新增页面先扩展路由测试，再通过 App 装配。router.test.ts 与 tests/browsing.spec.ts 覆盖导航、播放上下文、离线与触控目标。
+新增页面先扩展路由测试，再通过 App 装配。router.test.ts 与 tests/navigation.spec.ts、tests/viewer.spec.ts 覆盖导航、播放上下文、离线与触控目标。

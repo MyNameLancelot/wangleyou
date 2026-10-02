@@ -12,6 +12,9 @@ export interface Session {
   index: number;
   intent: PlaybackIntent;
   status: PlaybackStatus;
+  /** 文档可见性与程序性暂停分开保存；回前台只由显式播放清除待恢复。 */
+  visible: boolean;
+  resumeRequired: boolean;
   /** 当前媒体的播放进度，0–1；照片恒为 0。 */
   progress: number;
   /** 当前媒体时长（秒）；未知为 0。 */
@@ -38,6 +41,8 @@ export function openSession(media: Media[], id: string): Session | null {
     media: [...media],
     index,
     ...initialPlayback(media[index]),
+    visible: true,
+    resumeRequired: false,
     progress: 0,
     duration: 0,
   };
@@ -48,7 +53,7 @@ export function stepSession(session: Session | null, delta: number): Session | n
   if (!session || !Number.isInteger(delta)) return session;
   const index = session.index + delta;
   if (index < 0 || index >= session.media.length) return session;
-  return { ...session, index, ...initialPlayback(session.media[index]), progress: 0, duration: 0 };
+  return stepSessionTo(session, index);
 }
 
 /**
@@ -58,11 +63,21 @@ export function stepSession(session: Session | null, delta: number): Session | n
 export function stepSessionTo(session: Session | null, index: number): Session | null {
   if (!session || !Number.isInteger(index)) return session;
   if (index === session.index || index < 0 || index >= session.media.length) return session;
-  return { ...session, index, ...initialPlayback(session.media[index]), progress: 0, duration: 0 };
+  return { ...session, index, ...initialPlayback(session.media[index]), status: session.visible ? initialPlayback(session.media[index]).status : 'paused', resumeRequired: !session.visible, progress: 0, duration: 0 };
 }
 
 export function setIntent(session: Session | null, intent: PlaybackIntent): Session | null {
-  return session && session.intent !== intent ? { ...session, intent } : session;
+  return session && (session.intent !== intent || session.resumeRequired) ? { ...session, intent, resumeRequired: intent === 'playing' ? !session.visible : false } : session;
+}
+
+/** 隐藏不会改写用户意图；回前台不清除临时暂停，也不自动恢复。 */
+export function setSessionVisibility(session: Session | null, visible: boolean): Session | null {
+  if (!session || session.visible === visible) return session;
+  return visible ? { ...session, visible } : { ...session, visible, resumeRequired: session.resumeRequired || session.intent === 'playing', status: 'paused' };
+}
+
+export function shouldPlaySession(session: Session): boolean {
+  return session.intent === 'playing' && session.visible && !session.resumeRequired;
 }
 
 export function setStatus(session: Session | null, status: PlaybackStatus): Session | null {

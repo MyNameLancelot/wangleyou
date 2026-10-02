@@ -1,5 +1,5 @@
 import { accessSync, constants, statSync } from 'node:fs';
-import { mkdir, readdir, realpath, rm, stat } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { cpus, tmpdir } from 'node:os';
 import { basename, delimiter, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
@@ -100,7 +100,7 @@ export interface CompressDeps {
   log?: LogFn;
   probeCommand?: CommandProbe;
 }
-type Context = { log: LogFn; probeCommand: CommandProbe; decoderCache: Map<HeicStrategy, Decoder | null> };
+type Context = { log: LogFn; probeCommand: CommandProbe; decoderCache: Map<HeicStrategy, Decoder | null>; inputPaths: Set<string> };
 
 interface Decoder {
   command: HeicCommand;
@@ -461,6 +461,20 @@ function failed(task: PlannedFile, inputBytes: number, reason: string, heic = fa
   return { status: 'failed', rel: task.rel, outRel: task.outRel, renamed: task.renamed, inputBytes, outputBytes: 0, heic, decoderPath, reason };
 }
 
+/** 每项创建目录前与替换前校验；拒绝链接逃逸和叶子链接，硬链接仅替换目录项。 */
+async function assertSafeOutput(outPath: string, outputRoot: string, inputPaths: Set<string>): Promise<void> {
+  if (!pathInside(outputRoot, await canonicalPath(dirname(outPath)))) {
+    throw new Error('输出目录链接逃逸：目标必须位于输出根目录内');
+  }
+  const target = await lstat(outPath).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  });
+  if (target?.isSymbolicLink()) throw new Error('输出文件是 symlink，拒绝覆盖');
+  if (inputPaths.has(await canonicalPath(outPath))) throw new Error('输出文件是输入照片的真实路径别名，拒绝覆盖');
+  if (target && !target.isFile()) throw new Error('输出目标不是普通文件');
+}
+
 async function processFile(task: PlannedFile, options: CompressOptions, outputRoot: string, context: Context): Promise<FileOutcome> {
   const { log } = context;
   const inputBytes = await readSize(task.input);
@@ -474,32 +488,29 @@ async function processFile(task: PlannedFile, options: CompressOptions, outputRo
   }
 
   const outPath = join(outputRoot, task.outRel);
+  let temporaryDirectory: string | undefined;
   try {
+    await assertSafeOutput(outPath, outputRoot, context.inputPaths);
     await mkdir(dirname(outPath), { recursive: true });
-  } catch (error) {
-    return failed(task, inputBytes, `无法创建输出目录（${messageOf(error)}）`, heic);
-  }
-  const existedBefore = (await readSize(outPath)) !== null;
-  try {
-    const result = heic ? await encodeHeic(task.input, outPath, options, context) : { dimensions: await encodeToJpeg(task.input, outPath, options), decoderPath: null };
-    const outputBytes = (await readSize(outPath)) ?? 0;
+    await assertSafeOutput(outPath, outputRoot, context.inputPaths);
+    // 独占临时目录：编码不会跟随目标文件的 hardlink/symlink，也不破坏有效旧文件。
+    temporaryDirectory = await mkdtemp(join(dirname(outPath), '.compress-'));
+    const temporary = join(temporaryDirectory, 'image.jpg');
+    const result = heic ? await encodeHeic(task.input, temporary, options, context) : { dimensions: await encodeToJpeg(task.input, temporary, options), decoderPath: null };
+    const outputBytes = (await readSize(temporary)) ?? 0;
+    await assertSafeOutput(outPath, outputRoot, context.inputPaths);
+    await rename(temporary, outPath);
     log(`${task.rel}：${formatBytes(inputBytes)} → ${formatBytes(outputBytes)}${task.renamed ? `（输出 ${task.outRel}）` : ''}`);
     return {
-      status: 'success',
-      rel: task.rel,
-      outRel: task.outRel,
-      renamed: task.renamed,
-      inputBytes,
-      outputBytes,
-      heic,
-      decoderPath: result.decoderPath,
+      status: 'success', rel: task.rel, outRel: task.outRel, renamed: task.renamed,
+      inputBytes, outputBytes, heic, decoderPath: result.decoderPath,
     };
   } catch (error) {
-    // 失败隔离：只记录本次文件，不中断整体任务；同时清理本次可能写出的半成品。
-    if (!existedBefore) await rm(outPath, { force: true }).catch(() => undefined);
     const reason = messageOf(error);
     log(`失败：${task.rel}（${reason}）`);
     return failed(task, inputBytes, reason, heic, error instanceof HeicDecodeError ? error.decoderPath : null);
+  } finally {
+    if (temporaryDirectory) await rm(temporaryDirectory, { recursive: true, force: true });
   }
 }
 
@@ -560,7 +571,8 @@ export async function runCompress(options: CompressOptions, deps: CompressDeps =
 
   const { candidates, skipped } = await collectFiles(inputRoot, outputRoot);
   const tasks = planFiles(candidates);
-  const context: Context = { log, probeCommand: deps.probeCommand ?? defaultProbe, decoderCache: new Map() };
+  const inputPaths = new Set(await Promise.all(tasks.map(task => canonicalPath(task.input))));
+  const context: Context = { log, probeCommand: deps.probeCommand ?? defaultProbe, decoderCache: new Map(), inputPaths };
   const outcomes: FileOutcome[] = [];
   const claim = async (task: PlannedFile) => {
     outcomes.push(options.dryRun ? await inspectFile(task, options, context) : await processFile(task, options, outputRoot, context));

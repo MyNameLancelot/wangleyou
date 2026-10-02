@@ -3,7 +3,7 @@ export interface Photo {
   type: 'photo'
   src: string
   date?: string
-  /** 单张照片的寄语：来自相册 meta.json 的 photos_meta.captions，查看器据此显示照片下方文案。 */
+  /** 单张照片的寄语：来自相册 meta.json 的 photos_meta.captions，查看器据此在影像左下角显示寄语。 */
   caption?: string
   description?: string
   alt?: string
@@ -33,7 +33,7 @@ export interface Video {
   duration?: number
 }
 
-/** 首页主回忆由 photos/home-memory.json 显式给出，数组顺序即播放顺序。 */
+/** 首页主回忆由 media-source/home-memory.json 显式给出，数组顺序即播放顺序。 */
 export type HomeMemoryPhoto = Photo
 
 export type Media = Photo | Video

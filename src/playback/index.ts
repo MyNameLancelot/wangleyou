@@ -7,6 +7,8 @@ export {
   setIntent,
   setProgress,
   setStatus,
+  setSessionVisibility,
+  shouldPlaySession,
   stepSession,
   stepSessionTo,
 } from './session';

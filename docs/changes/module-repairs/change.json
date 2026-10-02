@@ -1,0 +1,95 @@
+{
+  "mode": "full",
+  "summary": "落实全模块 A1–A7 修复及剩余浏览器/Android 验收；补慢挂载与 DOM 替换生命周期、原生错误遮罩可访问性。",
+  "reason": "用户明确要求修复；关键文件/异步生命周期、候选数据与接口涉及架构和行为，使用 full。",
+  "behavior": true,
+  "architecture": true,
+  "status": "awaiting_accessibility_verification",
+  "scope": [
+    "scripts/",
+    "src/",
+    "tests/",
+    "public/media/themes/book/",
+    "public/media/SOURCES.md",
+    "README.md",
+    "docs/requirements.md",
+    "docs/architecture.md",
+    "docs/decisions/0005-responsive-media-pipeline.md",
+    "docs/changes/module-repairs/",
+    "docs/changes/module-review/",
+    "docs/changes/README.md",
+    "native/android/"
+  ],
+  "dependsOn": [
+    "docs/changes/module-review/change.json",
+    "docs/changes/docs-cleanup/change.json"
+  ],
+  "verification": [
+    "2026-10-01：Node24.18.0/npm11.16.0，保留 chore/docs-cleanup 上既有未提交文档清理；本轮没有提交、推送或公开发布。",
+    "最终 npm run check 通过：结构、生成/发布校验、typecheck、lint及13文件143项单测；后续EXIF小图定向结果与收尾检查见 verification.md。",
+    "默认与根路径build通过；完整E2E两种base各88通过6平台条件跳过，root在hook提取后；恢复默认子路径后viewer定向44项全通过，未增加重试或修改通过阈值。",
+    "源链接/硬链接/跨输入真实路径别名保护、坏图及缓存/索引替换故障、失败新产物回收、缓存损坏/尺寸/路径、小图/封面边界均有临时素材回归；43个media-source受控文件与HEAD逐字节哈希一致。",
+    "Chrome154.0.8037.58：1440x1000/360x800及390x300、宽度xDPR冷上下文矩阵；390 DPR1首页284px选择480w，body39818B，卷页不额外请求最大图。头图RGBA像素相同，losslessWebP1132128B，PNG1497405B保留；资源与工具数据见verification.md。",
+    "100MiB合成文件HEAD和32B Range HTTP契约正确；流式服务实测RSS峰增2457600B，修前212910080B；5项服务器测试涵盖路径和断开清理。",
+    "独立管线审查发现派生直写链接漏洞，已修复并加回归；整体只读审查及AC3清理增量复审无新的确定Critical/Important，头图像素亦独立复核。",
+    "最终收尾：Node24 SDD worktree --base origin/main通过（133差异路径）；33份Markdown的97个本地链接和5个锚点全部存在，git diff --check通过。全量check后补充的EXIF小图测试随22项媒体生成定向套件通过；最后源码变化仅该测试和注释/证据，不重跑无变化浏览器套件。",
+    "2026-10-02：双 base 完整 E2E 各94通过6条件跳过；最终慢 portal/替换/寄语定向6项通过，默认子路径产物恢复。Chrome noDefaults 真实 hidden、API34原生后台、全屏/返回/旋转/断网重试与移动数据限速开屏结果见verification.md。",
+    "TalkBack 实测中文错误提示和末页无输入区间，修复底层 WebView 在加载/失败时仍可访问；仓库实际 Android Debug 与独立验收包离线构建通过。当前修复未发布，不代表v1.0.10家庭包已更新。",
+    "用户明确iOS不做，并确认暂无Android真机保留待验收；macOS旁白工具连接失败未验证，状态仍awaiting_device_verification。",
+    "最终 Node24 check 全通过（13文件144单测），SDD worktree --base origin/main通过（136路径）；43源文件与HEAD SHA-256一致，diff --check通过。辅助功能/网络/旋转已恢复，独立测试包和Android驱动卸载，原家庭App保留，退出root并关闭本次模拟器；无提交、推送或发布。",
+    "2026-10-02 收尾：用户安装局域网交付的v1.0.11家庭签名APK后明确反馈“真机没问题”，并授权commit、push、PR。记录为用户真机反馈通过，未提供机型/系统/WebView版本或逐项日志，不据此宣称本地网页修复已在线上验证。macOS旁白仍未验证，iOS排除。",
+    "2026-10-02 提交前：Node24.18.0 npm run check全部通过（13文件144单测、内容/结构/typecheck/lint）；无应用逻辑新改动，沿用此前双base各94通过6条件跳过及实际Release签名证据。用户验收后临时局域网HTTP服务已关闭。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "paths": [
+        "docs/requirements.md"
+      ],
+      "reason": "明确小候选和封面歧义规则，既有后台/寄语需求不降低。"
+    },
+    "architecture": {
+      "status": "updated",
+      "paths": [
+        "docs/architecture.md"
+      ],
+      "reason": "更新生成提交阶段及 DOM/业务状态生命周期。"
+    },
+    "modules": {
+      "status": "updated",
+      "paths": [
+        "src/app/module.md",
+        "src/albums/module.md",
+        "src/content/module.md",
+        "src/playback/module.md",
+        "src/media-viewer/module.md",
+        "src/themes/module.md",
+        "scripts/sdd/module.md",
+        "native/android/module.md"
+      ],
+      "reason": "同步真实接口、允许依赖、资源归属及检查限制。 Android 加载/失败遮罩与 WebView 可访问性生命周期。"
+    },
+    "decisions": {
+      "status": "updated",
+      "paths": [
+        "docs/decisions/0005-responsive-media-pipeline.md"
+      ],
+      "reason": "同步小尺寸候选和成功后提交的管线取舍。"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": [
+        "README.md",
+        "public/media/SOURCES.md",
+        "docs/changes/README.md"
+      ],
+      "reason": "修正素材维护、保护约束、来源与验证入口。"
+    }
+  },
+  "implementationStatus": "complete",
+  "automatedVerificationStatus": "passed",
+  "androidDeviceVerificationStatus": "passed_user_report",
+  "remainingVerification": [
+    "macOS VoiceOver 实际阅读；工具连接失败，未验证。"
+  ]
+}

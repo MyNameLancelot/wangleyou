@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, it } from 'vitest'
-import { generatePhotoIndex } from './generate-photo-index'
+import { generatePhotoIndex, readPhotoIndex } from './generate-photo-index'
 
 const temporary: string[] = []
 afterEach(async () => { await Promise.all(temporary.splice(0).map(path => rm(path, { recursive: true, force: true }))) })
@@ -161,4 +161,27 @@ it('keeps home memory photo-only: a video cannot enter the main memory queue', a
   const { photos, output } = await videoFixture(['top01.jpg', 'weekend-clip.mp4', 'weekend-clip.poster.jpg'])
   await writeFile(join(photos, 'home-memory.json'), JSON.stringify([{ id: 'clip', type: 'photo', src: 'media/2025-05-sequence00-周岁/weekend-clip.mp4' }]))
   await expect(generatePhotoIndex(photos, output)).rejects.toThrow('必须引用相册目录中的照片')
+})
+
+
+it('scans in memory without creating a publication file', async () => {
+  const { photos, output } = await fixture()
+  expect((await readPhotoIndex(photos)).content.albums).toHaveLength(1)
+  await expect(readFile(output)).rejects.toThrow()
+})
+
+it.each(['clip.MP4', '片段.Mp4'])('associates poster by exact stem and case-insensitive MP4 extension: %s', async video => {
+  const stem = video.slice(0, -4)
+  const { photos, output } = await videoFixture([video, `${stem}.poster.JPG`])
+  expect((await generatePhotoIndex(photos, output)).content.albums[0].media[0]).toMatchObject({ type: 'video', poster: `media/2025-05-sequence00-周岁/${stem}.poster.JPG` })
+})
+
+it('rejects multiple posters instead of silently picking one', async () => {
+  const { photos, output } = await videoFixture(['clip.mp4', 'clip.poster.jpg', 'clip.poster.png'])
+  await expect(generatePhotoIndex(photos, output)).rejects.toThrow('重复封面')
+})
+
+it('keeps the video stem case-sensitive for association', async () => {
+  const { photos, output } = await videoFixture(['clip.MP4', 'Clip.poster.jpg'])
+  await expect(generatePhotoIndex(photos, output)).rejects.toThrow('找不到同名的视频源文件 Clip.mp4')
 })

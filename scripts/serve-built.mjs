@@ -1,12 +1,16 @@
 import { URL } from 'node:url';
 // Strict static server for acceptance tests. No SPA fallback or application backend.
 import { createServer } from 'node:http';
-import { readFile, realpath, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { pipeline } from 'node:stream';
+import { realpath, stat } from 'node:fs/promises';
 import { resolve, relative, extname, isAbsolute } from 'node:path';
 import process from 'node:process';
 import console from 'node:console';
 const base = process.env.SITE_BASE || '/wangleyou/';
 if (!base.startsWith('/') || !base.endsWith('/')) throw new Error('SITE_BASE must start and end with /');
+const port = Number(process.env.PORT || 4173);
+if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('PORT must be an integer from 0 to 65535');
 const root = await realpath('dist');
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.md':'text/plain; charset=utf-8','.mp4':'video/mp4'};
 // 视频进度与结束行为只有在支持 Range 的服务下才可验证；GitHub Pages 与这个测试服务器都返回 Range，
@@ -34,18 +38,23 @@ const server = createServer(async (request,response) => {
       response.end();
       return;
     }
-    const data = await readFile(file);
-    if (range) {
-      const body = data.subarray(range.start, range.end + 1);
-      response.writeHead(206, {'Content-Type': type, 'Content-Length': String(body.length), 'Content-Range': `bytes ${range.start}-${range.end}/${info.size}`, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store'});
-      response.end(request.method === 'HEAD' ? undefined : body);
+    const length = range ? range.end - range.start + 1 : info.size;
+    const headers = {'Content-Type': type, 'Content-Length': String(length), 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store'};
+    if (range) headers['Content-Range'] = `bytes ${range.start}-${range.end}/${info.size}`;
+    response.writeHead(range ? 206 : 200, headers);
+    if (request.method === 'HEAD') {
+      response.end();
       return;
     }
-    response.writeHead(200, {'Content-Type': type, 'Content-Length': String(data.length), 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store'});
-    response.end(request.method === 'HEAD' ? undefined : data);
+    // pipeline 负责读错误、写错误及客户端提前断开的流销毁，不分配整文件 Buffer。
+    const stream = createReadStream(file, range || undefined);
+    pipeline(stream, response, error => {
+      if (error && !response.destroyed) response.destroy(error);
+    });
   } catch {
+    if (response.headersSent) { response.destroy(); return; }
     response.writeHead(404, {'Content-Type':'text/plain; charset=utf-8'});
     response.end('Not found');
   }
 });
-server.listen(4173,'127.0.0.1',()=>console.log(`Strict static preview: http://127.0.0.1:4173${base}`));
+server.listen(port,'127.0.0.1',()=>console.log(`Strict static preview: http://127.0.0.1:${server.address().port}${base}`));

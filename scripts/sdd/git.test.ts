@@ -42,16 +42,47 @@ it('enforces module direction and public imports including dynamic imports', () 
 it('rejects imports between isolated theme UI trees', () => {
   const files = new Map([
     ['src/themes/module.md', '# Themes'],
-    ['src/themes/beach/Card.tsx', "import { Meadow } from '../grassland/Meadow'; export const Card = Meadow;"],
-    ['src/themes/grassland/Meadow.tsx', 'export const Meadow = () => null;'],
+    ['src/themes/book/Card.tsx', "import { Meadow } from '../future/Meadow'; export const Card = Meadow;"],
+    ['src/themes/future/Meadow.tsx', 'export const Meadow = () => null;'],
   ]);
-  expect(validateModules(files).join()).toContain('主题 beach 不得依赖主题 grassland');
+  expect(validateModules(files).join()).toContain('主题 book 不得依赖主题 future');
 });
 
 it('rejects theme imports from app to keep theme-to-app assembly one-way', () => {
   const files = new Map([
     ['src/themes/module.md', '# Themes'],
-    ['src/themes/beach/Card.tsx', "import type { Route } from '../../app'; export const Card = () => null;"],
+    ['src/themes/book/Card.tsx', "import type { Route } from '../../app'; export const Card = () => null;"],
   ]);
-  expect(validateModules(files).join()).toContain('src/themes/beach/Card.tsx: 不允许依赖 app');
+  expect(validateModules(files).join()).toContain('src/themes/book/Card.tsx: 不允许依赖 app');
 });
+
+
+it.each(["import('../future/Card')", "export { Card } from '../future/Card'", "const card = require('../future/Card')"])("rejects cross-theme literal import and re-export: %s", statement => {
+  const files = new Map([
+    ['src/themes/module.md', '# Themes'],
+    ['src/themes/book/Card.tsx', statement],
+    ['src/themes/future/Card.tsx', 'export const Card = () => null'],
+  ])
+  expect(validateModules(files).join()).toContain('主题 book 不得依赖主题 future')
+})
+
+it('allows shared contracts and imports inside one theme', () => {
+  const files = new Map([
+    ['src/themes/module.md', '# Themes'],
+    ['src/themes/contracts.ts', 'export type Props = {}'],
+    ['src/themes/book/Card.tsx', "import type { Props } from '../contracts'; import { Other } from './Other';"],
+    ['src/themes/book/Other.tsx', 'export const Other = () => null'],
+    ['src/themes/index.ts', "export { Other } from './book/Other'"],
+  ])
+  expect(validateModules(files)).toEqual([])
+})
+
+
+it('recognizes theme directories with dots instead of hardcoding names', () => {
+  const files = new Map([
+    ['src/themes/module.md', '# Themes'],
+    ['src/themes/book/Card.tsx', "import { Card } from '../future.v2/Card'"],
+    ['src/themes/future.v2/Card.tsx', 'export const Card = () => null'],
+  ])
+  expect(validateModules(files).join()).toContain('主题 book 不得依赖主题 future.v2')
+})

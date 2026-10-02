@@ -13,84 +13,12 @@ export type HomeMemory = {
 export const HOME_MEMORY_INTERVAL_MS = 2_000
 export const HOME_GESTURE_THRESHOLD = 56
 
-export function getHomeWheelIntent(accumulatedDeltaY: number, deltaY: number, threshold = HOME_GESTURE_THRESHOLD): {
-  direction: HomeDirection | null
-  accumulatedDeltaY: number
-} {
-  const nextDeltaY = accumulatedDeltaY + deltaY
-  if (Math.abs(nextDeltaY) < threshold) return { direction: null, accumulatedDeltaY: nextDeltaY }
-  return { direction: nextDeltaY > 0 ? 1 : -1, accumulatedDeltaY: 0 }
-}
-
-export function canChangeHomeSection(current: HomeSection, next: HomeSection, transitionLocked: boolean): boolean {
-  return !transitionLocked && current !== next
-}
-
-export function getHomeKeyIntent(key: string, options: {
-  viewerOpen: boolean
-  defaultPrevented: boolean
-  interactiveTarget: boolean
-}): HomeDirection | null {
-  if (options.viewerOpen || options.defaultPrevented || options.interactiveTarget) return null
-  if (key === 'ArrowDown' || key === 'PageDown') return 1
-  if (key === 'ArrowUp' || key === 'PageUp') return -1
-  return null
-}
-
-export function getHomeTouchIntent(start: { x: number; y: number }, end: { x: number; y: number }, threshold = HOME_GESTURE_THRESHOLD): HomeDirection | null {
-  const deltaX = end.x - start.x
-  const deltaY = end.y - start.y
-  if (Math.abs(deltaY) < threshold || Math.abs(deltaY) <= Math.abs(deltaX)) return null
-  return deltaY < 0 ? 1 : -1
-}
-
-/** 第二屏内的横向滑动换图：横向位移必须达到阈值且大于纵向位移，纵向滑动留给切屏。 */
+/** 主回忆横滑换图：横向位移达到阈值且大于纵向位移，纵向滑动留给页面滚动。 */
 export function getHomeMemorySwipeIntent(start: { x: number; y: number }, end: { x: number; y: number }, threshold = HOME_GESTURE_THRESHOLD): HomeDirection | null {
   const deltaX = end.x - start.x
   const deltaY = end.y - start.y
   if (Math.abs(deltaX) < threshold || Math.abs(deltaX) <= Math.abs(deltaY)) return null
   return deltaX < 0 ? 1 : -1
-}
-
-/** 手势结束判定：事件静默超过这个时间才认为上一段滑动结束（慢速滑动的事件间隔通常小于它）。 */
-export const HOME_MEMORY_WHEEL_GAP_MS = 400
-
-export type HomeMemoryWheelState = {
-  accumulatedDeltaX: number
-  /** 本次手势是否已经换过图：触控板动量会继续发事件，但一次手势只换一张。 */
-  consumed: boolean
-  lastEventAt: number
-}
-
-export function createHomeMemoryWheelState(): HomeMemoryWheelState {
-  return { accumulatedDeltaX: 0, consumed: false, lastEventAt: 0 }
-}
-
-/**
- * 触控板横向滚动：同一手势内累积到位只换一张，停手超过 gap 才开启下一次手势。
- * 手指向左（deltaX 为正）前进一张，与触屏滑动方向一致。
- */
-export function reduceHomeMemoryWheel(
-  state: HomeMemoryWheelState,
-  event: { deltaX: number; at: number },
-  threshold = HOME_GESTURE_THRESHOLD,
-  gap = HOME_MEMORY_WHEEL_GAP_MS,
-): { state: HomeMemoryWheelState; direction: HomeDirection | null } {
-  const nextState = event.at - state.lastEventAt > gap
-    ? { accumulatedDeltaX: 0, consumed: false, lastEventAt: event.at }
-    : { ...state, lastEventAt: event.at }
-
-  if (nextState.consumed) return { state: nextState, direction: null }
-
-  const accumulatedDeltaX = nextState.accumulatedDeltaX + event.deltaX
-  if (Math.abs(accumulatedDeltaX) < threshold) {
-    return { state: { ...nextState, accumulatedDeltaX }, direction: null }
-  }
-
-  return {
-    state: { accumulatedDeltaX: 0, consumed: true, lastEventAt: event.at },
-    direction: accumulatedDeltaX > 0 ? 1 : -1,
-  }
 }
 
 export function shouldRunHomeMemoryInterval(options: {
@@ -144,12 +72,6 @@ export function createHomeMemoryIntervalController<Handle>(
     },
     dispose: stop,
   }
-}
-
-export function nextHomeSection(section: HomeSection, delta: HomeDirection): HomeSection {
-  if (section === 'hero' && delta === 1) return 'memory'
-  if (section === 'memory' && delta === -1) return 'hero'
-  return section
 }
 
 export function createHomeMemory(items: Photo[]): HomeMemory {

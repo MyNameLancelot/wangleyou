@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { link, mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { afterEach, expect, it } from 'vitest';
@@ -364,4 +364,77 @@ it('体积变大时单独列出', async () => {
   const report = await runCompress(options(input, { out }));
   expect(report.grown.map(item => item.rel)).toEqual(['tiny.png']);
   expect(report.grown[0].outputBytes).toBeGreaterThan(report.grown[0].originalBytes);
+});
+
+
+it('拒绝输出叶子 symlink，源照片及链接保持不变', async () => {
+  const { input, out } = await workspace();
+  await photo(join(input, 'photo.jpg'), 1000, 800);
+  await mkdir(out);
+  await symlink(join(input, 'photo.jpg'), join(out, 'photo.jpg'));
+  const before = await fingerprint(input);
+  const report = await runCompress(options(input, { out, maxEdge: 500 }));
+  expect(report.failed).toBe(1);
+  expect(report.succeeded).toBe(0);
+  expect(await fingerprint(input)).toEqual(before);
+});
+
+it('拒绝输出祖先链接逃逸，不能在输入子目录内写入', async () => {
+  const { input, out } = await workspace();
+  await photo(join(input, 'sub/photo.jpg'), 1000, 800);
+  await mkdir(out);
+  await symlink(join(input, 'sub'), join(out, 'sub'));
+  const before = await fingerprint(input);
+  const report = await runCompress(options(input, { out, maxEdge: 500 }));
+  expect(report.failed).toBe(1);
+  expect(await fingerprint(input)).toEqual(before);
+});
+
+it('原子替换 hardlink 输出，保留输入 inode 内容和无关文件', async () => {
+  const { input, out } = await workspace();
+  await photo(join(input, 'photo.jpg'), 1000, 800);
+  await mkdir(out);
+  await link(join(input, 'photo.jpg'), join(out, 'photo.jpg'));
+  await writeFile(join(out, 'keep.txt'), 'keep');
+  const before = await fingerprint(input);
+  const report = await runCompress(options(input, { out, maxEdge: 500 }));
+  expect(report.failed).toBe(0);
+  expect(await fingerprint(input)).toEqual(before);
+  expect(await metadata(join(out, 'photo.jpg'))).toMatchObject({ width: 500, height: 400 });
+  expect((await readdir(out)).sort()).toEqual(['keep.txt', 'photo.jpg']);
+  expect(await readFile(join(out, 'keep.txt'), 'utf8')).toBe('keep');
+});
+
+it('编码失败保留最后有效输出并清理临时产物', async () => {
+  const { input, out } = await workspace();
+  await photo(join(input, 'photo.jpg'), 800, 600);
+  await runCompress(options(input, { out }));
+  const before = await fingerprint(out);
+  await writeFile(join(input, 'photo.jpg'), 'broken image');
+  const report = await runCompress(options(input, { out }));
+  expect(report.failed).toBe(1);
+  expect(await fingerprint(out)).toEqual(before);
+});
+
+
+it('输入 symlink 指向输出文件时仍拒绝真实路径别名', async () => {
+  const { input, out } = await workspace();
+  await photo(join(out, 'photo.jpg'), 1000, 800);
+  await symlink(join(out, 'photo.jpg'), join(input, 'photo.jpg'));
+  const before = await fingerprint(input);
+  const report = await runCompress(options(input, { out, maxEdge: 500 }));
+  expect(report.failed).toBe(1);
+  expect(await fingerprint(input)).toEqual(before);
+});
+
+it('输出不能替换其他输入链接所引用的真实照片', async () => {
+  const { input, out } = await workspace();
+  await photo(join(out, 'second.jpg'), 1000, 800);
+  await symlink(join(out, 'second.jpg'), join(input, 'first.jpg'));
+  await photo(join(input, 'second.jpg'), 1000, 800);
+  const before = await fingerprint(input);
+  const report = await runCompress(options(input, { out, maxEdge: 500 }));
+  expect(report.failed).toBe(1);
+  expect(report.succeeded).toBe(1);
+  expect(await fingerprint(input)).toEqual(before);
 });

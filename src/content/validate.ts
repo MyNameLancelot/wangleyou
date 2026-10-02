@@ -1,6 +1,6 @@
 import type { Album, Media, Photo, SiteContent, Video } from './model'
 
-/** 单张照片寄语的长度上限：查看器里只作一行文案，超过就会挤压影像。 */
+/** 寄语长度上限：查看器允许在影像范围内折行，限制遮挡面积。 */
 export const CAPTION_MAX_LENGTH = 60
 
 /** 视频只接受 H.264 + AAC 的 MP4；其它容器由维护者离线转码后再入库。 */
@@ -163,7 +163,7 @@ function validateCommonMedia(input: UnknownRecord, location: string): void {
       assertOptionalPositiveInteger(candidate.width, `${candidateLocation}.width`)
       assertOptionalPositiveInteger(candidate.height, `${candidateLocation}.height`)
       if (!candidate.width || !candidate.height) fail(candidateLocation, 'must include width and height')
-      if (width && height && Math.abs(candidate.width / candidate.height - width / height) > 0.002) fail(candidateLocation, 'must preserve the source aspect ratio')
+      if (width && height && Math.abs(candidate.height - candidate.width * height / width) > 1) fail(candidateLocation, 'must preserve the source aspect ratio')
     })
   }
 }

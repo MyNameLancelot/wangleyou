@@ -94,6 +94,7 @@ public final class MainActivity extends Activity {
             }
             @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 if (!isSite(Uri.parse(url))) { view.stopLoading(); showError(); return; }
+                webView.setVisibility(View.INVISIBLE);
                 mainFrameError = false;
                 if (awaitingInitialPageStart) awaitingInitialPageStart = false;
                 else startupOverlay.showLoading();
@@ -152,6 +153,8 @@ public final class MainActivity extends Activity {
 
     private void showError() {
         mainFrameError = true;
+        // 原生错误层显示期间，不让辅助功能访问底层 WebView 错误页。
+        webView.setVisibility(View.INVISIBLE);
         startupOverlay.showError();
         statusBarScrim.setVisibility(View.GONE);
         setLoadingStatusBar(true);

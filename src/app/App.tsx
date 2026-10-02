@@ -14,6 +14,7 @@ import {
   setIntent,
   setProgress,
   setStatus,
+  setSessionVisibility,
   setBackgroundMusicVisibility,
   stepSessionTo,
   toggleBackgroundMusic,
@@ -87,7 +88,7 @@ export function App() {
   }, []);
 
   const open = useCallback((target: Album, id: string) => {
-    applySession(openSession(target.media, id));
+    applySession(setSessionVisibility(openSession(target.media, id), document.visibilityState !== 'hidden'));
   }, [applySession]);
 
 
@@ -96,11 +97,13 @@ export function App() {
     close: () => applySession(null),
     reportProgress: (progress, duration) => applySession(setProgress(sessionRef.current, progress, duration)),
     reportStatus: status => applySession(setStatus(sessionRef.current, status)),
+    reportIntent: intent => applySession(setIntent(sessionRef.current, intent)),
+    reportVisibility: visible => applySession(setSessionVisibility(sessionRef.current, visible)),
     reportEnded: () => applySession(handleEnded(sessionRef.current)),
     reportError: () => applySession(markPlaybackError(sessionRef.current)),
     reportBlocked: (media, index) => {
       const current = sessionRef.current;
-      if (current?.media === media && current.index === index) applySession(setStatus(setIntent(current, 'paused'), 'paused'));
+      if (current?.media === media && current.index === index && current.visible && !current.resumeRequired) applySession(setStatus(setIntent(current, 'paused'), 'paused'));
     },
   }), [applySession]);
 
