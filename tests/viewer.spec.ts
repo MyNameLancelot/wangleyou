@@ -742,20 +742,23 @@ test('caption stays inside a short viewport and a synthetic narrow image after l
   await page.getByRole('button', { name: '查看照片：周岁 第 1 张' }).click();
   const caption = currentSlide(page).locator('.yarl__slide_captions_container');
   await expect(caption).toBeVisible();
+  // Zoom 升级响应式候选时会保留旧图；操作已加载的影像，避开并存的加载图层。
+  const image = currentSlide(page).locator('img:not(.yarl__slide_image_loading)');
+  await expect(image).toBeVisible();
   const inside = () => currentSlide(page).evaluate(node => {
-    const image = node.querySelector('img')!.getBoundingClientRect();
+    const image = node.querySelector('img:not(.yarl__slide_image_loading)')!.getBoundingClientRect();
     const caption = node.querySelector('.yarl__slide_captions_container')!.getBoundingClientRect();
     return caption.left >= image.left - 1 && caption.top >= image.top - 1 && caption.right <= image.right + 1 && caption.bottom <= image.bottom + 1 && caption.height <= image.height * .4 + 1;
   });
   await expect.poll(inside).toBe(true);
   await page.getByRole('button', { name: '收起缩略图' }).click();
   await expect.poll(inside).toBe(true);
-  await currentSlide(page).locator('img').evaluate(node => { node.style.width = '60px'; node.style.height = '150px'; });
+  await image.evaluate(node => { node.style.width = '60px'; node.style.height = '150px'; });
   await caption.locator('.yarl__slide_description').evaluate(node => { node.textContent = '窄竖图的长寄语'.repeat(20); });
   await expect.poll(inside).toBe(true);
-  await currentSlide(page).locator('img').evaluate(node => { node.style.removeProperty('width'); node.style.removeProperty('height'); });
+  await image.evaluate(node => { node.style.removeProperty('width'); node.style.removeProperty('height'); });
   await page.setViewportSize({ width: 820, height: 700 });
-  await currentSlide(page).locator('img').dblclick();
+  await image.dblclick();
   await page.waitForTimeout(650);
   await expect.poll(inside).toBe(true);
 });
