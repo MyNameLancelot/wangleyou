@@ -1,0 +1,83 @@
+{
+  "mode": "light",
+  "summary": "清理本机 .private 内已无用途的临时和重复产物，保留 R2 配置及 Android 签名材料。",
+  "reason": "用户明确要求删除 .private 下不需要的内容。仅清理被 Git 忽略的旧安装包、下载页/二维码、视频中间产物、预览和 PR 草稿；不改代码、配置契约、产品行为或模块架构，因此使用 light。",
+  "behavior": false,
+  "architecture": false,
+  "status": "complete",
+  "scope": [
+    "docs/changes/private-cleanup/",
+    "docs/changes/README.md"
+  ],
+  "localScope": [
+    ".private/"
+  ],
+  "preserved": [
+    ".private/r2/config.json",
+    ".private/android/family-release.jks",
+    ".private/android/signing.env"
+  ],
+  "plannedRemoval": [
+    ".private/apk-download/",
+    ".private/generated-video/",
+    ".private/preview/",
+    ".private/qr/",
+    ".private/android/share.py",
+    ".private/android/qr.png",
+    ".private/pr-body.md"
+  ],
+  "verification": [
+    "2026-10-09：枚举目录与项目引用，仅上述三份配置/签名材料属于当前工具或 README 明确依赖；不读取或输出秘密值。",
+    "当前 v1.0.11 下载副本与 native/android/app/build/outputs/apk/release 下两份 APK 的 SHA-256 均为 e17a1aa749a859a319d4e779b7e597c9f87d560c1fc434557d87498505f76c12；垂直视频与 native/android/app/src/main/res/raw/album_opening.mp4 的 SHA-256 均为 8e7fc966e6a5c74db35ba7ccc22bc8f0d56e3a3b7c74398366d51008516cc14b，确认项目内仍有相同副本。",
+    "当前 .private 无符号链接；正式代码只读取 r2/config.json，Android 签名依赖 family-release.jks/signing.env。清理不改变 APK 发布链接、原生视频源或 R2 配置内容。清理前完成范围判断。",
+    "实际删除17个文件、释放32544934字节（31.04MiB），空目录已移除。最终只剩3份必要配置/签名材料，其字节和权限与清理前一致；未输出秘密内容。",
+    "本机分享进程只读检查未发现匹配的Python8765下载服务或android/share.py；初始沙箱不允许ps，按工具要求提升后完成，没有停止其他服务。",
+    "未运行check/build/浏览器或原生构建：仅删除忽略临时产物，源文件、实际配置和代码无变化；SDD工作区检查通过（26个差异路径），git diff --check通过，三份保留文件均被Git忽略。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "不改变产品行为或验收，仅清理本机忽略产物。"
+    },
+    "architecture": {
+      "status": "none",
+      "reason": "构建与媒体/原生架构不变，实际源文件和配置保留。"
+    },
+    "modules": {
+      "status": "none",
+      "reason": "没有模块代码、接口、依赖或生命周期变化。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "不改变技术选择，签名与 R2 密钥归属不变。"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": [
+        "docs/changes/README.md"
+      ],
+      "reason": "仅活动记录索引新增本次本机清理声明；项目 README 的有效配置、签名路径和分发步骤继续成立。"
+    }
+  },
+  "removedFiles": [
+    "android/qr.png",
+    "android/share.py",
+    "apk-download/app_icon.png",
+    "apk-download/index.html",
+    "apk-download/qr.png",
+    "apk-download/乐悠时光-v1.0.7.apk",
+    "apk-download/乐悠时光-v1.0.8.apk",
+    "apk-download/乐悠时光-v1.0.9.apk",
+    "apk-download/v1.0.11/download-qr.png",
+    "apk-download/v1.0.11/index.html",
+    "apk-download/v1.0.11/lan-download-qr.png",
+    "apk-download/v1.0.11/leyou-time-v1.0.11.apk",
+    "generated-video/album-opening-1080p.mp4",
+    "generated-video/album-opening-vertical-1080p.mp4",
+    "preview/startup-depth.html",
+    "qr/leyou-v1.0.10-download.png",
+    "pr-body.md"
+  ],
+  "removedFileCount": 17,
+  "freedBytes": 32544934
+}

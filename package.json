@@ -12,7 +12,6 @@
     "dev": "npm run generate:media && vite --host 127.0.0.1",
     "dev:lan": "npm run generate:media && vite --host 0.0.0.0",
     "validate:content": "npm run generate:media && tsx scripts/validate-content.ts src/content/generated-photo-index.json public",
-    "compress:photos": "tsx scripts/compress-photos.ts",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
@@ -20,7 +19,8 @@
     "build": "npm run validate:content && npm run typecheck && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test:e2e": "playwright test",
-    "check:sdd": "tsx scripts/sdd/cli.ts"
+    "check:sdd": "tsx scripts/sdd/cli.ts",
+    "r2:sync": "tsx scripts/r2-sync/cli.ts"
   },
   "dependencies": {
     "lucide-react": "^1.47.0",
@@ -30,6 +30,7 @@
     "yet-another-react-lightbox": "^3.32.2"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1148.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.5.1",

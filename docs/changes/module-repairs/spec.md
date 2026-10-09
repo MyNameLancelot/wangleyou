@@ -1,5 +1,7 @@
 # 模块审查修复规格
 
+> 2026-10-09：A1 对应的独立 JPEG 压缩工具已按用户要求退役，原 AC1/测试仅保留历史证据，不再是当前工具契约。其余修复及验证状态保持，见 [退役变更](../remove-photo-compression/spec.md)。
+
 依据 [审查证据](../module-review/findings.md) 和已批准的 [行动清单](../module-review/action-plan.md)，用户已明确要求执行修复。覆盖 A1–A7；用户要求完成剩余工作后继续 D1 浏览器/Android 专项，修复验收实际发现的局部问题。iOS 不执行，D2 无触发证据的优化不实施。
 
 ## 目标与边界
