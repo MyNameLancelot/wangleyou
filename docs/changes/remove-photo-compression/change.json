@@ -1,0 +1,51 @@
+{
+  "mode": "full",
+  "summary": "按用户要求删除独立照片 JPEG 压缩 CLI、专属测试、npm 入口和 README 使用说明。",
+  "reason": "用户明确要求移除旧工具；当前构建已自动派生 WebP，旧命令无生产消费者。删除维护 CLI 改变可用入口，按 full 记录，不以清理名称豁免。",
+  "behavior": true,
+  "architecture": false,
+  "status": "complete",
+  "scope": [
+    "scripts/compress-photos.ts",
+    "scripts/compress-photos.test.ts",
+    "package.json",
+    "README.md",
+    "docs/changes/remove-photo-compression/",
+    "docs/changes/README.md",
+    "docs/changes/module-review/",
+    "docs/changes/module-repairs/"
+  ],
+  "verification": [
+    "2026-10-09：检查工作区、最近提交、需求/架构、README、生成器/CI与全仓引用；旧脚本只由npm入口和专属测试使用，sharp仍是现行WebP/封面派生依赖。确认删除边界，不改生成器或sharp依赖。",
+    "旧脚本与25项专属测试、npm入口和README命令/选项说明已删除；现行代码/CI无残留引用；历史审查与修复记录注明退役。",
+    "Node24.18.0：npm run check通过17文件224测试，内容校验7相册34媒体、类型/lint/结构通过；npm run build通过，generate-media与R2工具保持。",
+    "本轮未执行真实素材压缩、R2写入、发布、提交或推送；网页/原生实现未变，不重复浏览器/设备验收。SDD工作区检查通过41差异路径，git diff --check通过。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "none",
+      "reason": "产品基线要求自动WebP派生，不依赖独立JPEG预处理；照片/视频发布验收不变。"
+    },
+    "architecture": {
+      "status": "none",
+      "reason": "生成器和R2架构不变，独立工具没有其他生产消费者；保留sharp，不改依赖方向。"
+    },
+    "modules": {
+      "status": "none",
+      "reason": "旧工具为独立脚本，没有module.md；现有模块公开接口、状态与资源生命周期不变。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "ADR0005仍采用sharp派生WebP，不变更该长期选择或增加替代依赖。"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": [
+        "README.md",
+        "docs/changes/README.md"
+      ],
+      "reason": "删除旧CLI命令表项及用法/选项章节，保留真实构建维护步骤并更新活动索引。"
+    }
+  },
+  "deliveryAuthorization": "用户后续明确要求 commit push pr，授权当前分支提交、推送并创建 PR；不授权合并、正式 R2 同步或网站发布。"
+}

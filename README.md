@@ -28,7 +28,6 @@ npm run dev
 | `npm run dev:lan` | 本地开发并监听局域网（用手机访问同一 Wi-Fi 下的 `http://<电脑内网IP>:5173/wangleyou/` 做真机核对） |
 | `npm run generate:media` | 增量生成发布 WebP、尺寸/srcSet 内容索引与本地媒体缓存 |
 | `npm run generate:photo-index` | `generate:media` 的兼容别名 |
-| `npm run compress:photos` | 离线把照片压成发布规格：长边封顶、统一 JPEG、剥离元数据，不改动源文件 |
 | `npm run validate:content` | 检查配置结构、日期、ID 和实际文件 |
 | `npm run typecheck` | TypeScript 检查 |
 | `npm run lint` | ESLint 检查 |
@@ -79,25 +78,6 @@ npm run dev
 - 显式引用文件不存在、配置格式错误、重复 ID 会使校验和构建失败，并指出字段位置。视频还要求 `.mp4` 扩展名与单个文件不超过 200 MB（超过 100 MB 打印警告）；封面源素材可以缺，缺失时构建期生成占位封面。运行时网络失败由查看器给出默认错误状态，用户可手动切换或关闭后重新打开。
 - 背景音乐不进入相册内容配置；相册主题资产（浏览头图、保留但停用的背景音乐）放在 `public/media/themes/book/`。当前站点不播放背景音乐。重新启用或替换真实音乐时同步主题组件、素材说明和许可确认。
 
-### 压缩发布大图
-
-相机原片和演示素材可先离线压缩，再将输出加入 `media-source/<相册目录>/`；发布资源由构建管线生成，不手工写入 `public/media/`。这是独立的离线预处理命令，只读输入目录，不参与站点运行时，也不改变任何页面行为。
-
-```bash
-npm run compress:photos -- ~/Pictures/trip              # 输出到 ~/Pictures/trip_compressed
-npm run compress:photos -- ~/Pictures/trip --out ~/Pictures/trip_web --max-edge 3840 --quality 78
-npm run compress:photos -- ~/Pictures/trip --dry-run     # 只扫描并打印计划与预估，不写文件
-```
-
-- 默认长边上限 4096（DCI 4K 口径，横竖通用），只按原比例缩小、不放大；需要 UHD 口径时传 `--max-edge 3840`。
-- 默认质量 82。同一张图 q100 体积约为 q80 的两倍而画质没有可见收益，因此不建议把默认质量调高。输出一律为 JPEG 且扩展名改为 `.jpg`，编码使用 mozjpeg 与渐进式扫描；透明通道会填成白色背景，动图 GIF 只保留首帧。
-- 默认剥离 EXIF/GPS/拍摄时间等全部元数据，需要保留时加 `--keep-exif`；无论是否保留元数据，输出都会先按 EXIF Orientation 摆正。
-- 默认输出目录是输入目录同级的 `<输入目录>_compressed`，用 `--out` 覆盖；输出目录不能与输入目录相同，也不能位于输入目录内。逐项检查输出祖先，拒绝链接逃逸及输出叶子 symlink。递归处理子目录并保留相对结构。可用 `--concurrency` 调整并发（默认 4，上限为 CPU 核数）。
-- HEIC/HEIF 先尝试 sharp 直接解码；成功时汇总明确标出。失败后按 `sips`（macOS 自带）→ `heif-convert` → `magick` 顺序探测；三者在当前机器都没有时，该文件计入失败并给出安装建议，也可用 `--heic-via none` 跳过 HEIC。临时 JPEG 写在系统临时目录并自动清理。
-- 同一输出目录内多个源文件映射到同一个 `.jpg` 名时（例如 `a.jpg` 与 `a.png` 并存），按路径字典序保留第一个，其余追加 `-2`、`-3`，并在汇总中列出改名结果。
-- 每项先编码到同目录独占临时空间，再原子替换同名输出（不沿 hardlink 改写源 inode）；编码失败保留旧输出，清理本项临时文件。重跑不影响输出目录中与本次无关的已有文件；输入目录始终保持只读。结束时打印成功、跳过、失败三类计数、体积节省比例、体积变大与失败清单。
-- 退出码：0 全部成功，1 存在处理失败，2 参数或环境错误。完整参数用 `npm run compress:photos -- --help` 查看。
-
 ### 视频的离线准备
 
 站点只发布 H.264 + AAC 的 MP4（faststart），构建、CI 与运行时不转码、不抽帧，也不需要 ffmpeg/ffprobe。两步都由维护者离线完成：
@@ -124,6 +104,26 @@ npm run dev:lan        # 终端会打印 Network: http://<电脑内网IP>:5173/w
 格式与三端：发布形态只有一种——H.264 + AAC 的 MP4 + faststart。桌面浏览器、移动端浏览器与原生 WebView 壳共用同一份视频，不按端生成不同格式；`playsinline` 保证移动端内联播放，弱网优化也是补同一格式的更低码率/分辨率变体，而不是换 WebM/HEVC（那会带来越来越多的兼容分支与额外编码成本）。
 
 体积基线：单个视频 >100 MB 打印警告，>200 MB 构建失败；添加大视频前先评估仓库和 Pages 限制，GitHub 普通推送本身阻止超过 100 MiB 的单文件。
+
+## 相册媒体同步至 Cloudflare R2
+
+使用 Node 24，在项目根目录执行：
+
+```bash
+npm run r2:sync
+```
+
+无需参数，也无需提前手动构建。命令自动重新构建工程，使用文件大小与 MD5/ETag 比较，仅上传新增和变化的相册图片、MP4；全部上传及校验成功后，自动删除 R2 中本地已不存在的相册媒体，使受管理内容与本次构建一致。
+
+源目录为 `dist/media/YYYY-MM-sequenceNN-相册名/`，远端保留 `media/<相册目录>/` 路径；`themes/**`、MP3、文档和其他目录均不上传、覆盖或删除。相册整个移除时也清理其历史媒体。选中单文件最大 200 MiB。
+
+首次配置：参考 [config.example.json](scripts/r2-sync/config.example.json)，将 bucket、endpoint 和密钥统一填入本机 `.private/r2/config.json`。密钥字段为 `credentials.accessKeyId`、`credentials.secretAccessKey`，可选 `credentials.sessionToken`；只接受静态值，不支持命令/角色凭据链或环境默认凭据。该文件已被 Git 忽略，建议权限为 `0600`，不使用前端 VITE 环境变量保存密钥。本机已完成合并，目标桶为 `wangleyou-media`，旧 `.private/r2/credentials` 已移除。
+
+构建、扫描、上传或校验失败时不执行删除；修复后重新运行同一命令即可。合法空构建会自动清空受管理媒体，缺失/不完整的 dist 则停止。删除中途失败以非零退出并保留已确认结果；工具没有远端历史备份，恢复旧媒体须先构建对应源码版本再同步。
+
+终端显示计划、结果与总耗时；完整数量、字节数、分阶段耗时和安全错误码在 `.cache/r2-sync/latest-report.json`。退出码为 0 成功、1 同步/构建失败、2 配置/参数/Node 版本错误、130 中断。已有 `.cache/r2-sync/run.lock` 时拒绝运行，只有核对其中本机 PID 已退出后才能手动移除遗留锁；运行期间避免其他机器或控制台修改受管理对象。
+
+同步命令不发布网站或切换线上媒体地址。正式相册尚未同步，站点仍使用原同源媒体；固定 URL 更新若被公共 CDN 缓存，须另行清缓存。后续切向 R2 还须处理未上传的主题资产、CORS/Range、旧站资源引用窗口与 WebView 验证，见 [ADR 0008](docs/decisions/0008-r2-media-sync.md)。
 
 ## 静态路径与 GitHub Pages
 
@@ -243,7 +243,7 @@ xcodebuild -project native/ios/WangLeYou.xcodeproj -scheme WangLeYou -configurat
 | src/themes/book | 唯一相册主题的页面 UI、CSS、装饰与资产引用 |
 | src/themes | 主题装配契约 |
 | src/shared | 跨模块无 UI 类型契约（当前：路由形状） |
-| scripts | 内容文件校验、缩略图与视频封面生成、视频按内容哈希发布与发布图片压缩 |
+| scripts | 内容文件校验、响应式 WebP 与视频封面派生、MP4 发布及 R2 相册媒体同步 |
 | tests | 浏览器验收 |
 | native/ios | iPhone/iPad WKWebView 原生壳与 Xcode 工程 |
 | native/android | Android WebView 原生壳与 Gradle 工程 |
