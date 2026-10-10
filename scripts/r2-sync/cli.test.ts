@@ -137,6 +137,31 @@ it.each([
   await missing(space.lock);
 });
 
+it('explains the actual runtime and nvm fix before any side effects', async () => {
+  const space = await fixture();
+  expect(await runCLI({ ...space.deps, nodeVersion: '26.8.2' })).toBe(2);
+  const output = space.deps.log.mock.calls.flat().join('\n');
+  expect(output).toContain('26.8.2');
+  expect(output).toContain(process.execPath);
+  expect(output).toContain('nvm use');
+  expect(output).not.toContain('不接受额外参数');
+  expect(space.deps.config).not.toHaveBeenCalled();
+  expect(space.deps.build).not.toHaveBeenCalled();
+  expect(space.deps.store).not.toHaveBeenCalled();
+  await missing(space.lock);
+});
+
+it('explains extra arguments separately from the Node version', async () => {
+  const space = await fixture();
+  expect(await runCLI({ ...space.deps, argv: ['--apply'] })).toBe(2);
+  const output = space.deps.log.mock.calls.flat().join('\n');
+  expect(output).toContain('不接受额外参数');
+  expect(output).not.toContain('nvm use');
+  expect(space.deps.config).not.toHaveBeenCalled();
+  expect(space.deps.build).not.toHaveBeenCalled();
+  expect(space.deps.store).not.toHaveBeenCalled();
+});
+
 it('returns configuration code 2 without building, locking or revealing credentials', async () => {
   const space = await fixture();
   space.deps.config.mockRejectedValue(new ConfigError('fixture invalid config'));

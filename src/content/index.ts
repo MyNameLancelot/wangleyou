@@ -34,9 +34,11 @@ export function assetUrl(path: string, base = import.meta.env.BASE_URL): string 
 }
 
 /**
- * 所有 public/media 资源的统一入口。VITE_MEDIA_BASE_URL 由 Vite 在构建期注入，
- * 未配置时保留 GitHub Pages 或本地开发的页面 BASE_URL 行为。
+ * 相册使用构建期 VITE_MEDIA_BASE_URL；未同步到 R2 的 themes 始终使用页面 BASE_URL。
+ * 未配置相册前缀时保留 GitHub Pages 或本地开发的页面 BASE_URL 行为。
  */
 export function mediaUrl(path: string, base = import.meta.env.VITE_MEDIA_BASE_URL || import.meta.env.BASE_URL): string {
+  assertAssetPath(path, 'resource');
+  if (path.startsWith('media/themes/')) return assetUrl(path);
   return resolveAssetUrl(path, base);
 }
