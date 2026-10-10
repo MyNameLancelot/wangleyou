@@ -107,11 +107,15 @@ npm run dev:lan        # 终端会打印 Network: http://<电脑内网IP>:5173/w
 
 ## 相册媒体同步至 Cloudflare R2
 
-使用 Node 24，在项目根目录执行：
+在项目根目录启用 `.nvmrc` 指定的 Node 24 后执行：
 
 ```bash
+nvm use
+node -v              # 应为 v24.x
 npm run r2:sync
 ```
+
+`nvm list` 的箭头表示当前终端启用的版本；`-> system` 表示仍在用系统 Node，即使已安装 Node 24 或 default 指向它，也需要执行 `nvm use`。脚本遇到版本不符会输出当前版本和可执行文件路径；不自动改动 shell 配置。
 
 无需参数，也无需提前手动构建。命令自动重新构建工程，使用文件大小与 MD5/ETag 比较，仅上传新增和变化的相册图片、MP4；全部上传及校验成功后，自动删除 R2 中本地已不存在的相册媒体，使受管理内容与本次构建一致。
 
@@ -123,7 +127,7 @@ npm run r2:sync
 
 终端显示计划、结果与总耗时；完整数量、字节数、分阶段耗时和安全错误码在 `.cache/r2-sync/latest-report.json`。退出码为 0 成功、1 同步/构建失败、2 配置/参数/Node 版本错误、130 中断。已有 `.cache/r2-sync/run.lock` 时拒绝运行，只有核对其中本机 PID 已退出后才能手动移除遗留锁；运行期间避免其他机器或控制台修改受管理对象。
 
-同步命令不发布网站或切换线上媒体地址。正式相册尚未同步，站点仍使用原同源媒体；固定 URL 更新若被公共 CDN 缓存，须另行清缓存。后续切向 R2 还须处理未上传的主题资产、CORS/Range、旧站资源引用窗口与 WebView 验证，见 [ADR 0008](docs/decisions/0008-r2-media-sync.md)。
+同步命令不发布网站。生产相册媒体前缀配置在 `.env.production`，公开桶地址为 `https://pub-61801102583343938a91e117b81957b9.r2.dev/`；主题资产未上传，继续与网页同源。先运行同步确认成功，再发布引用新媒体的网页；同步会立即清理旧哈希对象，因此旧页面或缓存仍可能引用已移除资源。固定 URL 更新若被公共 CDN 缓存，须另行清缓存。`r2.dev` 是有限流的开发入口，生产长期托管推荐绑定自定义域名；前缀变更需重新构建。详情见 [ADR 0008](docs/decisions/0008-r2-media-sync.md)。
 
 ## 静态路径与 GitHub Pages
 
@@ -138,13 +142,13 @@ SITE_BASE=/another-repo/ npm run preview
 
 用户主页或自定义域名根目录使用 `SITE_BASE=/`。构建与预览应使用相同 base。
 
-媒体前缀独立于页面 base，由构建期 `VITE_MEDIA_BASE_URL` 决定，未设置时回退页面 base。受版本控制的 `.env.production` 当前不设置该变量，因此生产构建里 `media/<相册目录>/a.jpg` 解析为 `https://mynamelancelot.github.io/wangleyou/media/<相册目录>/a.jpg`，媒体与页面同源。派生 WebP 与视频产物在构建期生成、不提交仓库，所以只读取 Git 仓库文件的 CDN（例如 jsDelivr 的 `gh/<owner>/<repo>@<ref>` 形式）不能作为媒体前缀。不要在 JSON 或主题代码写完整 URL；需要临时指向镜像或其他来源时，在构建命令覆盖：
+相册媒体前缀独立于页面 base，由构建期 `VITE_MEDIA_BASE_URL` 决定。受版本控制的 `.env.production` 已设置 R2 公开桶根地址；例如 `media/<相册目录>/a.webp` 解析为 `https://pub-61801102583343938a91e117b81957b9.r2.dev/media/<相册目录>/a.webp`。公开地址不是需要认证的 `r2.cloudflarestorage.com` S3 API，前端不读取 `.private` 配置或密钥。不要在 JSON 或主题代码写完整 URL；需要指向其他媒体镜像时覆盖构建变量：
 
 ```bash
 VITE_MEDIA_BASE_URL=https://media.example.com/ npm run build
 ```
 
-本地 `npm run dev` 未设置该变量时继续从 Vite `BASE_URL` 加载仓库内媒体。该变量只影响图片、视频、视频封面、主题图和背景音乐，不影响 `/wangleyou/`、页面入口或 `#/...` 路由。当前媒体托管结论、升级触发条件与两条候选路径见 [总架构](docs/architecture.md)。
+本地 `npm run dev` 未设置该变量时继续从 Vite `BASE_URL` 加载媒体。`media/themes/**` 始终从网页同源路径加载，包括头图与保留但停用的背景音乐，不受 R2 前缀影响。前缀用于相册图片、响应式候选、视频及封面，不影响 `/wangleyou/`、页面入口或 `#/...` 路由。CI的check任务显式使用空前缀，验收该提交的本地媒体，避免新素材尚未同步而阻断PR；发布构建保持R2前缀。修改仅在重新构建后生效，不自动发布。恢复同源构建可运行 `VITE_MEDIA_BASE_URL= npm run build`。当前架构见 [总架构](docs/architecture.md)。
 
 ### 首次部署
 
@@ -177,7 +181,7 @@ check.yml 保留独立 push/PR 检查，因此 main 更新时会看到独立检�
 
 普通 Git 推送会阻止超过 100 MiB 的单文件；添加媒体前先压缩并评估仓库总量，不把仓库当无限容量媒体存储。[GitHub 大文件说明](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
 
-Cloudflare Pages 已通过 Git 集成从 `main` 构建根路径站点 `https://wangleyou.pages.dev/`，构建环境设 `NODE_VERSION=24`、`SITE_BASE=/`、命令 `npm ci && npm run build`、输出目录 `dist`。GitHub Pages 的 `/wangleyou/` 地址保留为浏览器备用。两处当前都让媒体与页面同源；真实照片和视频的独立存储尚未实施。仓库型 CDN 只能提供已提交的文件，拿不到构建期派生资源。媒体托管触发条件与候选路径见 [总架构](docs/architecture.md)。
+Cloudflare Pages 已通过 Git 集成从 `main` 构建根路径站点 `https://wangleyou.pages.dev/`，构建环境设 `NODE_VERSION=24`、`SITE_BASE=/`、命令 `npm ci && npm run build`、输出目录 `dist`。GitHub Pages 的 `/wangleyou/` 地址保留为浏览器备用。当前线上仍是此前构建；本次生产构建已切换相册媒体至R2，主题保持同源，合并发布后生效。仓库型 CDN 只能提供已提交的文件，拿不到构建期派生资源。媒体托管触发条件与候选路径见 [总架构](docs/architecture.md)。
 
 配置依据：[GitHub 自定义 Pages 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)、[Vite 静态部署](https://vite.dev/guide/static-deploy#github-pages)。
 

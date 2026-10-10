@@ -31,3 +31,5 @@ check.yml 验证内容、SDD、类型、lint、单元测试、构建和浏览器
 ## 验证方法
 
 使用 actionlint 检查工作流语法、表达式及本地复用引用；人工核对 main/非 main、push/PR/手动触发和失败依赖。运行 npm run check、npm run build 与 test:e2e。首次真实 artifact 上传、Pages 权限和 HTTPS 地址需在提交合并后另行核实，不能由本地测试代替。
+
+媒体迁移后：check任务显式设置 `VITE_MEDIA_BASE_URL` 为空，生成并使用本提交的同源媒体验收，不要求PR素材先写入R2；发布工作流的独立build不覆盖该变量，仍消费 `.env.production` 的公开R2前缀。媒体地址浏览器回归支持空前缀及真实R2两种构建。

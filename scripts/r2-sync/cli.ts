@@ -96,8 +96,14 @@ type Dependencies = {
 
 export async function runCLI(deps: Dependencies = {}): Promise<number> {
   const log = deps.log ?? console.log;
-  if ((deps.argv ?? process.argv.slice(2)).length || !(deps.nodeVersion ?? process.versions.node).startsWith('24.')) {
-    log('请使用 Node 24，执行 npm run r2:sync（不接受额外参数）。'); return 2;
+  const nodeVersion = deps.nodeVersion ?? process.versions.node;
+  if (!nodeVersion.startsWith('24.')) {
+    log(`当前 Node ${nodeVersion}（${process.execPath}），项目要求 Node 24。`);
+    log('请在项目根目录执行 nvm use，再运行 node -v 确认 v24，然后执行 npm run r2:sync。');
+    return 2;
+  }
+  if ((deps.argv ?? process.argv.slice(2)).length) {
+    log('npm run r2:sync 不接受额外参数，请直接运行该命令。'); return 2;
   }
   const root = deps.root ?? PROJECT_ROOT;
   const controller = new AbortController();

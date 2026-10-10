@@ -241,3 +241,27 @@ it('cancels an active hash, closes its handle and does not start queued hashes',
   expect(open).toHaveBeenCalledTimes(2);
   expect(active).toBe(0);
 });
+
+it('handles cancellation after the file stat but before the read stream is consumed', async () => {
+  const root = await workspace();
+  for (let index = 0; index < 5; index++) await media(root, `file-${index}.webp`);
+  const controller = new AbortController();
+  const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+  let active = 0;
+  vi.mocked(open).mockImplementation(async (...args) => {
+    const handle = await actual.open(...args);
+    active++;
+    const stat = handle.stat.bind(handle);
+    vi.spyOn(handle, 'stat').mockImplementation(async options => {
+      const result = await stat(options);
+      controller.abort();
+      return result;
+    });
+    const close = handle.close.bind(handle);
+    handle.close = async () => { try { await close(); } finally { active--; } };
+    return handle;
+  });
+  await expect(scanMedia(root, controller.signal)).rejects.toThrow();
+  expect(vi.mocked(open).mock.calls.length).toBeLessThanOrEqual(2);
+  expect(active).toBe(0);
+});

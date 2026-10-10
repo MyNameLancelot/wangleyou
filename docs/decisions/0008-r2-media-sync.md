@@ -1,6 +1,6 @@
 # 0008：本机相册媒体 R2 镜像同步
 
-日期：2026-10-09。状态：采纳；工具实现，正式媒体同步与网站迁移未执行。
+日期：2026-10-09。状态：采纳；工具实现，2026-10-10追加生产相册公开地址配置，线上发布未执行。
 
 ## 背景与候选
 
@@ -24,10 +24,18 @@
 
 运行锁是本机独占，遗留锁须人工核对后清理。远端复查检测观察到的变化，不是分布式事务。R2 media 前缀已由用户授权管理，实际操作仅覆盖合法相册图片/MP4；主题/音频和桶内其他内容保留。
 
-自动清理与上传同轮完成，不等待网站发布。未来切向 R2 必须另行设计旧站版本引用窗口、固定 URL 的 CDN purge、CORS/Range 和原生验证；全局媒体前缀还影响未上传的 themes，不能直接宣称迁移完成。工具不配置公开访问或付费服务，不自动发布/推送。
+自动清理与上传同轮完成，不等待网站发布。未来切向 R2 必须另行设计旧站版本引用窗口、固定 URL 的 CDN purge、CORS/Range 和原生验证；公开地址接入沿用content统一resolver：相册消费生产VITE_MEDIA_BASE_URL，未上传的themes始终使用页面BASE_URL。本地开发默认同源；不改生成索引、页面base或播放状态。工具不配置公开访问或付费服务，不自动发布/推送。
 
 ## 验证与维护
 
 真实文件、10,000 对象比较、SDK 本地 HTTP 协议、构建门禁/进程组取消及部分删除回归由 scripts/r2-sync 测试维护；实际 R2 的单次 PUT ETag 和隔离前缀行为证据由活动变更记录保存。长期契约见 [工具模块](../../scripts/r2-sync/module.md)，命令及配置步骤见 [README](../../README.md)。
 
 接口依据 [Cloudflare R2 S3 API](https://developers.cloudflare.com/r2/api/s3/api/)、[R2 multipart ETag](https://developers.cloudflare.com/r2/objects/multipart-objects/)、[AWS SDK 凭据提供者](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/migrate-credential-providers.html) 与 [S3 DeleteObjects](https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html)。接口文档不替代本桶实测。
+
+## 2026-10-10：公开媒体接入
+
+用户要求生产相册使用其提供的 `https://pub-61801102583343938a91e117b81957b9.r2.dev/`，通过 `.env.production` 固定配置公开桶根地址，对象key仍含media目录。S3 API endpoint与秘密配置只用于本机上传，不进入前端。保留主题同源避免扩大同步范围，不引入运行时签名服务。Cloudflare将r2.dev定位为有限流的开发入口；当前按用户地址接入，长期生产推荐自定义域名。公开读取与视频Range、静态产物验收由活动变更记录维护，配置完成不等于线上发布或原生设备验收。
+
+Node24契约不放宽：nvm的system选择仍可能运行其他版本。CLI报告实际版本和可执行文件并提示nvm use，额外参数单独报告，不自动修改用户shell。
+
+参考：[R2公开桶](https://developers.cloudflare.com/r2/buckets/public-buckets/)。

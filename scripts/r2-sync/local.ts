@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { constants, type BigIntStats } from 'node:fs';
 import { lstat, open, readdir } from 'node:fs/promises';
 import { basename, extname, join, parse, relative, resolve, sep } from 'node:path';
+import { Writable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { HASH_CONCURRENCY, MAX_MEDIA_BYTES, type FileStamp, type LocalMedia } from './types';
 
 const ALBUM_DIRECTORY = /^\d{4}-(?:0[1-9]|1[0-2])-sequence\d{2}-.+$/;
@@ -108,16 +110,23 @@ async function hashMedia(file: Candidate, signal: AbortSignal): Promise<LocalMed
   try {
     signal.throwIfAborted();
     const before = await handle.stat({ bigint: true });
+    signal.throwIfAborted();
     if (!before.isFile() || !sameStamp(file.stamp, stamp(before))) throw changed(file.absolutePath);
     const hash = createHash('md5');
     const stream = handle.createReadStream({ autoClose: false, signal });
     let bytes = 0;
-    for await (const chunk of stream) {
-      signal.throwIfAborted();
-      bytes += chunk.length;
-      if (bytes > MAX_MEDIA_BYTES || BigInt(bytes) > file.stamp.size) throw changed(file.absolutePath);
-      hash.update(chunk);
-    }
+    // Pipeline owns stream errors and destruction even if cancellation races with creation.
+    await pipeline(stream, new Writable({
+      write(chunk, _encoding, callback) {
+        try {
+          signal.throwIfAborted();
+          bytes += chunk.length;
+          if (bytes > MAX_MEDIA_BYTES || BigInt(bytes) > file.stamp.size) throw changed(file.absolutePath);
+          hash.update(chunk);
+          callback();
+        } catch (error) { callback(error instanceof Error ? error : new Error('HASH_FAILED')); }
+      },
+    }), { signal });
     signal.throwIfAborted();
     const after = await handle.stat({ bigint: true });
     const finalPathStats = await assertSafeMediaStats(file.absolutePath, signal);

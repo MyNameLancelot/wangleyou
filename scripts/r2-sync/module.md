@@ -38,3 +38,7 @@ CLI 持有 AbortController、构建进程和 SDK 生命周期。macOS/POSIX 构�
 config.ts 负责配置；local.ts 负责文件；r2.ts 负责 S3 协议；sync.ts 负责计划和顺序；cli.ts 负责进程、锁、报告和退出。types.ts 不持有状态。config.example.json 仅含普通目标配置。
 
 `npx vitest run scripts/r2-sync` 覆盖真实文件、构建门禁与进程组、10,000 对象比较、本地 HTTP SDK 请求、重试和部分删除。正常项目 `npm run check`、`npm run build` 仍不连接 R2。实际服务验证须用隔离前缀并清理测试对象；正式相册同步与站点迁移分别授权。扩展分片或命令行为时同步规格及 [ADR 0008](../../docs/decisions/0008-r2-media-sync.md)，不隐式放宽删除范围。
+
+Node 预检在配置/锁/构建/远端操作前执行：非24报告实际版本和可执行文件路径，提示项目根目录 `nvm use` 与 `node -v`，退出2；Node24时额外参数单独报告并退出2。工具不自动改动 shell 或放宽运行时约束。
+
+哈希读取使用标准 `stream/promises.pipeline` 将文件读取流写入摘要累积器，pipeline统一管理错误、背压及取消；settle后才在finally关闭文件句柄，包含stat返回与stream消费之间取消的竞态。
