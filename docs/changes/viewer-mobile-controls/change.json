@@ -1,0 +1,52 @@
+{
+  "mode": "full",
+  "summary": "修复 Android 查看器按钮安全区与缩略图横滑，构建家庭签名普通包与局域网真机测试包",
+  "reason": "用户真机截图确认系统栏遮挡与缩略图不可横滑",
+  "behavior": true,
+  "architecture": true,
+  "status": "complete",
+  "verification": [
+    "Node24.18.0 npm run check最终通过：内容、类型、lint和230项单元测试。中途一次完整复跑R2 SDK本地请求测试失败，随后单独17项及完整230项再次通过，未改动R2代码。",
+    "VITE_MEDIA_BASE_URL=子路径构建通过，Chrome154.0.8037.99查看器58项通过；补充多指取消后移动控件8项通过。SITE_BASE=/根路径构建及同8项通过；视口390x844、844x390、820x1180，CDP安全区48/20/24px，静态产物与真实CDP触屏输入。",
+    "JDK17.0.20 Gradle offline正常debug及独立applicationId测试包构建通过；Android API34模拟器320x640/640x320系统栏按钮避让、点击进入照片元素全屏、系统返回与旋转恢复核对通过。模拟器加载现有生产网页，缩略图新代码单独由静态产物CDP触屏测试覆盖。",
+    "用户于2026-10-10确认家庭签名v1.0.12-lan局域网包真机测试没问题；未提供机型、Android/WebView版本或逐项日志，不扩展为所有平台通过。Android26–29/35+、iOS/Safari专项覆盖仍未执行。普通v1.0.12/code13家庭签名APK已构建并验证，生产源码仍只加载HTTPS线上地址。",
+    "默认npm run build通过，恢复默认子路径与R2媒体地址；npm run check:sdd -- --worktree --base origin/main通过14个差异路径，git diff --check通过。本次模拟器已关闭，正常applicationId debug产物已恢复。",
+    "用户已明确授权commit/push/PR与正式tag/Release；局域网测试包不进入公开Release。普通APK证书SHA256为83701c5afbd6df1171e1595db96d3a3ee39786d373277e94398a727629135d4d，签名验证通过。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "paths": [
+        "docs/requirements.md"
+      ],
+      "reason": "补充控件安全区与缩略图触屏横滑验收"
+    },
+    "architecture": {
+      "status": "updated",
+      "paths": [
+        "docs/architecture.md"
+      ],
+      "reason": "记录官方 ControllerRef 事件适配与 Android 原生 inset 归属"
+    },
+    "modules": {
+      "status": "updated",
+      "paths": [
+        "src/media-viewer/module.md",
+        "native/android/module.md"
+      ],
+      "reason": "同步手势监听清理、方向阈值及原生顶部 margin 契约"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "复用 Pointer Events、系统 Insets 和现有控制器，无新增依赖或桥接；候选评估见规格"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": [
+        "docs/changes/README.md",
+        "README.md"
+      ],
+      "reason": "同步1.0.12版本、顶部安全区和局域网测试说明"
+    }
+  }
+}
