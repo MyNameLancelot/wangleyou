@@ -9,6 +9,19 @@
 /* 继承站点正文字体（来自 body），不引入主题级查看器变量。 */
 .viewer { font-family: inherit; }
 
+/* 浏览器提供安全区；原生壳已消费的 inset 为零，避免重复留白。 */
+.viewer :global(.yarl__toolbar) {
+  top: env(safe-area-inset-top, 0px);
+  right: env(safe-area-inset-right, 0px);
+}
+
+.viewer :global(.yarl__thumbnails_container) {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(16px + env(safe-area-inset-left, 0px));
+  padding-right: calc(16px + env(safe-area-inset-right, 0px));
+  touch-action: none;
+}
+
 /* 键盘焦点环：深色舞台上固定用白色，与主题色无关，保证共用查看器表现一致。 */
 .viewer :global(.yarl__button:focus-visible) {
   outline: 3px solid #ffffff;

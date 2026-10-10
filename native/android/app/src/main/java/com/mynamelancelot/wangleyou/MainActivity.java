@@ -46,13 +46,37 @@ public final class MainActivity extends Activity {
         root = new FrameLayout(this);
         root.setBackgroundColor(0xfff7f5f0);
         root.setOnApplyWindowInsetsListener((view, insets) -> {
-            if (Build.VERSION.SDK_INT >= 30 && fullscreenView == null) {
-                int safeTypes = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout();
-                android.graphics.Insets bars = insets.getInsets(safeTypes);
-                root.setPadding(bars.left, 0, bars.right, bars.bottom);
-                return new WindowInsets.Builder(insets)
-                        .setInsets(safeTypes, android.graphics.Insets.of(0, bars.top, 0, 0))
-                        .build();
+            if (fullscreenView == null) {
+                int left, top, right, bottom;
+                if (Build.VERSION.SDK_INT >= 30) {
+                    int safeTypes = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout();
+                    android.graphics.Insets bars = insets.getInsets(safeTypes);
+                    left = bars.left; top = bars.top; right = bars.right; bottom = bars.bottom;
+                } else {
+                    left = insets.getSystemWindowInsetLeft(); top = insets.getSystemWindowInsetTop();
+                    right = insets.getSystemWindowInsetRight(); bottom = insets.getSystemWindowInsetBottom();
+                    if (Build.VERSION.SDK_INT >= 28 && insets.getDisplayCutout() != null) {
+                        android.view.DisplayCutout cutout = insets.getDisplayCutout();
+                        left = Math.max(left, cutout.getSafeInsetLeft()); top = Math.max(top, cutout.getSafeInsetTop());
+                        right = Math.max(right, cutout.getSafeInsetRight()); bottom = Math.max(bottom, cutout.getSafeInsetBottom());
+                    }
+                }
+                root.setPadding(left, 0, right, bottom);
+                // 开屏仍铺满顶部；仅网页避开状态栏，不依赖 WebView 的 CSS env 支持。
+                FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) webView.getLayoutParams();
+                if (params.topMargin != top) {
+                    params.topMargin = top;
+                    webView.setLayoutParams(params);
+                }
+                if (Build.VERSION.SDK_INT >= 30) {
+                    int safeTypes = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout();
+                    return new WindowInsets.Builder(insets)
+                            .setInsets(safeTypes, android.graphics.Insets.NONE)
+                            .setDisplayCutout(null)
+                            .build();
+                }
+                WindowInsets consumed = insets.replaceSystemWindowInsets(0, 0, 0, 0);
+                return Build.VERSION.SDK_INT >= 28 ? consumed.consumeDisplayCutout() : consumed;
             } else {
                 root.setPadding(0, 0, 0, 0);
             }

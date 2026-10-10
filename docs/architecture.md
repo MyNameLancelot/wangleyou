@@ -61,7 +61,7 @@
 
 App 向查看器提供命令，主题在 Session 存在时挂载共用组件。查看器的 `view` 事件转 `stepSessionTo`，原生 video 的播放/等待/进度/结束/错误事件转 playback 命令，播放请求被拒时回报其发起队列与索引。hidden 通过插件 ref 暂停幻灯片，并使旧视频播放请求失效；回前台由 Session 的 resumeRequired 保持暂停，主动原生播放或可见时换项再继续。查看器不复制业务索引；局部缩略图/全屏 UI 状态不属于 playback。
 
-共用查看器使用 Captions、Fullscreen、Slideshow、Thumbnails、Video、Zoom。非循环、背景关闭、工具栏裁剪、寄语与缩略图收起条、全屏和 Tab 回绕契约详见 media-viewer；其焦点环固定白色，不读取主题变量。插件幻灯片需用户显式启动，视频 ended 不推进。首页动效用 Web Animations API 驱动 transform/opacity：各端共用叠页层中的整张纸片快照，以左上角为原点旋出，回翻将目标纸片转入；按视口左侧空间与纸片高度限制角度。旧层复用 currentSrc，输入继续 srcSet/sizes。组件管理新图就绪、最长5秒等待、隐藏/减少动态效果/窗口尺寸变化的收尾及卸载取消，先隐藏旧快照再取消动画以避免闪回，不逐帧更新React；与查看器会话独立。
+共用查看器使用 Captions、Fullscreen、Slideshow、Thumbnails、Video、Zoom。非循环、背景关闭、工具栏裁剪、寄语与缩略图收起条、全屏和 Tab 回绕契约详见 media-viewer；其焦点环固定白色，不读取主题变量。插件幻灯片需用户显式启动，视频 ended 不推进。缩略图通过模块内 Pointer Events 适配调用官方 ControllerRef，不维护第二份索引；委托事件兼容延迟挂载，卸载解绑。浏览器使用 CSS env 安全区，Android 消费系统栏/开孔 inset 并为 WebView 设置顶部 margin，不要求旧 WebView 暴露 CSS 安全区。首页动效用 Web Animations API 驱动 transform/opacity：各端共用叠页层中的整张纸片快照，以左上角为原点旋出，回翻将目标纸片转入；按视口左侧空间与纸片高度限制角度。旧层复用 currentSrc，输入继续 srcSet/sizes。组件管理新图就绪、最长5秒等待、隐藏/减少动态效果/窗口尺寸变化的收尾及卸载取消，先隐藏旧快照再取消动画以避免闪回，不逐帧更新React；与查看器会话独立。
 
 原生壳仅允许 Cloudflare HTTPS 根路径作为顶层页面，Hash 导航留在 WebView，外部 HTTPS 用户链接交系统浏览器；媒体子资源按页面地址加载，不做原生 URL 替换，无 JS 桥接。返回、加载失败与开屏生命周期由原生 module.md 维护。
 

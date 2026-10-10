@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import Lightbox from 'yet-another-react-lightbox';
+import type { ControllerRef } from 'yet-another-react-lightbox';
 import Captions from 'yet-another-react-lightbox/plugins/captions';
 import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen';
 import Slideshow from 'yet-another-react-lightbox/plugins/slideshow';
@@ -16,6 +17,7 @@ import type { Session } from '../playback';
 import type { MediaViewerCommands } from './commands';
 import { useViewerPlayback } from './useViewerPlayback';
 import { useViewerCaptionLayout } from './useViewerCaptionLayout';
+import { useThumbnailSwipe } from './useThumbnailSwipe';
 import styles from './MediaViewer.module.css';
 
 export type { MediaViewerCommands } from './commands';
@@ -33,6 +35,8 @@ export type { MediaViewerCommands } from './commands';
  */
 export function MediaViewer({ session, commands }: { session: Session; commands: MediaViewerCommands }) {
   const attachSlideshow = useViewerPlayback(session, commands);
+  const controllerRef = useRef<ControllerRef | null>(null);
+  useThumbnailSwipe(controllerRef);
   const thumbnailsRef = useRef<{ visible: boolean; show: () => void; hide: () => void } | null>(null);
   const [thumbnailsVisible, setThumbnailsVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
@@ -135,7 +139,7 @@ export function MediaViewer({ session, commands }: { session: Session; commands:
     }}
     // 两处行为保留：不循环（首尾按钮禁用）与点击黑色背景关闭；其余沿用库默认。
     carousel={{ finite: true }}
-    controller={{ closeOnBackdropClick: true }}
+    controller={{ ref: controllerRef, closeOnBackdropClick: true }}
     thumbnails={{ ref: thumbnailsRef, showToggle: false }}
     slideshow={{ ref: attachSlideshow }}
     video={{ controls: true, playsInline: true, preload: 'metadata' }}

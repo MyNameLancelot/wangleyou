@@ -201,7 +201,7 @@ cd native/android
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 测试版本为 1.0.11（`versionCode` 12），采用家庭 Release 签名；上一稳定家庭包为 1.0.10（`versionCode` 11）。桌面名称为「乐悠时光」，图标为奶油白底无文字翻开相册；系统启动和加载阶段播放 APK 内的 1080×1920 相册翻开视频，全程由同一画面层中心裁切铺满，视频播完后网页若仍未就绪则保持视频尾帧，网页先就绪时可用右上角「跳过」立即进入。视频源文件位于 `native/android/app/src/main/res/raw/album_opening.mp4`，加载文案下方的光条往返运动，异常或关闭动画时使用奶油白背景与文字。主框架加载或失败期间隐藏底层网页，避免 TalkBack 读到被遮挡的旧页面或系统错误页；该修复已包含在 v1.0.11 测试包中，用户于 2026-10-02 确认真机试用没问题。网页出现后状态栏透明，网页背景延伸至屏幕顶部，渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
+`app-debug.apk` 由本机 debug key 签名，只供开发验证。当前 Android 正式版本为 1.0.12（`versionCode` 13），采用家庭 Release 签名；上一稳定家庭包为 1.0.10（`versionCode` 11）。桌面名称为「乐悠时光」，图标为奶油白底无文字翻开相册；系统启动和加载阶段播放 APK 内的 1080×1920 相册翻开视频，全程由同一画面层中心裁切铺满，视频播完后网页若仍未就绪则保持视频尾帧，网页先就绪时可用右上角「跳过」立即进入。视频源文件位于 `native/android/app/src/main/res/raw/album_opening.mp4`，加载文案下方的光条往返运动，异常或关闭动画时使用奶油白背景与文字。主框架加载或失败期间隐藏底层网页，避免 TalkBack 读到被遮挡的旧页面或系统错误页；该修复已包含在 v1.0.11 测试包中，用户于 2026-10-02 确认真机试用没问题。网页出现后状态栏透明，原生容器预留状态栏和开孔安全区，顶部控件不进入系统栏触摸区域；渐隐暗色层保证系统图标可读。请在全面屏设备上核对时间图标、顶部控件和视频全屏。家庭分发请在本机安全生成并保管私有 keystore，例如 Android Studio **Build → Generate Signed Bundle / APK → APK**；或设置以下四个环境变量后构建，Gradle 内部产物为 `native/android/app/build/outputs/apk/release/app-release.apk`：
 
 ```bash
 export WANGLEYOU_ANDROID_KEYSTORE=/absolute/private/path/family.jks
@@ -210,10 +210,14 @@ export WANGLEYOU_ANDROID_KEY_ALIAS='在本机设置'
 export WANGLEYOU_ANDROID_KEY_PASSWORD='在本机设置'
 cd native/android && ./gradlew :app:assembleRelease
 apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
-python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.11.apk
+python3 package_family_apk.py  # 输出 app/build/outputs/apk/release/乐悠时光-v1.0.12.apk
 ```
 
 不要把示例值当成真实密码，也不要把密码写进仓库。本机已生成的家庭签名材料位于被 Git 忽略的 `.private/android/family-release.jks` 与 `.private/android/signing.env`；请将两者加密备份到仓库和电脑之外，丢失后不能用同一身份更新已安装的 App。安装 APK 时，Android 8+ 需要在设备上为接收文件的应用临时允许“安装未知应用”；首次安装和后续更新必须使用同一私钥签名。Debug 版与家庭 Release 版签名不同，已安装 Debug 版时需先卸载，其本地数据会被清除。在大陆网络仍需实际确认 GitHub 下载是否可达，安装后可关闭该来源的安装权限。
+
+局域网真机测试包使用相同家庭签名，连接电脑静态网页服务，仅允许当前内网IP/端口的HTTP根路径，应用名称标记「乐悠时光·本地测试」。HTTP例外只存在于临时构建副本，生产源码仍只接受HTTPS线上地址。手机与电脑须同Wi-Fi且电脑服务保持运行。测试后安装同签名普通包即可换回线上地址，无需卸载；二维码和包仅本机交付，不上传公开Release。
+
+2026-10-10 v1.0.12正式交付：[Release](https://github.com/MyNameLancelot/wangleyou/releases/tag/android-v1.0.12)、[APK](https://github.com/MyNameLancelot/wangleyou/releases/download/android-v1.0.12/leyou-time-v1.0.12.apk)、[下载二维码](https://github.com/MyNameLancelot/wangleyou/releases/download/android-v1.0.12/download-qr.png)。版本Code13，家庭签名，可覆盖旧家庭包与LAN测试包；正式包连接HTTPS线上地址，用户已确认LAN真机测试没问题。网页缩略图修复由本次PR合并后的网站部署生效，APK不内置网页。
 
 2026-10-02 测试交付：[v1.0.11 发布页](https://github.com/MyNameLancelot/wangleyou/releases/tag/android-v1.0.11-test)、[APK 下载](https://github.com/MyNameLancelot/wangleyou/releases/download/android-v1.0.11-test/leyou-time-v1.0.11.apk)、[下载二维码](https://github.com/MyNameLancelot/wangleyou/releases/download/android-v1.0.11-test/download-qr.png)。可覆盖 v1.0.10，签名已核对一致；SHA-256 为 `e17a1aa749a859a319d4e779b7e597c9f87d560c1fc434557d87498505f76c12`。此测试 APK 构建时来自本地未提交工作区，发布标签仅引用已有源码基线，自动 Source code 压缩包不包含本地原生修复；原生修复源码由本次 PR 提供。用户通过局域网下载试用后于 2026-10-02 确认真机没问题。网页修复尚未部署，App 仍加载当前线上网站。
 
