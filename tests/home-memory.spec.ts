@@ -1,18 +1,19 @@
 import { expect, test } from '@playwright/test';
+import type { Locator, Route } from '@playwright/test';
 
 test('home memory can pause, resume and turn a page without changing media routes', async ({ page }, testInfo) => {
   await page.goto('./');
   const initialURL = page.url();
   const photo = page.getByTestId('home-memory-photo');
-  await expect.poll(() => photo.locator('img').evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await photo.click();
   await expect(photo).toHaveAttribute('aria-label', /继续主回忆自动播放/);
-  const pausedSrc = await photo.locator('img').getAttribute('src');
+  const pausedSrc = await photo.locator('img').first().getAttribute('src');
   await page.waitForTimeout(2300);
-  await expect(photo.locator('img')).toHaveAttribute('src', pausedSrc!);
+  await expect(photo.locator('img').first()).toHaveAttribute('src', pausedSrc!);
   if (testInfo.project.name === 'desktop-chrome') {
     await page.getByRole('button', { name: '下一张照片' }).click();
-    await expect.poll(() => photo.locator('img').getAttribute('src')).not.toBe(pausedSrc);
+    await expect.poll(() => photo.locator('img').first().getAttribute('src')).not.toBe(pausedSrc);
   } else {
     await photo.evaluate(element => {
       const start = new Touch({ identifier: 1, target: element, clientX: 270, clientY: 340 });
@@ -20,12 +21,12 @@ test('home memory can pause, resume and turn a page without changing media route
       element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [start], changedTouches: [start] }));
       element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [end] }));
     });
-    await expect.poll(() => photo.locator('img').getAttribute('src')).not.toBe(pausedSrc);
+    await expect.poll(() => photo.locator('img').first().getAttribute('src')).not.toBe(pausedSrc);
   }
   await expect(page).toHaveURL(initialURL);
 });
 
-test('reduced motion turns pages without a flip overlay', async ({ page }) => {
+test('reduced motion turns pages without a transition overlay', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./');
   const photo = page.getByTestId('home-memory-photo');
@@ -40,30 +41,155 @@ test('reduced motion turns pages without a flip overlay', async ({ page }) => {
       element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [end] }));
     });
   }
-  await expect(page.locator('[class*="flip"]')).toHaveCount(0);
+  await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
 });
 
-test('normal motion flips a full-size page and releases the overlay', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-chrome', 'Desktop controls make the flip lifecycle deterministic');
+async function swipePage(stack: Locator, direction: -1 | 1) {
+  await stack.evaluate((element, direction) => {
+    const start = new Touch({ identifier: 1, target: element, clientX: direction === 1 ? 270 : 80, clientY: 340 });
+    const end = new Touch({ identifier: 1, target: element, clientX: direction === 1 ? 80 : 270, clientY: 340 });
+    element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [start], changedTouches: [start] }));
+    element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [end] }));
+  }, direction);
+}
+
+for (const viewport of [
+  { width: 1440, height: 1000, touch: false },
+  { width: 360, height: 800, touch: true },
+  { width: 390, height: 844, touch: true },
+  { width: 844, height: 390, touch: true },
+  { width: 768, height: 1024, touch: true },
+  { width: 820, height: 1180, touch: true },
+  { width: 1180, height: 820, touch: true },
+]) {
+  test(`whole paper pivots safely in both directions at ${viewport.width}x${viewport.height}`, async ({ browser }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'Matrix uses independent desktop and touch contexts');
+    const context = await browser.newContext({ viewport, hasTouch: viewport.touch, isMobile: viewport.touch });
+    const page = await context.newPage();
+    await page.goto(String(testInfo.project.use.baseURL));
+    const photo = page.getByTestId('home-memory-photo');
+    await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+    await photo.click();
+    const original = await photo.boundingBox();
+    const heading = await page.locator('#home-title').boundingBox();
+    const stack = page.locator('[class*="_stack_"]');
+    const transition = page.getByTestId('home-photo-transition');
+    if (viewport.width > 700) await expect(page.getByRole('button', { name: '下一张照片' })).toBeVisible();
+    else await expect(page.getByRole('button', { name: '下一张照片' })).toBeHidden();
+    for (const direction of [1, -1] as const) {
+      if (viewport.touch) await swipePage(stack, direction);
+      else await page.getByRole('button', { name: direction === 1 ? '下一张照片' : '上一张照片' }).click();
+      await expect(transition).toHaveAttribute('data-phase', 'moving');
+      await expect(transition).toHaveAttribute('data-direction', String(direction));
+      await expect(transition.locator('img')).toHaveCount(1);
+      await expect(transition.locator('svg')).toHaveCount(0);
+      await expect(transition).toHaveCSS('overflow', 'visible');
+      const motion = await stack.evaluate((element, direction) => {
+        const animations = element.getAnimations({ subtree: true });
+        const animation = animations[0];
+        animation.pause();
+        const effect = animation.effect as KeyframeEffect;
+        const target = effect.target as HTMLElement;
+        const samples = [0, 250, 450, 700, 899].map(time => {
+          animation.currentTime = time;
+          const box = target.getBoundingClientRect();
+          return { left: box.left, right: box.right, opacity: Number(getComputedStyle(target).opacity), scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth };
+        });
+        animation.currentTime = 450;
+        return {
+          count: animations.length,
+          duration: effect.getTiming().duration,
+          direction: effect.getTiming().direction,
+          origin: getComputedStyle(target).transformOrigin,
+          frames: effect.getKeyframes().map(frame => frame.transform),
+          targetIsFront: target.dataset.bookPage === 'front',
+          snapshotParentIsStack: element.querySelector('[data-testid="home-photo-transition"]')?.parentElement === element,
+          samples,
+          incomingOpacity: direction === 1 ? getComputedStyle(element.querySelector('[data-book-page="front"]')!).opacity : null,
+        };
+      }, direction);
+      expect(motion.count).toBe(1);
+      expect(motion.duration).toBe(900);
+      expect(motion.direction).toBe(direction === 1 ? 'normal' : 'reverse');
+      expect(motion.origin).toBe('0px 0px');
+      expect(motion.targetIsFront).toBe(direction === -1);
+      expect(motion.snapshotParentIsStack).toBe(true);
+      expect(motion.frames.every(frame => /^rotate\(/.test(String(frame)))).toBe(true);
+      const maxAngle = Number(String(motion.frames[2]).match(/rotate\((.+)deg\)/)![1]);
+      expect(maxAngle).toBeGreaterThan(0);
+      expect(maxAngle).toBeLessThanOrEqual(28);
+      if (viewport.width <= 820) expect(maxAngle).toBeLessThan(28);
+      for (const sample of motion.samples) {
+        expect(sample.left).toBeGreaterThanOrEqual(7);
+        expect(sample.right).toBeLessThanOrEqual(viewport.width + 1);
+        expect(sample.scrollWidth).toBeLessThanOrEqual(sample.clientWidth);
+      }
+      if (direction === 1) {
+        expect(motion.incomingOpacity).toBe('1');
+        expect(await photo.boundingBox()).toEqual(original);
+        expect(motion.samples.at(-1)!.opacity).toBeLessThan(.01);
+      } else expect(motion.samples[0].opacity).toBe(0);
+      expect(await page.locator('#home-title').boundingBox()).toEqual(heading);
+      await stack.evaluate(element => element.getAnimations({ subtree: true }).forEach(animation => animation.play()));
+      await expect(transition).toHaveCount(0);
+      expect(await stack.evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0);
+      expect(await photo.boundingBox()).toEqual(original);
+    }
+    await context.close();
+  });
+}
+
+test('cancelled touch and vertical gestures do not turn a page; a fresh swipe still works', async ({ page }) => {
   await page.goto('./');
   const photo = page.getByTestId('home-memory-photo');
+  await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await photo.click();
-  const original = await photo.evaluate(element => ({ width: (element as HTMLElement).offsetWidth, height: (element as HTMLElement).offsetHeight }));
-  await page.getByRole('button', { name: '下一张照片' }).click();
-  const flipping = page.getByTestId('book-turning-page');
-  await expect(flipping).toBeVisible();
-  const overlay = await flipping.evaluate(element => ({ width: (element as HTMLElement).offsetWidth, height: (element as HTMLElement).offsetHeight }));
-  expect(Math.abs(overlay.width - original.width)).toBeLessThan(2);
-  expect(Math.abs(overlay.height - original.height)).toBeLessThan(2);
-  await page.waitForTimeout(350);
-  const pageBounds = await photo.boundingBox();
-  const turnBounds = await flipping.boundingBox();
-  expect(Math.abs(turnBounds!.x - pageBounds!.x)).toBeLessThan(2);
-  expect(Math.abs(turnBounds!.y - pageBounds!.y)).toBeLessThan(2);
-  expect(turnBounds!.width).toBeLessThanOrEqual(pageBounds!.width + 2);
-  await expect(flipping).toHaveCSS('overflow', 'hidden');
-  await expect(flipping).toHaveCount(0);
+  const initial = await photo.locator('img').first().getAttribute('src');
+  const stack = page.locator('[class*="_stack_"]');
+  await stack.evaluate(element => {
+    const dispatch = (type: string, x: number, y: number) => {
+      const touch = new Touch({ identifier: 1, target: element, clientX: x, clientY: y });
+      element.dispatchEvent(new TouchEvent(type, { bubbles: true, touches: type === 'touchstart' ? [touch] : [], changedTouches: [touch] }));
+    };
+    dispatch('touchstart', 270, 340);
+    dispatch('touchcancel', 250, 340);
+    dispatch('touchend', 80, 340);
+    dispatch('touchstart', 270, 340);
+    dispatch('touchend', 80, 650);
+  });
+  await expect(photo.locator('img').first()).toHaveAttribute('src', initial!);
+  await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
+  await swipePage(stack, 1);
+  await expect(photo.locator('img').first()).not.toHaveAttribute('src', initial!);
+  await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
+  await swipePage(stack, -1);
+  await expect(photo.locator('img').first()).toHaveAttribute('src', initial!);
+  await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
 });
+
+for (const viewport of [{ width: 360, height: 800 }, { width: 820, height: 1180 }]) {
+  test(`resize during motion releases the turn at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'Matrix controls its own viewport');
+    await page.setViewportSize(viewport);
+    await page.goto('./');
+    const photo = page.getByTestId('home-memory-photo');
+    await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+    await photo.click();
+    const initial = await photo.locator('img').first().getAttribute('src');
+    const stack = page.locator('[class*="_stack_"]');
+    await swipePage(stack, 1);
+    const transition = page.getByTestId('home-photo-transition');
+    await expect(transition).toHaveAttribute('data-phase', 'moving');
+    await stack.evaluate(element => element.getAnimations({ subtree: true }).forEach(animation => animation.pause()));
+    await page.setViewportSize({ width: viewport.height, height: viewport.width });
+    await expect(transition).toHaveCount(0);
+    expect(await stack.evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0);
+    await swipePage(stack, -1);
+    await expect(transition).toHaveAttribute('data-phase', 'moving');
+    await expect(photo.locator('img').first()).toHaveAttribute('src', initial!);
+    await expect(transition).toHaveCount(0);
+  });
+}
 
 test('each turn removes a real right page and the final text page stops playback', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chrome', 'Desktop controls give a deterministic page count');
@@ -74,16 +200,16 @@ test('each turn removes a real right page and the final text page stops playback
   for (const remaining of [3, 2, 1]) {
     await page.getByRole('button', { name: '下一张照片' }).click();
     await expect(pages).toHaveCount(remaining);
-    await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
+    await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
   }
   await expect(page.getByTestId('home-memory-ending')).toContainText('想念的时候，随时回来看看');
   await expect(page.getByTestId('home-memory-ending')).not.toHaveAttribute('role', 'status');
   await expect(page.getByTestId('home-memory-ending')).not.toHaveAttribute('aria-live', /.+/);
   await expect(page.getByRole('button', { name: '主回忆播放已结束' })).toBeDisabled();
   await page.getByRole('button', { name: '上一张照片' }).click();
-  await expect(page.getByTestId('home-memory-ending')).toBeVisible();
-  await expect(page.getByTestId('home-memory-photo')).toHaveCount(0);
-  await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
+  await expect(page.getByTestId('home-memory-photo')).toBeVisible();
+  await expect(page.getByTestId('home-photo-transition')).toContainText('想念的时候，随时回来看看');
+  await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
   await expect(pages).toHaveCount(2);
   await expect(page.getByTestId('home-memory-photo')).toBeVisible();
 });
@@ -100,7 +226,7 @@ test('mobile swipe reaches the ending page without restarting', async ({ page },
       element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [start], changedTouches: [start] }));
       element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [end] }));
     });
-    await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
+    await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
   }
   await expect(page.locator('[data-book-page]')).toHaveCount(1);
   await expect(page.getByTestId('home-memory-ending')).toBeVisible();
@@ -122,13 +248,13 @@ test('leaving during a turn cancels it and a fresh home starts on the first page
   await page.goto('./');
   const photo = page.getByTestId('home-memory-photo');
   await photo.click();
-  const first = await photo.locator('img').getAttribute('src');
+  const first = await photo.locator('img').first().getAttribute('src');
   await page.getByRole('button', { name: '下一张照片' }).click();
-  await expect(page.getByTestId('book-turning-page')).toBeVisible();
+  await expect(page.getByTestId('home-photo-transition')).toBeVisible();
   await page.getByRole('link', { name: /浏览全部影像/ }).click();
-  await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
+  await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
   await page.evaluate(() => { location.hash = '#/'; });
-  await expect(photo.locator('img')).toHaveAttribute('src', first!);
+  await expect(photo.locator('img').first()).toHaveAttribute('src', first!);
 });
 
 
@@ -136,36 +262,36 @@ test('synthetic foreground resume takes one click and preserves an independent m
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./');
   const photo = page.getByTestId('home-memory-photo');
-  await expect(photo.locator('img')).toBeVisible();
+  await expect(photo.locator('img').first()).toBeVisible();
   const visibility = async (hidden: boolean) => page.evaluate(hidden => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => hidden ? 'hidden' : 'visible' });
     document.dispatchEvent(new Event('visibilitychange'));
   }, hidden);
-  const first = await photo.locator('img').getAttribute('src');
+  const first = await photo.locator('img').first().getAttribute('src');
   await visibility(true);
   await visibility(false);
   await expect(photo).toHaveAttribute('aria-label', /继续主回忆/);
   await page.waitForTimeout(2300);
-  await expect(photo.locator('img')).toHaveAttribute('src', first!);
+  await expect(photo.locator('img').first()).toHaveAttribute('src', first!);
   await photo.click();
   await expect(photo).toHaveAttribute('aria-label', /暂停主回忆/);
-  await expect.poll(() => photo.locator('img').getAttribute('src'), { timeout: 4000 }).not.toBe(first);
+  await expect.poll(() => photo.locator('img').first().getAttribute('src'), { timeout: 4000 }).not.toBe(first);
   await photo.click();
   await expect(photo).toHaveAttribute('aria-label', /继续主回忆/);
-  const paused = await photo.locator('img').getAttribute('src');
+  const paused = await photo.locator('img').first().getAttribute('src');
   await visibility(true);
   await visibility(false);
   await page.waitForTimeout(2300);
-  await expect(photo.locator('img')).toHaveAttribute('src', paused!);
+  await expect(photo.locator('img').first()).toHaveAttribute('src', paused!);
   await expect(photo).toHaveAttribute('aria-label', /继续主回忆/);
 });
 
 test('a page turn reuses the displayed candidate and image failure preserves the paper frame', async ({ page }) => {
   await page.goto('./');
   const photo = page.getByTestId('home-memory-photo');
-  await expect(photo.locator('img')).toBeVisible();
+  await expect(photo.locator('img').first()).toBeVisible();
   await photo.click();
-  const selected = await photo.locator('img').evaluate(node => (node as HTMLImageElement).currentSrc);
+  const selected = await photo.locator('img').first().evaluate(node => (node as HTMLImageElement).currentSrc);
   const bounds = await photo.boundingBox();
   const turn = async () => {
     if (await page.getByRole('button', { name: '下一张照片' }).isVisible()) await page.getByRole('button', { name: '下一张照片' }).click();
@@ -177,16 +303,114 @@ test('a page turn reuses the displayed candidate and image failure preserves the
     });
   };
   await turn();
-  await expect(page.getByTestId('book-turning-page').locator('image')).toHaveAttribute('href', selected);
-  await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
-  await expect(photo.locator('img')).toBeVisible();
-  await photo.locator('img').evaluate(node => node.dispatchEvent(new Event('error')));
+  await expect(page.getByTestId('home-photo-transition').locator('img')).toHaveAttribute('src', selected);
+  await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
+  await expect(photo.locator('img').first()).toBeVisible();
+  await photo.locator('img').first().evaluate(node => node.dispatchEvent(new Event('error')));
   await expect(photo.getByRole('status')).toContainText('影像暂时无法加载');
   const failedBounds = await photo.boundingBox();
   expect(Math.abs(failedBounds!.width - bounds!.width)).toBeLessThan(1);
   expect(Math.abs(failedBounds!.height - bounds!.height)).toBeLessThan(1);
 });
 
+
+test('a slow incoming photo holds the displayed snapshot and locks repeated turns until it loads', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chrome', 'Desktop controls verify repeated turn intent');
+  await page.goto('./');
+  const photo = page.getByTestId('home-memory-photo');
+  await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await photo.click();
+  const displayed = await photo.locator('img').first().evaluate(image => (image as HTMLImageElement).currentSrc);
+  let held: Route | undefined;
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/*.webp', async route => {
+    if (route.request().url() === displayed) return route.continue();
+    held = route;
+    await gate;
+    await route.continue();
+  });
+  await page.getByRole('button', { name: '下一张照片' }).click();
+  const transition = page.getByTestId('home-photo-transition');
+  await expect.poll(() => Boolean(held)).toBe(true);
+  await expect(transition).toHaveAttribute('data-phase', 'waiting');
+  await expect(transition.locator('img')).toHaveAttribute('src', displayed);
+  await expect(transition.locator('div').first()).toHaveCSS('opacity', '1');
+  const incoming = await photo.locator('img').first().getAttribute('src');
+  await page.getByRole('button', { name: '下一张照片' }).click();
+  await page.getByRole('button', { name: '上一张照片' }).click();
+  await page.waitForTimeout(900);
+  await expect(photo.locator('img').first()).toHaveAttribute('src', incoming!);
+  await expect(transition).toHaveAttribute('data-phase', 'waiting');
+  release();
+  await expect(transition).toHaveCount(0);
+  await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await page.getByRole('button', { name: '上一张照片' }).click();
+  await expect(transition).toHaveCount(0);
+  await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).currentSrc)).toBe(displayed);
+});
+
+test('failed and timed-out incoming photos release the transition and allow another turn', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chrome', 'Desktop controls verify recovery intent');
+  await page.goto('./');
+  const photo = page.getByTestId('home-memory-photo');
+  await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await photo.click();
+  const displayed = await photo.locator('img').first().evaluate(image => (image as HTMLImageElement).currentSrc);
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/*.webp', async route => {
+    if (route.request().url() === displayed) return route.continue();
+    await gate;
+    await route.abort();
+  });
+  await page.getByRole('button', { name: '下一张照片' }).click();
+  const transition = page.getByTestId('home-photo-transition');
+  await expect(transition).toHaveAttribute('data-phase', 'waiting');
+  await expect(transition).toHaveCount(0, { timeout: 6500 });
+  await expect(photo.getByTestId('media-skeleton')).toBeVisible();
+  release();
+  await expect(photo.getByRole('status')).toContainText('影像暂时无法加载');
+  await page.getByRole('button', { name: '上一张照片' }).click();
+  await expect(transition).toHaveCount(0);
+  await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  // A fresh outgoing snapshot also releases promptly when the next request fails.
+  await page.getByRole('button', { name: '下一张照片' }).click();
+  await expect(photo.getByRole('status')).toContainText('影像暂时无法加载');
+  await expect(transition).toHaveCount(0);
+  await page.getByRole('button', { name: '上一张照片' }).click();
+  await expect(photo.locator('img').first()).toBeVisible();
+});
+
+for (const interruption of ['reduced motion', 'hidden document'] as const) {
+  test(`changing to ${interruption} during motion cancels animations and releases navigation`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'Desktop controls start and pause the animation deterministically');
+    await page.goto('./');
+    const photo = page.getByTestId('home-memory-photo');
+    await expect.poll(() => photo.locator('img').first().evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+    await photo.click();
+    await page.getByRole('button', { name: '下一张照片' }).click();
+    const transition = page.getByTestId('home-photo-transition');
+    await expect(transition).toHaveAttribute('data-phase', 'moving');
+    await transition.evaluate(element => element.parentElement!.getAnimations({ subtree: true }).forEach(animation => animation.pause()));
+    if (interruption === 'reduced motion') await page.emulateMedia({ reducedMotion: 'reduce' });
+    else await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect(transition).toHaveCount(0);
+    expect(await photo.evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0);
+    const target = await photo.locator('img').first().getAttribute('src');
+    if (interruption === 'hidden document') await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.getByRole('button', { name: '上一张照片' }).click();
+    await expect(transition).toHaveCount(0);
+    await expect(photo.locator('img').first()).not.toHaveAttribute('src', target!);
+    await expect(photo).toHaveAttribute('aria-label', /继续主回忆/);
+  });
+}
 
 test('cold responsive candidates match the home and index frames across width and DPR', async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chrome', 'The matrix creates its own cold browser contexts');
@@ -203,7 +427,7 @@ test('cold responsive candidates match the home and index frames across width an
     });
     await page.goto(String(testInfo.project.use.baseURL));
     const photo = page.getByTestId('home-memory-photo');
-    await expect(photo.locator('img')).toBeVisible();
+    await expect(photo.locator('img').first()).toBeVisible();
     await photo.click();
     const snapshot = async (selector: string, target = page) => target.locator(selector).first().evaluate(node => {
       const image = node as HTMLImageElement;
@@ -221,9 +445,9 @@ test('cold responsive candidates match the home and index frames across width an
       element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [start], changedTouches: [start] }));
       element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [end] }));
     });
-    await expect(page.getByTestId('book-turning-page').locator('image')).toHaveAttribute('href', home.currentSrc);
-    await expect(page.getByTestId('book-turning-page')).toHaveCount(0);
-    await expect(photo.locator('img')).toBeVisible();
+    await expect(page.getByTestId('home-photo-transition').locator('img')).toHaveAttribute('src', home.currentSrc);
+    await expect(page.getByTestId('home-photo-transition')).toHaveCount(0);
+    await expect(photo.locator('img').first()).toBeVisible();
     const turnRequests = requests.slice(before);
     expect(turnRequests.filter(url => url === home.currentSrc)).toHaveLength(0);
     if (dpr === 1) expect(turnRequests.some(url => /\.(1600|2560)\.webp$/.test(url))).toBe(false);

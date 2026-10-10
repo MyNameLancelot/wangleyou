@@ -1,0 +1,52 @@
+{
+  "mode": "full",
+  "summary": "首页改为跨设备的相片左上角旋转抽走，并消除收尾闪回",
+  "reason": "PC设计和闪烁修复已获用户确认，继续适配手机/平板并验证。",
+  "behavior": true,
+  "architecture": true,
+  "status": "complete",
+  "verification": [
+    "用户确认PC旋转与闪烁修复；各端统一900ms旋转，按左侧空间限制角度，补齐resize与touchcancel处理。",
+    "Node24.18.0 npm run check通过：内容校验、类型、lint及230项单元测试。临时浏览器脚本曾被lint扫入，移至系统临时目录后通过。",
+    "VITE_MEDIA_BASE_URL= npm run build及子路径首页Playwright通过28项（18个设备场景跳过）；book-home/responsive-a11y另4项通过。",
+    "Chrome154.0.8037.99静态页面1440x1000、360x800、390x844、844x390、768x1024、820x1180、1180x820双向旋转及触屏输入核对通过，无横向滚动或页面脚本异常；横竖屏切换可收尾并继续。",
+    "SITE_BASE=/ VITE_MEDIA_BASE_URL= npm run build及根路径旋转/手势/切屏/减少动态Playwright通过13项（9个重复设备场景跳过）；默认npm run build通过且保留既有R2公开媒体地址。",
+    "npm run check:sdd -- --worktree --base b3c2f36通过（14差异路径），git diff --check通过；规格与代码专项审查无问题。详见tasks.md实际命令与环境说明。",
+    "浏览器视口/触屏模拟不等于真机：iPhone/iPad/Android真机、Safari、原生WebView及无关全站查看器回归未执行。未上传媒体或发布网站。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "paths": [
+        "docs/requirements.md"
+      ],
+      "reason": "同步各端旋转、触屏、横竖屏与闪烁修复的验收行为。"
+    },
+    "architecture": {
+      "status": "updated",
+      "paths": [
+        "docs/architecture.md"
+      ],
+      "reason": "统一各端纸片快照及按空间限角，补充resize清理归属。"
+    },
+    "modules": {
+      "status": "updated",
+      "paths": [
+        "src/themes/module.md"
+      ],
+      "reason": "同步跨端动效、手势与资源生命周期，删除临时展示分支约定。"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": [
+        "README.md",
+        "docs/changes/README.md"
+      ],
+      "reason": "使用概览及活动记录更新真实动效。"
+    },
+    "decisions": {
+      "status": "none",
+      "reason": "局部主题动效复用现有React和标准WAAPI，不引入新库或改变长期架构选择，候选评估已记规格。"
+    }
+  }
+}

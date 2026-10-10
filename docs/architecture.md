@@ -55,13 +55,13 @@
 | app | 路由、online、Session 与 BackgroundMusic 实例，hash/网络监听 | 改路由关闭 Session，卸载解绑监听；状态转换交 playback |
 | playback | 当前媒体、队列、意图、实际状态/进度、可见性/待主动恢复、音乐偏好及临时暂停 | 同步纯函数，无 DOM/计时器；视频结束不推进，旧回调来源须匹配当前会话 |
 | media-viewer / lightbox 库 | 受控 open/index、portal、video、焦点、inert、滚动锁与插件计时 | 观察当前 DOM 身份，延迟挂载和同项替换重绑；换项解绑 video 监听并失效旧播放请求；卸载释放 DOM/媒体、恢复滚动和焦点；Slideshow 计时由插件管理 |
-| book 首页 / albums 控制器 | 局部纸页、用户暂停、交互/可见性、翻页帧与 interval | 条件失效清 interval，回前台不自动恢复；翻页锁重入，完成提交索引，卸载取消动画帧 |
+| book 首页 / albums 控制器 | 局部纸页、用户暂停、交互/可见性、相片过渡与 interval | 条件失效清 interval，回前台不自动恢复；切换锁防重入，目标索引统一提交，动效层拥有动画/加载监听/等待计时器，隐藏或尺寸变化时完成、卸载时取消 |
 | book 音频组件（停用） | 若挂载才创建 audio 和监听 | 当前不挂载；重新启用先确认交互与音乐协调 |
 | 原生容器 | WebView、加载/错误状态、Android 视频纹理/播放器、加载光条 | 按平台生命周期暂停/释放，网站业务会话仍归网页 |
 
 App 向查看器提供命令，主题在 Session 存在时挂载共用组件。查看器的 `view` 事件转 `stepSessionTo`，原生 video 的播放/等待/进度/结束/错误事件转 playback 命令，播放请求被拒时回报其发起队列与索引。hidden 通过插件 ref 暂停幻灯片，并使旧视频播放请求失效；回前台由 Session 的 resumeRequired 保持暂停，主动原生播放或可见时换项再继续。查看器不复制业务索引；局部缩略图/全屏 UI 状态不属于 playback。
 
-共用查看器使用 Captions、Fullscreen、Slideshow、Thumbnails、Video、Zoom。非循环、背景关闭、工具栏裁剪、寄语与缩略图收起条、全屏和 Tab 回绕契约详见 media-viewer；其焦点环固定白色，不读取主题变量。插件幻灯片需用户显式启动，视频 ended 不推进。首页翻页由 SVG 曲线/裁切/渐变及 requestAnimationFrame 实现，与查看器会话独立。
+共用查看器使用 Captions、Fullscreen、Slideshow、Thumbnails、Video、Zoom。非循环、背景关闭、工具栏裁剪、寄语与缩略图收起条、全屏和 Tab 回绕契约详见 media-viewer；其焦点环固定白色，不读取主题变量。插件幻灯片需用户显式启动，视频 ended 不推进。首页动效用 Web Animations API 驱动 transform/opacity：各端共用叠页层中的整张纸片快照，以左上角为原点旋出，回翻将目标纸片转入；按视口左侧空间与纸片高度限制角度。旧层复用 currentSrc，输入继续 srcSet/sizes。组件管理新图就绪、最长5秒等待、隐藏/减少动态效果/窗口尺寸变化的收尾及卸载取消，先隐藏旧快照再取消动画以避免闪回，不逐帧更新React；与查看器会话独立。
 
 原生壳仅允许 Cloudflare HTTPS 根路径作为顶层页面，Hash 导航留在 WebView，外部 HTTPS 用户链接交系统浏览器；媒体子资源按页面地址加载，不做原生 URL 替换，无 JS 桥接。返回、加载失败与开屏生命周期由原生 module.md 维护。
 
