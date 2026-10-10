@@ -12,7 +12,7 @@ import {
   stepHomeMemory,
 } from '../../albums';
 import { PhotoImage } from './PhotoImage';
-import { PageTurn } from './PageTurn';
+import { EndingContent, PhotoTransition } from './PhotoTransition';
 import { homePhotoSizes, responsiveSrcSet } from './images';
 import styles from './ThemeHome.module.css';
 
@@ -28,20 +28,18 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
   const [interactionOverride, setInteractionOverride] = useState(false);
   const [visible, setVisible] = useState(() => document.visibilityState !== 'hidden');
   const [resumeRequired, setResumeRequired] = useState(() => document.visibilityState === 'hidden' && memory.length > 0);
-  const [flip, setFlip] = useState<{ src: string | null; direction: -1 | 1; targetIndex: number } | null>(null);
+  const [flip, setFlip] = useState<{ src: string | null; direction: -1 | 1 } | null>(null);
   const stateRef = useRef(state);
   const flipLockedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof createHomeMemoryIntervalController<number>> | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const suppressClickUntilRef = useRef(0);
-  const photoElementRef = useRef<HTMLButtonElement | null>(null);
-  const selectedSourcesRef = useRef(new Map<string, string>());
+  const photoContentRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => {
     flipLockedRef.current = false;
-    selectedSourcesRef.current.clear();
     setFlip(null);
     setState(createHomeMemory(memory));
   }, [memory]);
@@ -51,18 +49,14 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
     if (current.items.length === 0 || flipLockedRef.current) return;
     const next = stepHomeMemory(current, direction, false);
     if (next.index === current.index) return;
-    if (direction < 0) intervalRef.current?.sync(false);
-    else intervalRef.current?.restart();
-    const turningPhoto = direction === 1 ? current.items[current.index] : current.items[next.index];
-    const selected = photoElementRef.current?.querySelector('img')?.currentSrc;
-    if (selected && current.items[current.index]) selectedSourcesRef.current.set(current.items[current.index].id, selected);
-    if (direction > 0 || reducedMotion()) {
-      stateRef.current = next;
-      setState(next);
-    }
-    if (!reducedMotion()) {
+    intervalRef.current?.sync(false);
+    const image = photoContentRef.current?.querySelector('img');
+    const selected = image?.naturalWidth ? image.currentSrc : null;
+    stateRef.current = next;
+    setState(next);
+    if (!reducedMotion() && (selected || current.index === current.items.length)) {
       flipLockedRef.current = true;
-      setFlip({ src: turningPhoto ? selectedSourcesRef.current.get(turningPhoto.id) ?? null : null, direction, targetIndex: next.index });
+      setFlip({ src: selected, direction });
     } else {
       setFlip(null);
     }
@@ -138,6 +132,10 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
   const ending = state.items.length > 0 && state.index === state.items.length;
   const rightPageCount = state.items.length + 1 - state.index;
   const playing = state.playing && !resumeRequired;
+  const transition = flip && <PhotoTransition src={flip.src} direction={flip.direction} targetRef={photoContentRef} onComplete={() => {
+    setFlip(null);
+    flipLockedRef.current = false;
+  }} />;
   return <section className={styles.home} aria-labelledby="home-title" data-testid="book-home">
     <div className={styles.book}>
       <div className={styles.stitches} aria-hidden="true">{Array.from({ length: 7 }, (_, index) => <i key={index} />)}</div>
@@ -146,23 +144,17 @@ export function HomePage({ memory, viewerOpen = false }: { memory: HomeMemoryPho
         <a href="#/browse" className={styles.browse}>浏览全部影像 <span aria-hidden="true">↗</span></a>
       </div>
       {current || ending ? <div className={styles.memory} onMouseEnter={() => { setHovered(true); setInteractionOverride(false); }} onMouseLeave={() => { setHovered(false); setInteractionOverride(false); }} onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) { setFocused(false); setInteractionOverride(false); } }}>
-        <div className={styles.stack} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStartRef.current = null; }}>
+        <div className={styles.stack} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onTouchCancel={() => { touchStartRef.current = null; }} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStartRef.current = null; }}>
           {Array.from({ length: rightPageCount - 1 }, (_, index) => {
             const depth = rightPageCount - 1 - index;
             return <div key={depth} className={`${styles.sheet} ${styles.sheetUnder}`} style={{ '--depth': depth } as CSSProperties} aria-hidden="true" data-book-page="under" />;
           })}
-          {current ? <button ref={photoElementRef} type="button" className={`${styles.sheet} ${styles.sheetFront}`} onClick={toggle} aria-label={`${playing ? '暂停' : '继续'}主回忆自动播放：${current.description || current.id}`} data-testid="home-memory-photo" data-book-page="front">
-            <PhotoImage className={styles.photo} src={mediaUrl(current.src)} srcSet={responsiveSrcSet(current)} sizes={homePhotoSizes} alt={current.alt || current.description || '主回忆照片'} eager draggable={false} />
-          </button> : <div className={`${styles.sheet} ${styles.sheetFront} ${styles.ending}`} data-testid="home-memory-ending" data-book-page="front"><span className={styles.endingRule} aria-hidden="true" /><p>翻到这里，先把书轻轻合上<br />这些日子没有走远<br />想念的时候，随时回来看看</p><span className={styles.endingMark} aria-hidden="true">❦</span></div>}
-          {flip && <PageTurn src={flip.src} direction={flip.direction} onComplete={() => {
-            if (flip.direction < 0) {
-              const next = { ...stateRef.current, index: flip.targetIndex };
-              stateRef.current = next;
-              setState(next);
-            }
-            setFlip(null);
-            flipLockedRef.current = false;
-          }} />}
+          {current ? <button type="button" className={`${styles.sheet} ${styles.sheetFront}`} onClick={toggle} aria-label={`${playing ? '暂停' : '继续'}主回忆自动播放：${current.description || current.id}`} data-testid="home-memory-photo" data-book-page="front">
+            <span className={styles.photoViewport}>
+              <span ref={photoContentRef} className={styles.photoContent}><PhotoImage className={styles.photo} src={mediaUrl(current.src)} srcSet={responsiveSrcSet(current)} sizes={homePhotoSizes} alt={current.alt || current.description || '主回忆照片'} eager draggable={false} /></span>
+            </span>
+          </button> : <div className={`${styles.sheet} ${styles.sheetFront}`} data-testid="home-memory-ending" data-book-page="front"><span className={styles.photoViewport}><span ref={photoContentRef} className={`${styles.photoContent} ${styles.ending}`}><EndingContent /></span></span></div>}
+          {transition}
         </div>
         <div className={styles.controls}>
           <button type="button" onClick={() => step(-1)} disabled={state.index === 0} aria-label="上一张照片"><ChevronLeft aria-hidden="true" />上一页</button>

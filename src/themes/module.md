@@ -22,12 +22,12 @@ content、albums、playback、media-viewer、shared 的公开入口；不得反�
 
 ## 状态与资源生命周期
 
-BookApp 按路由挂载页面：首页主回忆局部持有当前纸页、自动播放意图、悬停/焦点、可见性与翻页层；每次前翻减少一张右侧实体页，回翻恢复。翻页期间锁定重复动作，PageTurn 通过 requestAnimationFrame 推进 SVG 卷页，完成回调释放锁，卸载时取消动画帧；到文字末页、播放条件失效或卸载时清理 interval。空队列不启动 interval，单张照片可翻到收束页。音乐组件暂不挂载，因此不创建 audio 或播放 Promise；该组件原有卸载清理能力仍保留。查看器会话和背景音乐状态由 App/playback 唯一持有。
+BookApp 按路由挂载页面：首页主回忆局部持有当前纸页、自动播放意图、悬停/焦点、可见性与翻页层；每次前翻减少一张右侧实体页，回翻恢复。切换期间锁定重复动作，PhotoTransition 用 Web Animations API 推进约 900ms 的动效，各端纸片连白边绕左上角旋出/转入，按视口左侧空间与纸片高度限制角度，最大28度。前后统一更新目标索引，旧层保留原图候选或收束文字；新图加载期间旧层保持，等待最多5秒，完成回调释放锁。组件收尾先隐藏旧快照，避免取消动画终态后旧片闪回，再统一清理动画、load/error/resize监听及等待定时器，页面隐藏/减少动态效果/窗口尺寸变化时收尾，卸载时取消；到文字末页、播放条件失效或卸载时清理 interval。空队列不启动 interval，单张照片可翻到收束页。音乐组件暂不挂载，因此不创建 audio 或播放 Promise；该组件原有卸载清理能力仍保留。查看器会话和背景音乐状态由 App/playback 唯一持有。
 
 ## 主要文件
 
-`book/BookApp.tsx` 路由页面装配；`book/ThemeHome.tsx` 与 `ThemeHome.module.css` 为线缝首页，`book/PageTurn.tsx` 为局部卷页与动画帧生命周期；`book/ThemePages.tsx` 与 `ThemePages.module.css` 为内容页；`book/BookMusicToggle.tsx` 为保留但未挂载的音乐能力；`book/images.ts` 复用首页/索引的响应式候选及 sizes，PageTurn 使用已显示候选避免额外请求最大图；`book/BookTokens.css` 为唯一主题 token；`contracts.ts` 为装配契约。
+`book/BookApp.tsx` 路由页面装配；`book/ThemeHome.tsx` 与 `ThemeHome.module.css` 为线缝首页，`book/PhotoTransition.tsx` 为跨端纸片旋转、共享收束文字与动画/加载生命周期；`book/ThemePages.tsx` 与 `ThemePages.module.css` 为内容页；`book/BookMusicToggle.tsx` 为保留但未挂载的音乐能力；`book/images.ts` 复用首页/索引的响应式候选及 sizes，PhotoTransition使用已显示currentSrc避免额外请求最大图，输入保持响应式候选；`book/BookTokens.css` 为唯一主题 token；`contracts.ts` 为装配契约。
 
 ## 扩展与验证
 
-调整首页先更新本模块与 `albums` 契约，再运行 `npm run check`、`npm run build` 和桌面/手机端到端验证。浏览与查看器仍需验证 Hash 子路径、媒体资源和键盘/触摸行为。
+调整首页先更新本模块与 `albums` 契约，再运行 `npm run check`、`npm run build` 和桌面/手机/平板横竖屏端到端验证。浏览与查看器仍需验证 Hash 子路径、媒体资源和键盘/触摸行为。
