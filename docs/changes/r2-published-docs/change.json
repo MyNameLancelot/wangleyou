@@ -1,0 +1,39 @@
+{
+  "mode": "light",
+  "summary": "同步 R2 相册媒体已发布状态",
+  "reason": "用户于 2026-10-12 确认 R2 已发布；仅修正文档中的部署状态和过时的未来时表述，不改变产品行为、架构、配置或部署流程，采用轻量记录。",
+  "behavior": false,
+  "architecture": false,
+  "deliveryAuthorization": "用户明确要求在新分支完成后 commit、push 并创建 PR；本次分支为 docs/r2-published-status。",
+  "verification": [
+    "已核对用户发布确认、现有 R2 变更记录及需求、架构、README、ADR 中的状态表述；当前工作区初始干净。",
+    "Node 24.18.0：npm run check:sdd -- --worktree --base HEAD 通过（8 个差异路径）；首次沙箱运行因 tsx IPC EPERM 失败，提升权限重跑同一命令通过。git diff --check 通过，逐项核对文档差异及历史证据语境。",
+    "发布状态依据用户确认，本次未独立执行线上、浏览器或真机验证；纯文档变更未运行应用构建和功能测试。"
+  ],
+  "impacts": {
+    "requirements": {
+      "status": "updated",
+      "paths": ["docs/requirements.md"],
+      "reason": "将生产 R2 前缀从待发布更新为已发布。"
+    },
+    "architecture": {
+      "status": "updated",
+      "paths": ["docs/architecture.md"],
+      "reason": "同步线上媒体来源状态，修正未来切换措辞，不改变架构。"
+    },
+    "modules": {
+      "status": "none",
+      "reason": "模块文档已准确描述 R2 URL 分流与同步契约，无待发布状态需要修正；接口、依赖及资源生命周期不变。"
+    },
+    "decisions": {
+      "status": "updated",
+      "paths": ["docs/decisions/0008-r2-media-sync.md"],
+      "reason": "同步采纳方案的发布状态，保留既有同步边界与验证缺口。"
+    },
+    "readme": {
+      "status": "updated",
+      "paths": ["README.md", "docs/changes/README.md"],
+      "reason": "记录用户确认的已发布状态并登记本次文档维护；同步 R2 活动记录状态，保留原实施期证据。"
+    }
+  }
+}
